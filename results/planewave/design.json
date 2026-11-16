@@ -1,0 +1,33 @@
+{
+  "low": {
+    "driver": "18 Sound 15NMB420",
+    "throat_width_mm": 360.0,
+    "mouth_width_mm": 700.0,
+    "length_mm": 800.0,
+    "rear_chamber_litres": 25.0,
+    "throat_area_m2": 0.11955350717091341,
+    "mouth_area_m2": 0.458584073464102,
+    "min_area_m2": 0.11955350717091341,
+    "min_area_z_m": 0.105,
+    "expansion": 3.835806111555651,
+    "front_chamber_litres": 9.06654899338035
+  },
+  "mid": {
+    "driver": "Beyma 6MCF200Nd",
+    "profile": "conical",
+    "outer_throat_diameter_mm": 99.35793878699377,
+    "mouth_diameter_mm": 190.0,
+    "length_mm": 125.0,
+    "can_diameter_mm": 200.0,
+    "can_length_mm": 230.0
+  },
+  "tweeter": {
+    "driver": "Fostex T90A",
+    "housing_diameter_mm": 64.0,
+    "face_recess_mm": 24.999999999999993
+  },
+  "crossover_hz": [
+    500.0,
+    7000.0
+  ]
+}

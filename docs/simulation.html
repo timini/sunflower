@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sunflower simulation</title>
+<meta name="description" content="Phase and magnitude response of each Sunflower horn section, FEM check and DSP settings.">
+<link rel="stylesheet" href="assets/style.css">
+<link rel="icon" href="data:image/svg+xml,<svg viewBox='0 0 32 32' aria-hidden='true'><g fill='none' stroke-width='2.4'><rect x='3' y='3' width='26' height='26' rx='4' stroke='%23d38a0c'/><circle cx='16' cy='16' r='8' stroke='%23eb6834'/><circle cx='16' cy='16' r='3.2' fill='%231baf7a' stroke='none'/></g></svg>">
+</head>
+<body>
+<header class="site"><div class="wrap">
+<a class="brand" href="index.html"><svg viewBox="0 0 32 32" aria-hidden="true"><g fill="none" stroke-width="2.4">
+<rect x="3" y="3" width="26" height="26" rx="4" stroke="#d38a0c"/><circle cx="16" cy="16" r="8" stroke="#eb6834"/>
+<circle cx="16" cy="16" r="3.2" fill="#1baf7a" stroke="none"/></g></svg>Sunflower</a>
+<nav><a href="index.html">Product</a><a href="design.html">Design</a><a href="simulation.html" aria-current=page>Simulation</a><a href="build.html">Build</a><a href="downloads.html">Downloads</a></nav>
+</div></header>
+<main><div class="wrap">
+
+<h1>Simulation</h1>
+<p class="lede">Each section was simulated on its own, unfiltered, then summed through the crossover with the
+gains, delays and polarity a DSP would apply. All curves are at 2.83 V and 1 m.</p>
+
+<h2>Method</h2>
+<ol>
+<li><b>Plane-wave horn model.</b> Each horn is cut into a few hundred thin annular slices and cascaded as
+transfer matrices from throat to mouth, with the radiation load of a flanged piston at the mouth. Centre bodies
+are subtracted from the area slice by slice.</li>
+<li><b>Driver model.</b> Each driver is a Thiele/Small motor with its sealed rear volume and the front chamber
+between cone and throat, solved for cone velocity and electrical impedance.</li>
+<li><b>Radiation.</b> The mouth's far field includes the curvature of the wavefront in a conical or pyramidal horn.
+Treating the mouth as a flat piston gave false nulls off axis.</li>
+<li><b>FEM check.</b> The mid and low horns were solved again with an axisymmetric Helmholtz finite-element model
+(dolfinx 0.8, quadratic elements) in a baffled half-space with an absorbing outer boundary. The FEM throat impedance
+and far field were coupled to the same driver models, so the two results differ only in the acoustics. The FEM
+code was first checked against the exact solution for a straight tube: median error 3% in throat impedance.</li>
+</ol>
+
+<h2>Low section</h2>
+<figure class="figure"><img class="plot" src="img/plots/low-section.png" alt="18 Sound 15NMB420 in the low horn. Shaded: 100 to 500 Hz. The group delay peak near 95 Hz is the horn's low-frequency cut-off." loading="lazy"><figcaption>18 Sound 15NMB420 in the low horn. Shaded: 100 to 500 Hz. The group delay peak near 95 Hz is the horn's low-frequency cut-off.</figcaption></figure>
+<p>From 100 to 500 Hz the plane-wave model gives 3.0 dB variation at a mean of 106.7 dB.
+The FEM agrees within 0.8 dB in that band. The low horn stays
+usable to about 1 kHz on axis, which leaves room for the 500 Hz crossover. Off axis it narrows above about 500 Hz,
+roughly where the mid takes over.</p>
+
+<h2>Mid section</h2>
+<figure class="figure"><img class="plot" src="img/plots/mid-section.png" alt="Beyma 6MCF200Nd in the conical mid horn with the tweeter bullet in its throat. Shaded: 500 Hz to 7 kHz." loading="lazy"><figcaption>Beyma 6MCF200Nd in the conical mid horn with the tweeter bullet in its throat. Shaded: 500 Hz to 7 kHz.</figcaption></figure>
+<p>From 500 Hz to 7 kHz the plane-wave model gives 4.9 dB variation at a mean of 104.1 dB;
+FEM gives 4.2 dB with a mean difference of 0.03 dB and a largest difference of
+1.9 dB. Coverage narrows to about plus or minus 20 degrees above 3 kHz, as expected for
+a conical horn with a 20 degree half-angle.</p>
+
+<h2>Tweeter</h2>
+<figure class="figure"><img class="plot" src="img/plots/tweeter-section.png" alt="Fostex T90A, from the datasheet: 106 dB/W/m, horn cut-off at 3.6 kHz, roll-off above 35 kHz, 60 mm piston directivity. Not a horn simulation." loading="lazy"><figcaption>Fostex T90A, from the datasheet: 106 dB/W/m, horn cut-off at 3.6 kHz, roll-off above 35 kHz, 60 mm piston directivity. Not a horn simulation.</figcaption></figure>
+<p>The tweeter's internal horn and ring diaphragm were not simulated. Its curves are a minimum-phase model of the
+published figures. The effect of sitting 25 mm inside the mid horn is not modelled
+beyond the extra path length. Measuring it in place is the first job after building.</p>
+
+<h2>Electrical impedance</h2>
+<figure class="figure"><img class="plot" src="img/plots/impedance.png" alt="Impedance of the low and mid drivers in their horns." loading="lazy"><figcaption>Impedance of the low and mid drivers in their horns.</figcaption></figure>
+
+<h2>FEM against plane-wave</h2>
+<figure class="figure"><img class="plot" src="img/plots/fem-vs-planewave.png" alt="Grey: plane-wave. Colour: FEM. Solid on axis, dotted 30 degrees." loading="lazy"><figcaption>Grey: plane-wave. Colour: FEM. Solid on axis, dotted 30 degrees.</figcaption></figure>
+<div class="table-wrap"><table><thead><tr><th class="">Section</th><th class="">Band</th><th class="num">Largest on-axis difference</th><th class="num">Mean difference</th><th class="num">Variation, FEM</th><th class="num">Variation, plane-wave</th></tr></thead><tbody><tr><td class="">Low</td><td class="">100 to 500 Hz</td><td class="num">0.84 dB</td><td class="num">-0.03 dB</td><td class="num">3.35 dB</td><td class="num">2.98 dB</td></tr><tr><td class="">Mid</td><td class="">500 Hz to 7 kHz</td><td class="num">1.88 dB</td><td class="num">+0.03 dB</td><td class="num">4.22 dB</td><td class="num">4.89 dB</td></tr></tbody></table></div>
+
+<h2>The complete system</h2>
+<figure class="figure"><img class="plot" src="img/plots/system.png" alt="Each section through its LR4 filters, and their sum on axis." loading="lazy"><figcaption>Each section through its LR4 filters, and their sum on axis.</figcaption></figure>
+<p>With the settings below, the on-axis sum stays within 3.6 dB peak to peak from 100 Hz to 20 kHz
+(RMS deviation 0.98 dB), before any equalisation.</p>
+<figure class="figure"><img class="plot" src="img/plots/system-off-axis.png" alt="Summed response at 0, 15 and 30 degrees." loading="lazy"><figcaption>Summed response at 0, 15 and 30 degrees.</figcaption></figure>
+<h3>DSP settings</h3>
+<div class="table-wrap"><table><thead><tr><th class="">Channel</th><th class="">Filter</th><th class="num">Gain</th><th class="num">Delay</th><th class="">Polarity in the model</th></tr></thead><tbody><tr><td class="">Low</td><td class="">LR4 low-pass 500 Hz</td><td class="num">-2.1 dB</td><td class="num">0.00 ms</td><td class="">Inverted</td></tr><tr><td class="">Mid</td><td class="">LR4 high-pass 500 Hz, LR4 low-pass 7 kHz</td><td class="num">+0.0 dB</td><td class="num">1.56 ms</td><td class="">Normal</td></tr><tr><td class="">Tweeter</td><td class="">LR4 high-pass 7 kHz</td><td class="num">-0.9 dB</td><td class="num">1.82 ms</td><td class="">Normal</td></tr></tbody></table></div>
+<div class="note"><p>The model wants the low section inverted relative to a forward-facing driver. The reversed
+mounting already does that: with the 15 inch wired red to positive, a positive voltage pulls air out of the horn.
+So wire all three drivers normally and leave every DSP channel at normal polarity, then confirm with a
+measurement at the crossover.</p>
+<p>The 1.56 ms on the mid and 1.82 ms on the tweeter make up for the longer path from the 15 inch cone to the mouth
+and for the delay of the low horn itself.</p></div>
+
+<h2 id="limits">What the models leave out</h2>
+<ul>
+<li>No cross modes in the plane-wave model. The FEM is axisymmetric, so it includes radial modes but not the
+octagon to square corners, which it replaces with circles of equal area.</li>
+<li>Cone breakup, wall losses, distortion and power compression are not modelled.</li>
+<li>The cabinet front is treated as an infinite baffle at the mouth plane. A real 736 mm front face will show
+baffle step and edge diffraction below about 300 Hz.</li>
+<li>The four support rods, the three bullet vanes and the cable channels are not in the acoustic models.
+They block about 2% of each passage.</li>
+<li>The 15NMB420 motor diameter and the split between cone depth and motor length are estimated from the datasheet
+drawing, as is the 6.5 inch cone profile behind the lead-in. Measure the drivers before printing the nose and the
+mid horn.</li>
+<li>The T90A response is a datasheet model, not a simulation.</li>
+</ul>
+
+</div></main>
+<footer><div class="wrap">
+Sunflower is an open design. Source, CAD and results: <a href="https://github.com/timini/sunflower">github.com/timini/sunflower</a>.
+Simulated, not yet built or measured. MIT licence.
+</div></footer>
+</body>
+</html>

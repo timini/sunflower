@@ -1,0 +1,37 @@
+{
+ "panels": {
+  "flare_half_angle_deg": 11.996899307923577,
+  "long_edge_bevel_deg": 43.7618750025369,
+  "end_bevel_deg": 11.996899307923577,
+  "slope_length_mm": 817.8630692236934
+ },
+ "corner_filler": {
+  "throat_leg_mm": 105.4415587728429,
+  "face_base_mm": 149.11688245431424,
+  "face_height_mm": 859.7726973688978
+ },
+ "rear_chamber": {
+  "box_litres": 22.049999999999997,
+  "cone_concave_litres": 3.15,
+  "flange_displacement_litres": 0.217366795701878,
+  "net_litres": 24.982633204298118,
+  "target_litres": 25.0
+ },
+ "external_mm": {
+  "width": 736.0,
+  "height": 736.0,
+  "depth": 888.0000000000001
+ },
+ "stations_mm": {
+  "baffle_back": 0,
+  "baffle_front": 25.0,
+  "mid_tail_tip": 475.0000000000001,
+  "mid_can_back": 595.0000000000001,
+  "mid_driver_back": 613.0000000000001,
+  "mid_cone_rim": 688.0000000000001,
+  "mid_throat": 700.0000000000001,
+  "tweeter_face": 800.0000000000001,
+  "mouth": 825.0000000000001,
+  "support_rods": 710.0000000000001
+ }
+}

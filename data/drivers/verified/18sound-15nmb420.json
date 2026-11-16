@@ -1,0 +1,41 @@
+{
+ "driver_id": "18sound-15nmb420",
+ "manufacturer": "18Sound",
+ "model_name": "15NMB420",
+ "driver_type": "cone",
+ "parameters": {
+  "fs_hz": 42.0,
+  "re_ohm": 5.6,
+  "bl_tm": 19.0,
+  "sd_m2": 0.09000000000000001,
+  "mms_kg": 0.073,
+  "le_h": 0.0008,
+  "qts": 0.29,
+  "nominal_impedance_ohm": 8.0,
+  "xmax_m": 0.006500000000000001,
+  "qms": 6.0,
+  "qes": 0.3,
+  "power_w": 450,
+  "vas_l": 225,
+  "sensitivity_db_2p83v": 99.0
+ },
+ "nominal_diameter": "15in",
+ "catalogue_status": "manufacturer_verified",
+ "nominal_diameter_verified": true,
+ "parameter_source": "https://www.eighteensound.it/en/products/lf-driver/15-0/8/15NMB420.pdf",
+ "physical_envelope_mm": {
+  "overall_diameter": 387,
+  "bolt_circle": 370,
+  "baffle_cutout": 353,
+  "depth": 169,
+  "flange_thickness": 11
+ },
+ "weight_kg": 3.9,
+ "provenance": {
+  "retrieved_on": "2026-11-15",
+  "capture_method": "Checked by hand against the manufacturer datasheet (page 2)",
+  "unverified": [
+   "motor diameter and cone depth split: estimated from the outline drawing, not published"
+  ]
+ }
+}

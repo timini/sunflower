@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sunflower</title>
+<meta name="description" content="A three-way nested coaxial horn loudspeaker: reversed 15 inch, 6.5 inch mid horn, T90A tweeter.">
+<link rel="stylesheet" href="assets/style.css">
+<link rel="icon" href="data:image/svg+xml,<svg viewBox='0 0 32 32' aria-hidden='true'><g fill='none' stroke-width='2.4'><rect x='3' y='3' width='26' height='26' rx='4' stroke='%23d38a0c'/><circle cx='16' cy='16' r='8' stroke='%23eb6834'/><circle cx='16' cy='16' r='3.2' fill='%231baf7a' stroke='none'/></g></svg>">
+</head>
+<body>
+<header class="site"><div class="wrap">
+<a class="brand" href="index.html"><svg viewBox="0 0 32 32" aria-hidden="true"><g fill="none" stroke-width="2.4">
+<rect x="3" y="3" width="26" height="26" rx="4" stroke="#d38a0c"/><circle cx="16" cy="16" r="8" stroke="#eb6834"/>
+<circle cx="16" cy="16" r="3.2" fill="#1baf7a" stroke="none"/></g></svg>Sunflower</a>
+<nav><a href="index.html" aria-current=page>Product</a><a href="design.html">Design</a><a href="simulation.html">Simulation</a><a href="build.html">Build</a><a href="downloads.html">Downloads</a></nav>
+</div></header>
+<main><div class="wrap">
+
+<h1>Sunflower</h1>
+<p class="lede">A three-way coaxial horn loudspeaker where each horn's phase plug is the next horn.
+A reversed 15 inch driver drives a flat-panel horn. A 6.5 inch midrange horn sits in its mouth and
+forms the low horn's centre body. A Fostex T90A tweeter sits in the throat of the mid horn as its phase plug.
+All three sections radiate from one axis and one mouth plane.</p>
+<figure class="hero"><img src="img/renders/hero.jpg" alt="Rendered Sunflower cabinet, three-quarter front view"></figure>
+<div class="stat">
+<div><b>104 dB</b><span>2.83 V, 1 m, mean 100 Hz to 20 kHz</span></div>
+<div><b>81 Hz</b><span>low-frequency -3 dB, on axis</span></div>
+<div><b>3.6 dB</b><span>peak to peak, 100 Hz to 20 kHz, on axis</span></div>
+<div><b>736 x 736 x 888</b><span>mm, width x height x depth</span></div>
+</div>
+<div class="note"><p><b>Status.</b> Every number on this site is from simulation: a plane-wave
+horn model coupled to Thiele/Small driver models, checked with axisymmetric FEM. Nothing has been built or
+measured yet. The <a href="simulation.html#limits">limits section</a> lists what the models leave out.</p></div>
+
+<div class="grid2">
+<figure class="figure"><img class="render" src="img/renders/front.jpg" alt="Straight into the mouth: the corner fillers turn the square into an octagon at the throat, which gives the project its name." loading="lazy"><figcaption>Straight into the mouth: the corner fillers turn the square into an octagon at the throat, which gives the project its name.</figcaption></figure>
+<figure class="figure"><img class="render" src="img/renders/detail.jpg" alt="The mid horn mouth, with the tweeter bullet and its three locating vanes in the throat." loading="lazy"><figcaption>The mid horn mouth, with the tweeter bullet and its three locating vanes in the throat.</figcaption></figure>
+</div>
+
+<h2>Three horns on one axis</h2>
+<div class="grid3">
+<div class="card"><h3><span class="swatch" style="background:var(--low)"></span>Low, 500 Hz down</h3>
+<p>18 Sound 15NMB420, mounted backwards so its neodymium motor points into the horn. The motor and a printed
+nose cone form the throat's phase plug. The cone's front works into a 25 litre sealed chamber.
+The horn is four flat birch-ply panels and four corner fillers, octagonal at the throat and square at the mouth.</p></div>
+<div class="card"><h3><span class="swatch" style="background:var(--mid)"></span>Mid, 500 Hz to 7 kHz</h3>
+<p>Beyma 6MCF200Nd, factory sealed, loading a conical horn with a 190 mm mouth through an annular throat.
+The driver, horn and an elliptical tail sit in a 200 mm printed can on four aluminium rods.
+To the low horn, the can is the centre body.</p></div>
+<div class="card"><h3><span class="swatch" style="background:var(--tw)"></span>Tweeter, 7 kHz up</h3>
+<p>Fostex T90A ring-diaphragm horn tweeter, 106 dB/W/m, in a 64 mm printed bullet. The bullet fills the
+centre of the mid horn throat, so the mid sound leaves through an annulus around it. The tweeter's own mouth sits
+25 mm inside the mid horn.</p></div>
+</div>
+<figure class="figure"><img class="render" src="img/renders/section.jpg" alt="Cutaway render. From the back: sealed chamber, reversed 15 inch with its nose cone, the low horn, the mid can with tail, mid horn and tweeter bullet." loading="lazy"><figcaption>Cutaway render. From the back: sealed chamber, reversed 15 inch with its nose cone, the low horn, the mid can with tail, mid horn and tweeter bullet.</figcaption></figure>
+
+<h2>Specification</h2>
+<div class="table-wrap"><table><thead><tr><th class=""></th><th class="">Value</th><th class="">Notes</th></tr></thead><tbody><tr><td class="">Type</td><td class="">Three-way coaxial horn, active</td><td class="">Needs a 3-way DSP crossover and three amplifier channels</td></tr><tr><td class="">Sensitivity</td><td class="">103.9 dB</td><td class="">2.83 V at the quietest section, 1 m, mean 100 Hz to 20 kHz</td></tr><tr><td class="">Frequency response</td><td class="">81 Hz to 20 kHz, -3 dB</td><td class="">-6 dB at 75 Hz; on axis, after DSP</td></tr><tr><td class="">Crossovers</td><td class="">500 Hz and 7 kHz</td><td class="">Linkwitz-Riley 24 dB/oct</td></tr><tr><td class="">Coverage</td><td class="">About 40 degrees above 3 kHz</td><td class="">Set by the 20 degree half-angle of the conical mid horn</td></tr><tr><td class="">Drivers</td><td class="">18 Sound 15NMB420, Beyma 6MCF200Nd, Fostex T90A</td><td class="">All 8 ohm</td></tr><tr><td class="">Cabinet</td><td class="">736 x 736 x 888 mm</td><td class="">18 mm birch ply, 25 mm baffle</td></tr><tr><td class="">Low horn</td><td class="">360 mm octagon to 700 mm square, 800 mm long</td><td class="">Flat panels, 12 degree flare</td></tr><tr><td class="">Mid horn</td><td class="">Conical, 99.4 to 190 mm, 125 mm long</td><td class="">Annular throat around the 64 mm bullet</td></tr></tbody></table></div>
+<figure class="figure"><img class="render" src="img/renders/turntable.gif" alt="Turntable animation of the cabinet"><figcaption>Turntable, rendered from the CAD in Blender.</figcaption></figure>
+<p>Next: <a href="design.html">how the nested horns are laid out</a>, <a href="simulation.html">the simulated responses</a>,
+or <a href="build.html">how to build one</a>.</p>
+
+</div></main>
+<footer><div class="wrap">
+Sunflower is an open design. Source, CAD and results: <a href="https://github.com/timini/sunflower">github.com/timini/sunflower</a>.
+Simulated, not yet built or measured. MIT licence.
+</div></footer>
+</body>
+</html>

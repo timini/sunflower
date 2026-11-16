@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sunflower design</title>
+<meta name="description" content="Layout, area functions and driver selection for the Sunflower nested coaxial horn.">
+<link rel="stylesheet" href="assets/style.css">
+<link rel="icon" href="data:image/svg+xml,<svg viewBox='0 0 32 32' aria-hidden='true'><g fill='none' stroke-width='2.4'><rect x='3' y='3' width='26' height='26' rx='4' stroke='%23d38a0c'/><circle cx='16' cy='16' r='8' stroke='%23eb6834'/><circle cx='16' cy='16' r='3.2' fill='%231baf7a' stroke='none'/></g></svg>">
+</head>
+<body>
+<header class="site"><div class="wrap">
+<a class="brand" href="index.html"><svg viewBox="0 0 32 32" aria-hidden="true"><g fill="none" stroke-width="2.4">
+<rect x="3" y="3" width="26" height="26" rx="4" stroke="#d38a0c"/><circle cx="16" cy="16" r="8" stroke="#eb6834"/>
+<circle cx="16" cy="16" r="3.2" fill="#1baf7a" stroke="none"/></g></svg>Sunflower</a>
+<nav><a href="index.html">Product</a><a href="design.html" aria-current=page>Design</a><a href="simulation.html">Simulation</a><a href="build.html">Build</a><a href="downloads.html">Downloads</a></nav>
+</div></header>
+<main><div class="wrap">
+
+<h1>Design</h1>
+<p class="lede">Sunflower is three horns nested on one axis. Each section's phase plug, the solid body in the
+middle of its throat, is the next section. This page covers the layout, the area functions and how each driver
+was chosen.</p>
+<figure class="figure"><img class="plot" src="img/plots/section-drawing.png" alt="Half-section through the axis, to scale. Wood: cabinet and low horn walls. Black: the low horn centre body, which is the 15 inch motor and nose cone, then the mid can. Yellow: tweeter bullet." loading="lazy"><figcaption>Half-section through the axis, to scale. Wood: cabinet and low horn walls. Black: the low horn centre body, which is the 15 inch motor and nose cone, then the mid can. Yellow: tweeter bullet.</figcaption></figure>
+
+<figure class="figure"><img class="render" src="img/renders/section-side.jpg" alt="Cutaway render on the same axis, mouth on the left." loading="lazy"><figcaption>Cutaway render on the same axis, mouth on the left.</figcaption></figure>
+
+<h2>Why nest the horns</h2>
+<p>A coaxial layout puts every acoustic source on one axis, so the sections stay aligned off axis as well as on
+it. The usual cost is that the inner horn blocks the outer one. In Sunflower the blockage is part of the outer horn:
+the low horn's area function is the space between its walls and the centre body, and the model includes the
+centre body from the start.</p>
+<ul>
+<li><b>Low section.</b> The 15 inch is mounted backwards, from behind the baffle. Its convex cone and motor face the
+horn. The motor plus a printed elliptical nose is the first part of the centre body. The front of the cone works
+into a small sealed chamber at the back of the cabinet.</li>
+<li><b>Mid section.</b> The mid can is the rest of the centre body. Its elliptical tail starts 475 mm from the
+cone rim, so the open area in the low horn narrows smoothly onto the can and then widens again to the mouth.</li>
+<li><b>Tweeter.</b> The tweeter bullet is the mid horn's phase plug. The mid throat is the annulus between the
+64 mm bullet and a 99.4 mm bore, 45.4 cm² open,
+3.09:1 compression for the 6.5 inch cone. A cone-following lead-in keeps 1.5 mm clearance to the
+cone and gives a 25 cm³ front chamber.</li>
+</ul>
+
+<h2>Area functions</h2>
+<figure class="figure"><img class="plot" src="img/plots/area.png" alt="Open area along each horn. The low horn's open area narrows where the motor and then the mid can sit, which the plane-wave and FEM models both include." loading="lazy"><figcaption>Open area along each horn. The low horn's open area narrows where the motor and then the mid can sit, which the plane-wave and FEM models both include.</figcaption></figure>
+<div class="table-wrap"><table><thead><tr><th class="">Low horn</th><th class="">Value</th></tr></thead><tbody><tr><td class="">Throat area at the voice-coil plane</td><td class="">1196 cm²</td></tr><tr><td class="">Mouth open area (square minus can)</td><td class="">4586 cm²</td></tr><tr><td class="">Front chamber, cone back to throat</td><td class="">9.1 litres</td></tr><tr><td class="">Flare half-angle of the side panels</td><td class="">12.0 degrees</td></tr><tr><td class="">Rear sealed chamber, net</td><td class="">25.0 litres</td></tr></tbody></table></div>
+
+<h2>Choosing the 15 inch</h2>
+<p>The low section was screened over 253 15 inch drivers from the horn-simulation catalogue,
+36 flat-panel horn sizes and three rear-chamber volumes: 27324 combinations, each a full plane-wave solve
+of the horn with its centre body. A row passed if its mean output from 100 to 700 Hz was at least 103 dB and its
+excursion at 100 W stayed inside Xmax. Passing rows were ranked by peak-to-peak variation.</p>
+<figure class="figure"><img class="plot" src="img/plots/screen-15.png" alt="Best horn for each driver that passed. Grey: other drivers. The catalogue values are legacy and unverified, so the chosen driver was checked by hand against its datasheet." loading="lazy"><figcaption>Best horn for each driver that passed. Grey: other drivers. The catalogue values are legacy and unverified, so the chosen driver was checked by hand against its datasheet.</figcaption></figure>
+<div class="table-wrap"><table><thead><tr><th class="">Driver</th><th class="">Throat / mouth / length (mm)</th><th class="num">Rear (L)</th><th class="num">Variation (dB)</th><th class="num">Mean (dB)</th><th class="num">x at 100 W / Xmax (mm)</th></tr></thead><tbody><tr><td class="">Eminence WHEEL_HOUSE_200</td><td class="">360 / 750 / 850</td><td class="num">30</td><td class="num">2.58</td><td class="num">105.9</td><td class="num">2.1 / 2.2</td></tr><tr><td class="">18Sound 15NMB420</td><td class="">360 / 750 / 850</td><td class="num">30</td><td class="num">3.35</td><td class="num">106.9</td><td class="num">1.9 / 6.5</td></tr><tr><td class="">18Sound 15NCX750H</td><td class="">360 / 750 / 850</td><td class="num">30</td><td class="num">3.71</td><td class="num">106.3</td><td class="num">2.0 / 5.5</td></tr><tr><td class="">Celestion TF1530e</td><td class="">360 / 750 / 850</td><td class="num">30</td><td class="num">3.78</td><td class="num">106.1</td><td class="num">2.0 / 6.5</td></tr><tr><td class="">18Sound 15NCX750</td><td class="">360 / 750 / 850</td><td class="num">30</td><td class="num">3.80</td><td class="num">106.3</td><td class="num">2.0 / 5.5</td></tr><tr><td class="">Eminence DELTA_PRO-15A</td><td class="">360 / 750 / 850</td><td class="num">30</td><td class="num">3.93</td><td class="num">106.3</td><td class="num">2.2 / 4.3</td></tr><tr><td class="">Eminence LEGEND_CB158</td><td class="">360 / 680 / 850</td><td class="num">30</td><td class="num">3.94</td><td class="num">104.9</td><td class="num">2.1 / 4.8</td></tr><tr><td class="">LaVoce WXF15.400</td><td class="">360 / 750 / 850</td><td class="num">30</td><td class="num">3.98</td><td class="num">105.9</td><td class="num">1.9 / 5.2</td></tr></tbody></table></div>
+<p>The 18 Sound 15NMB420 was chosen over the Eminence Wheel House 200 at the top of the list. The Eminence ripples less but has
+2.2 mm of Xmax against 2.1 mm needed at 100 W. The 15NMB420 has 6.5 mm, a small neodymium motor that blocks
+less of the throat, and 450 W AES handling. Its Thiele/Small values were checked against the
+<a href="https://www.eighteensound.it/en/products/lf-driver/15-0/8/15NMB420.pdf">18 Sound datasheet</a>.
+A finer search with its own body dimensions chose a 360 mm throat, 700 mm mouth,
+800 mm length and a 25 litre chamber: 3.0 dB variation, 106.6 dB mean.
+A 750 mm mouth measured 0.2 dB better and makes the cabinet 50 mm wider, so the smaller mouth was kept.</p>
+
+<h2>Mid and tweeter</h2>
+<p>The mid horn comes from an earlier study in
+<a href="https://github.com/timini/horn-simulation">horn-simulation</a>: 480 annular horn geometries against 26 manufacturer-verified
+6.5 inch drivers, 500 Hz to 6.5 kHz. The Beyma 6MCF200Nd with a conical horn had the least variation at over 100 dB.
+Its sealed back matters here: the driver sits in the airflow of the low horn and needs no rear chamber of its own.
+The port of that model into this repository reproduces the study's result within 0.12 dB in band, which is a test.</p>
+<p>The Fostex T90A is a horn super tweeter: 106 dB/W/m, 5 to 35 kHz, with a 60 mm aluminium horn that fits a
+64 mm bullet. Fostex recommends a crossover at 7 kHz or above, which sets the upper crossover.</p>
+
+<h2>Dimensions</h2>
+<div class="table-wrap"><table><thead><tr><th class="">Station</th><th class="num">z from the 15 inch cone rim (mm)</th></tr></thead><tbody><tr><td class="">baffle back</td><td class="num">0</td></tr><tr><td class="">baffle front</td><td class="num">25</td></tr><tr><td class="">mid tail tip</td><td class="num">475</td></tr><tr><td class="">mid can back</td><td class="num">595</td></tr><tr><td class="">mid driver back</td><td class="num">613</td></tr><tr><td class="">mid cone rim</td><td class="num">688</td></tr><tr><td class="">mid throat</td><td class="num">700</td></tr><tr><td class="">tweeter face</td><td class="num">800</td></tr><tr><td class="">mouth</td><td class="num">825</td></tr><tr><td class="">support rods</td><td class="num">710</td></tr></tbody></table></div>
+
+</div></main>
+<footer><div class="wrap">
+Sunflower is an open design. Source, CAD and results: <a href="https://github.com/timini/sunflower">github.com/timini/sunflower</a>.
+Simulated, not yet built or measured. MIT licence.
+</div></footer>
+</body>
+</html>

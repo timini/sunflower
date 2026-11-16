@@ -1,0 +1,25 @@
+[project]
+name = "sunflower"
+version = "0.1.0"
+description = "Sunflower: a three-way nested coaxial horn loudspeaker. Simulation, CAD and build files."
+readme = "README.md"
+authors = [{ name = "Tim Richardson" }]
+license = "MIT"
+requires-python = ">=3.12"
+dependencies = [
+    "ezdxf>=1.4.5",
+    "gmsh>=4.15.2",
+    "matplotlib>=3.11.2",
+    "numpy>=2.5.5",
+    "pandas>=3.1.1",
+    "scipy>=1.18.1",
+]
+
+[build-system]
+requires = ["uv_build>=0.8.2,<0.9.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.2.0",
+]

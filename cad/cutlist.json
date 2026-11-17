@@ -1,67 +1,483 @@
 {
+ "units": "mm",
+ "external_mm": {
+  "width": 790.8,
+  "height_front": 790.8,
+  "height_back": 469.6,
+  "depth": 599.5,
+  "overall_depth": 783.6
+ },
  "walls": {
-  "side_wall": {
-   "throat_edge_mm": 360.0,
-   "mouth_edge_mm": 600.0,
-   "slope_length_mm": 509.9019513592785,
-   "flare_deg": 11.309932474020215
+  "qty": 4,
+  "ply_mm": 18.0,
+  "slant_length_mm": 602.0,
+  "inner_face": {
+   "back_edge": 442.0,
+   "mouth_edge": 753.6
   },
-  "top_wall": {
-   "throat_edge_mm": 396.0,
-   "mouth_edge_mm": 596.0,
-   "slope_length_mm": 514.1984052872976,
-   "flare_deg": 13.495733280795811
-  }
+  "outer_face": {
+   "back_edge": 479.2,
+   "mouth_edge": 790.8
+  },
+  "blade_bevel_deg": 43.08,
+  "edge_taper_deg": 14.51,
+  "end_bevel_deg": 15.0,
+  "corner_dihedral_deg": 93.84,
+  "dxf": "dxf/wall.dxf",
+  "note": "Four identical panels. Cut the outer face to size, tilt the blade to the bevel along both long edges so the inner face is the narrower one, and bevel both ends at the half angle so the back and the mouth are square to the axis."
+ },
+ "baffle": {
+  "front_square_mm": 480.0,
+  "back_square_mm": 466.6,
+  "thickness_mm": 25.0,
+  "cutout_diameter_mm": 353.0,
+  "flange_pcd_mm": 369.0,
+  "flange_holes": 8,
+  "standoff_pcd_mm": 411.0,
+  "edge_bevel_deg": 15.0,
+  "z_mm": [
+   -25.0,
+   0.0
+  ],
+  "dxf": "dxf/baffle.dxf",
+  "note": "Glued inside the frustum; the kick flange screws to its front face"
+ },
+ "back": {
+  "front_square_mm": 479.2,
+  "back_square_mm": 469.6,
+  "thickness_mm": 18.0,
+  "edge_bevel_deg": 15.0,
+  "screws": "12 x M5 into threaded inserts in the wall end grain",
+  "gasket": "3 mm closed-cell foam in a 7 mm wide, 2 mm deep groove over the wall ends",
+  "z_mm": [
+   -89.0,
+   -71.0
+  ],
+  "dxf": "dxf/back.dxf"
  },
  "corner_filler": {
-  "throat_leg_mm": 105.4415587728429,
-  "face_base_mm": 149.11688245431424
+  "qty": 4,
+  "leg_at_baffle_mm": 140.6,
+  "length_mm": 510.5,
+  "face_width_at_baffle_mm": 198.8,
+  "note": "Rip a square hardwood blank of the leg size on its diagonal for two fillers, then taper each to a point at the mouth. Or stack 18 mm ply triangles (laminations below) and plane the face.",
+  "laminations": [
+   {
+    "z0_mm": 0.0,
+    "z1_mm": 18.0,
+    "leg_at_z0_mm": 140.6
+   },
+   {
+    "z0_mm": 18.0,
+    "z1_mm": 36.0,
+    "leg_at_z0_mm": 135.6
+   },
+   {
+    "z0_mm": 36.0,
+    "z1_mm": 54.0,
+    "leg_at_z0_mm": 130.7
+   },
+   {
+    "z0_mm": 54.0,
+    "z1_mm": 72.0,
+    "leg_at_z0_mm": 125.7
+   },
+   {
+    "z0_mm": 72.0,
+    "z1_mm": 90.0,
+    "leg_at_z0_mm": 120.8
+   },
+   {
+    "z0_mm": 90.0,
+    "z1_mm": 108.0,
+    "leg_at_z0_mm": 115.8
+   },
+   {
+    "z0_mm": 108.0,
+    "z1_mm": 126.0,
+    "leg_at_z0_mm": 110.8
+   },
+   {
+    "z0_mm": 126.0,
+    "z1_mm": 144.0,
+    "leg_at_z0_mm": 105.9
+   },
+   {
+    "z0_mm": 144.0,
+    "z1_mm": 162.0,
+    "leg_at_z0_mm": 100.9
+   },
+   {
+    "z0_mm": 162.0,
+    "z1_mm": 180.0,
+    "leg_at_z0_mm": 96.0
+   },
+   {
+    "z0_mm": 180.0,
+    "z1_mm": 198.0,
+    "leg_at_z0_mm": 91.0
+   },
+   {
+    "z0_mm": 198.0,
+    "z1_mm": 216.0,
+    "leg_at_z0_mm": 86.1
+   },
+   {
+    "z0_mm": 216.0,
+    "z1_mm": 234.0,
+    "leg_at_z0_mm": 81.1
+   },
+   {
+    "z0_mm": 234.0,
+    "z1_mm": 252.0,
+    "leg_at_z0_mm": 76.1
+   },
+   {
+    "z0_mm": 252.0,
+    "z1_mm": 270.0,
+    "leg_at_z0_mm": 71.2
+   },
+   {
+    "z0_mm": 270.0,
+    "z1_mm": 288.0,
+    "leg_at_z0_mm": 66.2
+   },
+   {
+    "z0_mm": 288.0,
+    "z1_mm": 306.0,
+    "leg_at_z0_mm": 61.3
+   },
+   {
+    "z0_mm": 306.0,
+    "z1_mm": 324.0,
+    "leg_at_z0_mm": 56.3
+   },
+   {
+    "z0_mm": 324.0,
+    "z1_mm": 342.0,
+    "leg_at_z0_mm": 51.4
+   },
+   {
+    "z0_mm": 342.0,
+    "z1_mm": 360.0,
+    "leg_at_z0_mm": 46.4
+   },
+   {
+    "z0_mm": 360.0,
+    "z1_mm": 378.0,
+    "leg_at_z0_mm": 41.4
+   },
+   {
+    "z0_mm": 378.0,
+    "z1_mm": 396.0,
+    "leg_at_z0_mm": 36.5
+   },
+   {
+    "z0_mm": 396.0,
+    "z1_mm": 414.0,
+    "leg_at_z0_mm": 31.5
+   },
+   {
+    "z0_mm": 414.0,
+    "z1_mm": 432.0,
+    "leg_at_z0_mm": 26.6
+   },
+   {
+    "z0_mm": 432.0,
+    "z1_mm": 450.0,
+    "leg_at_z0_mm": 21.6
+   },
+   {
+    "z0_mm": 450.0,
+    "z1_mm": 468.0,
+    "leg_at_z0_mm": 16.7
+   },
+   {
+    "z0_mm": 468.0,
+    "z1_mm": 486.0,
+    "leg_at_z0_mm": 11.7
+   },
+   {
+    "z0_mm": 486.0,
+    "z1_mm": 504.0,
+    "leg_at_z0_mm": 6.7
+   },
+   {
+    "z0_mm": 504.0,
+    "z1_mm": 510.5,
+    "leg_at_z0_mm": 1.8
+   }
+  ]
  },
- "shell_angle_deg": 7.841407862331483,
  "chamber": {
-  "available_litres": 35.53494914493099,
-  "target_litres": 35.0,
-  "fill_litres": 0.5349491449309909
+  "available_litres": 14.91,
+  "frustum_litres": 9.5,
+  "note": "Kick.chamber_litres: frustum between the baffle and the back, the baffle cutout, the cone"
  },
- "external_mm": {
-  "width": 596.0,
-  "height_front": 636.0,
-  "height_back": 478.99999999999994,
-  "depth": 588.0
+ "supports": {
+  "standoffs": {
+   "qty": 4,
+   "diameter_mm": 20.0,
+   "pcd_mm": 411.0,
+   "length_mm": 89.7,
+   "duct_bore_mm": 12,
+   "azimuth_deg": [
+    45,
+    135,
+    225,
+    315
+   ]
+  },
+  "vanes": {
+   "qty": 4,
+   "thickness_mm": 6.0,
+   "chord_mm": 60.0,
+   "z_centre_mm": 410.5
+  }
+ },
+ "centre_body": {
+  "joints_mm": [
+   125.5,
+   181.5,
+   295.5,
+   473.5
+  ],
+  "volume_cm3": 89292.3
  },
  "stations_mm": {
-  "back": -63.0,
-  "baffle_back": 0,
-  "baffle_front": 25.0,
-  "throat": 25.0,
-  "motor_end": 160.0,
-  "can_back": 282.0,
-  "mid_driver_back": 300.0,
-  "mid_throat": 375.0,
-  "hf_exit": 426.0,
-  "hf_mouth": 515.0,
-  "mouth": 525.0,
-  "support_rods": 450.0
+  "back": -89.0,
+  "wall_back": -71.0,
+  "baffle_back": -25.0,
+  "baffle_front": 0.0,
+  "throat": 0.0,
+  "turn": 64.7,
+  "motor_end": 181.5,
+  "mid_driver_back": 201.5,
+  "mid_flange": 295.5,
+  "mid_throat": 300.5,
+  "hf_exit": 351.5,
+  "hf_mouth": 650.5,
+  "mouth": 510.5,
+  "mid_mouth": 660.5,
+  "vanes": 410.5
+ },
+ "array_spacers": {
+  "qty": 8,
+  "max_thickness_mm": 125.8,
+  "min_thickness_mm": 16.7,
+  "pieces": [
+   {
+    "name": "array_spacer_m1_m1__0_m1",
+    "between": [
+     [
+      -1,
+      -1
+     ],
+     [
+      0,
+      -1
+     ]
+    ],
+    "max_thickness_mm": 125.8,
+    "min_thickness_mm": 16.7,
+    "volume_litres": 19.56
+   },
+   {
+    "name": "array_spacer_m1_m1__m1_0",
+    "between": [
+     [
+      -1,
+      -1
+     ],
+     [
+      -1,
+      0
+     ]
+    ],
+    "max_thickness_mm": 125.8,
+    "min_thickness_mm": 16.7,
+    "volume_litres": 19.56
+   },
+   {
+    "name": "array_spacer_m1_0__m1_1",
+    "between": [
+     [
+      -1,
+      0
+     ],
+     [
+      -1,
+      1
+     ]
+    ],
+    "max_thickness_mm": 125.8,
+    "min_thickness_mm": 16.7,
+    "volume_litres": 19.56
+   },
+   {
+    "name": "array_spacer_m1_1__0_1",
+    "between": [
+     [
+      -1,
+      1
+     ],
+     [
+      0,
+      1
+     ]
+    ],
+    "max_thickness_mm": 125.8,
+    "min_thickness_mm": 16.7,
+    "volume_litres": 19.56
+   },
+   {
+    "name": "array_spacer_0_m1__1_m1",
+    "between": [
+     [
+      0,
+      -1
+     ],
+     [
+      1,
+      -1
+     ]
+    ],
+    "max_thickness_mm": 125.8,
+    "min_thickness_mm": 16.7,
+    "volume_litres": 19.56
+   },
+   {
+    "name": "array_spacer_0_1__1_1",
+    "between": [
+     [
+      0,
+      1
+     ],
+     [
+      1,
+      1
+     ]
+    ],
+    "max_thickness_mm": 125.8,
+    "min_thickness_mm": 16.7,
+    "volume_litres": 19.56
+   },
+   {
+    "name": "array_spacer_1_m1__1_0",
+    "between": [
+     [
+      1,
+      -1
+     ],
+     [
+      1,
+      0
+     ]
+    ],
+    "max_thickness_mm": 125.8,
+    "min_thickness_mm": 16.7,
+    "volume_litres": 19.56
+   },
+   {
+    "name": "array_spacer_1_0__1_1",
+    "between": [
+     [
+      1,
+      0
+     ],
+     [
+      1,
+      1
+     ]
+    ],
+    "max_thickness_mm": 125.8,
+    "min_thickness_mm": 16.7,
+    "volume_litres": 19.56
+   }
+  ],
+  "note": "Rigging frame, not part of a single box. Each spacer is a twisted wedge between the facing walls of an edge box and a corner box. Make it as an 18 mm birch ply frame (a perimeter of strips planed to the taper, with a ply skin on each face) or as a solid laminated wedge; four are mirror images of the other four. STEP and STL in the array frame: cad/step and cad/stl/array_spacer_*."
+ },
+ "area_check": {
+  "kick": {
+   "max_abs_diff_pct": 0.001,
+   "at_z_mm": 456.09,
+   "rms_diff_pct": 0.0,
+   "max_vane_blockage_pct": 1.9
+  },
+  "mid": {
+   "max_abs_diff_pct": 0.235,
+   "at_z_mm": 325.77,
+   "rms_diff_pct": 0.042,
+   "max_vane_blockage_pct": 3.72
+  },
+  "kick_air_litres": 109.16,
+  "standoffs": {
+   "width_fraction_of_turn_pct": 6.2,
+   "turn_height_mm": 45.72,
+   "at_radius_mm": 205.5
+  }
  },
  "print_files": {
-  "centre_body": [
-   "centre_body-1-q1.stl",
-   "centre_body-1-q2.stl",
-   "centre_body-1-q3.stl",
-   "centre_body-1-q4.stl",
-   "centre_body-2-q1.stl",
-   "centre_body-2-q2.stl",
-   "centre_body-2-q3.stl",
-   "centre_body-2-q4.stl"
+  "kick_shroud": [
+   "kick_shroud-1-s1.stl",
+   "kick_shroud-1-s2.stl",
+   "kick_shroud-1-s3.stl",
+   "kick_shroud-1-s4.stl",
+   "kick_shroud-1-s5.stl",
+   "kick_shroud-1-s6.stl",
+   "kick_shroud-1-s7.stl",
+   "kick_shroud-1-s8.stl"
   ],
-  "mid_horn": [
-   "mid_horn-1.stl"
+  "motor_fairing": [
+   "motor_fairing-1-s1.stl",
+   "motor_fairing-1-s2.stl",
+   "motor_fairing-1-s3.stl",
+   "motor_fairing-1-s4.stl",
+   "motor_fairing-1-s5.stl",
+   "motor_fairing-1-s6.stl",
+   "motor_fairing-1-s7.stl",
+   "motor_fairing-1-s8.stl"
   ],
-  "mid_sleeve": [
-   "mid_sleeve-1.stl"
+  "mid_pod": [
+   "mid_pod-1-s1.stl",
+   "mid_pod-1-s2.stl",
+   "mid_pod-1-s3.stl",
+   "mid_pod-1-s4.stl",
+   "mid_pod-1-s5.stl",
+   "mid_pod-1-s6.stl",
+   "mid_pod-1-s7.stl",
+   "mid_pod-1-s8.stl"
   ],
-  "phase_plug": [
-   "phase_plug-1.stl"
+  "mid_horn_rear": [
+   "mid_horn_rear-1-s1.stl",
+   "mid_horn_rear-1-s2.stl",
+   "mid_horn_rear-1-s3.stl",
+   "mid_horn_rear-1-s4.stl",
+   "mid_horn_rear-1-s5.stl",
+   "mid_horn_rear-1-s6.stl",
+   "mid_horn_rear-1-s7.stl",
+   "mid_horn_rear-1-s8.stl"
+  ],
+  "mid_horn_front": [
+   "mid_horn_front-1-s1.stl",
+   "mid_horn_front-1-s2.stl",
+   "mid_horn_front-1-s3.stl",
+   "mid_horn_front-1-s4.stl",
+   "mid_horn_front-1-s5.stl",
+   "mid_horn_front-1-s6.stl",
+   "mid_horn_front-1-s7.stl",
+   "mid_horn_front-1-s8.stl"
+  ],
+  "bullet_nose": [
+   "bullet_nose-1.stl"
+  ],
+  "bullet": [
+   "bullet-1.stl",
+   "bullet-2.stl"
+  ],
+  "bullet_vanes": [
+   "bullet_vanes-1.stl"
   ]
- }
+ },
+ "warnings": []
 }

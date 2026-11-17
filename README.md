@@ -1,59 +1,56 @@
 # Sunflower
 
-A three-way coaxial horn where each horn's phase plug is the next horn, laid out like a Funktion-One Res top (kick, wide-band mid, small HF) on one axis.
+A three-way coaxial horn after the Funktion-One Res 2: a kick horn up to 250 Hz, a cone mid that carries the voice from 250 Hz to 4 kHz, and a 1 inch compression driver above, nested on one axis. The HF horn is the mid's phase plug; the mid horn is the core of the kick's centre body.
 
-![Sunflower stack, rendered from the CAD](docs/img/renders/stack.jpg)
+![Nine Sunflower boxes as a curved point source, rendered from the CAD](docs/img/renders/stack.jpg)
 
 Designed from the inside out:
 
-1. **HF:** an 18 Sound ND1030 compression driver (65 mm body cylinder, about $150) on a small printed horn.
-2. **Mid phase plug:** that body in a 2 mm sleeve, tapering to the HF horn mouth.
-3. **Mid driver:** a Beyma 6MCF200Nd (6.5 inch), whose cone is at least 1.6 times the plug.
-4. **Mid horn:** an oblate spheroidal (OS) open-area law from a 2.2:1 annular throat to a 220 mm mouth over 150 mm, with the plug always subtracted.
-5. **Centre body:** the mid can ends a one-piece centre body whose rear face follows the reversed Eminence DELTA-15LFA cone. That gives a 2.3:1 kick-horn throat, an HD-15 style tube-like kick horn, 500 mm long.
+1. **HF:** 18 Sound ND1030, 65 mm body cylinder, on a printed horn inside the mid phase plug.
+2. **Mid phase plug:** one smooth bullet. Its nose follows the mid cone, it holds the HF body, and it tapers to the HF mouth. Felt under the nose damps the cavity between it and the cone.
+3. **Mid:** Beyma 8MI100 in a 360 mm OS horn, 2.2:1 compression, the bullet always subtracted. It protrudes 150 mm past the kick mouth.
+4. **Kick:** a reversed 18 Sound 15MB700 under a shroud that follows the cone at a constant-compression gap. A centre body solved from the hyperbolic-exponential (T = 0.6) law runs inside a single-ply square frustum, with corner fillers that make the throat an octagon and vanish at the square mouth.
+5. **Cabinet:** 791 mm square at the mouth, 470 mm at the back, 600 mm deep. All four walls splay, so boxes sit 30 degrees apart in both directions; nine make a 3 x 3 curved point source.
 
-Site with renders, each horn's plots, the full-range response, the v0.2 review and build instructions: **https://timini.github.io/sunflower/**
+Site with renders, videos, each horn's plots, the full-range response and build instructions: **https://timini.github.io/sunflower/**
 
-## Simulated performance (v0.2)
+## Simulated performance
 
 | | |
 |---|---|
-| Sensitivity | 103.5 dB, 2.83 V, 1 m |
-| Response | 81 Hz to 16 kHz, -3 dB, on axis; use with a sub |
-| No-sub shelf | -6 dB at 61 Hz, kick channel limited to about 48 W |
-| Crossovers | LR4 at 500 Hz and 3500 Hz |
-| Cabinet | 596 wide, 636 high at the front, 479 at the back, 588 deep; 15.7 degree splay when stacked |
+| Sensitivity | 104 dB, 2.83 V, 1 m |
+| Kick low end | -6 dB at 104 Hz on the ground; use with a sub |
+| No-sub shelf | -6 dB at 92 Hz, kick limited to about 163 W |
+| Crossovers | LR4 at 250 Hz and 4000 Hz |
+| Drivers | about $509 per box |
 
-These are plane-wave horn models coupled to Thiele/Small driver models, checked with axisymmetric FEM:
-- kick within 1.2 dB;
-- mid within 0.7 dB;
-- the HF mouth inside the mid horn, a separate case.
+Each horn is modelled from its real profile with a plane-wave network in which the cone is a distributed source. The chosen design is checked with axisymmetric FEM, using the cone as a vibrating boundary, and a 3D model of the square kick horn. The kick agrees within 0.9 dB RMS from 40 to 250 Hz. The mid agrees to 2.7 kHz; above that, the FEM shows a cavity loss that set the 4 kHz crossover. The CAD air volumes, sliced, match the horn models' areas.
 
-Nothing has been built or measured. v0.1 is kept at the `v0.1` tag.
+Nothing has been built or measured. Driver cone and basket shapes are estimated from datasheet drawings and must be checked before printing.
 
 ## Repository
 
 | Path | What it is |
 |---|---|
-| `src/sunflower/optimise.py` | Inside-out search over HF unit, mid driver and horn, kick driver and horn, crossovers, size and HF cost |
-| `src/sunflower/geometry.py` | Area-law horns with phase plugs and the one-piece centre body |
+| `src/sunflower/geometry.py` | Drivers, mid horn and bullet, kick horn, shroud, centre body, frustum, array layout |
+| `src/sunflower/models.py`, `acoustics.py` | Acoustic networks built from the geometry; driver coupling |
+| `src/sunflower/optimise.py` | Inside-out search: HF and mid, then kick and cabinet, then the system; crossover re-picked after FEM |
+| `src/sunflower/simulate.py` | Sections, crossover tuning, EQ, the no-sub shelf, the 3 x 3 low end |
 | `src/sunflower/design.py` | The selected design, from `results/optimise/selected.json` |
-| `src/sunflower/acoustics.py`, `simulate.py` | Plane-wave horns, driver models, crossover tuning, the no-sub shelf |
-| `src/sunflower/tweeters.py`, `data/tweeters/` | HF units from their datasheets, with prices |
-| `src/sunflower/fem.py`, `fem/axisym.py` | Axisymmetric FEM in the dolfinx Docker image |
-| `src/sunflower/cad.py` | STEP, STL, print-bed sections, DXF, cut list, stack angles |
-| `blender/render.py`, `src/sunflower/annotate.py` | Cycles renders, splayed stack, dimension overlays |
+| `src/sunflower/fem.py`, `fem/` | Axisymmetric and 3D FEM in the dolfinx Docker image |
+| `src/sunflower/cad.py` | STEP, STL, print-bed sections, DXF, cut list, array layout and spacers, CAD area check |
+| `blender/render.py`, `src/sunflower/annotate.py` | Cycles stills, videos and dimension overlays |
 | `src/sunflower/plots.py`, `src/sunflower/site.py` | Figures and the GitHub Pages site |
-| `data/drivers/` | Catalogues; `verified/` checked by hand against datasheets; `excluded.json` lists removed parts and why |
+| `data/drivers/` | Kick and mid candidates with datasheet links and prices; `excluded.json` lists removed parts and why |
 
 ## Reproduce
 
 Needs [uv](https://docs.astral.sh/uv/), [just](https://just.systems), Docker for FEM, Blender 4.2 or later, ffmpeg.
 
 ```sh
+git clone https://github.com/timini/sunflower
+cd sunflower
 just all
 ```
 
-## Licence
-
-MIT
+MIT licence.

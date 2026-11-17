@@ -16,6 +16,7 @@ import numpy as np  # noqa: E402
 import pandas as pd  # noqa: E402
 
 from sunflower import design as D
+from sunflower.geometry import SQ2  # noqa: E402
 from sunflower.geometry import law_name  # noqa: E402
 from sunflower.acoustics import C  # noqa: E402
 
@@ -37,7 +38,7 @@ plt.rcParams.update({
 
 def names():
     s = D.summary()
-    return dict(low=f"Low: {s['low']['driver']}, reversed", mid=f"Mid: {s['mid']['driver']}",
+    return dict(low=f"Kick: {s['kick']['driver']}, reversed", mid=f"Mid: {s['mid']['driver']}",
                 tweeter=f"Tweeter: {s['tweeter']['driver']}", sum="Sum")
 
 
@@ -72,17 +73,22 @@ def cutoffs():
         d = pd.read_csv(RES / f"planewave/{name}.csv")
         f, s = d.frequency_hz.values, d.spl_db.values
         lo, hi = bands()["passband"][name]
-        ref = s[(f >= lo) & (f <= hi)].mean()
+        ref = s[(f >= max(lo, 150)) & (f <= hi)].mean()
         below = f[(f < lo) & (s < ref - 3)]
         above = f[(f > hi) & (s < ref - 3)]
         out[name] = dict(f_low_3db=float(below.max()) if len(below) else None,
                          f_high_3db=float(above.min()) if len(above) else None, level_db=float(ref))
-    lo = D.LOW
-    a_m = math.sqrt(lo.outer_area(lo.mouth_z) / math.pi)
+    k = D.KICK
+    a_m = math.sqrt(k.wall_area(k.mouth_z) / math.pi)
     out["low"]["mouth_cutoff_hz"] = C / (2 * math.pi * a_m)
-    out["low"]["front_chamber_corner_hz"] = lo.area(lo.throat_z) * C / (2 * math.pi * lo.front_chamber_m3)
+    drv = D.kick_driver()
+    vas = 1.225 * C**2 * drv.sd**2 * drv.cms * 1000
+    qts = 1 / (1 / (drv.fs * 2 * math.pi * drv.mms / drv.rms) + drv.re * 2 * math.pi * drv.fs * drv.mms / drv.bl**2)
+    out["low"]["sealed_resonance_hz"] = drv.fs * math.sqrt(1 + vas / k.chamber_litres)
+    out["low"]["sealed_q"] = qts * math.sqrt(1 + vas / k.chamber_litres)
     m = D.MID
     out["mid"]["mouth_cutoff_hz"] = C / (math.pi * m.mouth_diameter)
+    out["mid"]["front_cavity_corner_hz"] = C * m.throat_area / (2 * math.pi * m.front_cavity_litres / 1000)
     out["tweeter"]["datasheet_cutoff_hz"] = D.TW.cutoff_hz
     out["crossover_hz"] = [D.CROSSOVER_LOW_MID_HZ, D.CROSSOVER_MID_HIGH_HZ]
     (RES / "planewave/cutoffs.json").write_text(json.dumps(out, indent=2) + "\n")
@@ -109,7 +115,8 @@ def section_figures(name):
     if fem is not None:
         ax.plot(fem.frequency_hz, fem.fem_0deg_spl_db, color=c, ls="--", lw=1.6, label="FEM, axisymmetric")
     for i, (key, lab) in enumerate((("f_low_3db", "-3 dB"), ("f_high_3db", "-3 dB"), ("mouth_cutoff_hz", "mouth cutoff"),
-                                    ("datasheet_cutoff_hz", "datasheet cutoff"))):
+                                    ("datasheet_cutoff_hz", "datasheet cutoff"), ("sealed_resonance_hz", "sealed resonance"),
+                                    ("front_cavity_corner_hz", "front cavity corner"))):
         v = co.get(key)
         if v and lo < v < hi:
             ax.axvline(v, color=MUTED, lw=0.8, ls=":")
@@ -171,7 +178,7 @@ def section_figures(name):
         axes[0].plot(f, pw.impedance_ohm, color=c)
         axes[0].set(ylabel="|Z| (ohm)", title="Electrical impedance", ylim=(0, None))
         freq_axis(axes[0], lo, hi)
-        rec = D.LOW_RECORD if name == "low" else D.MID_RECORD
+        rec = D.KICK_RECORD if name == "low" else D.MID_RECORD
         z_nom = rec["parameters"].get("nominal_impedance_ohm") or 8
         p_w = rec["parameters"].get("power_w") or 100
         scale = math.sqrt(p_w * z_nom) / 2.83
@@ -194,114 +201,190 @@ def dim(ax, p0, p1, text, off=(0, 0), fs=8.5):
             bbox=dict(boxstyle="round,pad=0.15", fc="white", ec="none", alpha=0.9))
 
 
+def _body_outline():
+    """Centre body silhouette (z, r) in mm: shroud underside, lip, law body, mid horn outside to the mid mouth."""
+    k, m = D.KICK, D.MID
+    pts = [(float(k.shroud_z(k.channel_start)) * 1000, (k.motor_body_radius - k.body_wall) * 1000)]
+    rr = np.linspace(k.channel_start, k.drv.rim_r, 40)
+    pts += [(float(k.shroud_z(r)) * 1000, r * 1000) for r in rr]
+    r_lip = k.body_radius(k.turn_z)
+    pts += [(k.turn_z * 1000, k.drv.rim_r * 1000), (k.turn_z * 1000, r_lip * 1000)]
+    zz = np.linspace(k.turn_z, k.mouth_z, 160)
+    pts += [(z * 1000, k.body_radius(z) * 1000) for z in zz]
+    ss = np.linspace(k.mouth_z - k.mid_throat_z, m.length, 40)
+    pts += [((k.mid_throat_z + s) * 1000, m.outer(s) * 1000) for s in ss]
+    return np.array(pts)
+
+
+def _driver_section(ax, zc, sgn, drv, colour, reversed_=True, face=0.0):
+    """Cone, motor and flange of a driver; zc maps driver z (from its front face) to the drawing."""
+    r = np.linspace(drv.vc_r, drv.rim_r, 60)
+    z = drv.cone_z(r)
+    ax.plot(zc(z) , sgn * r * 1000, color=colour, lw=2.6, zorder=8)
+    zt = zc(np.array([drv.top_plate_z, drv.top_plate_z + drv.motor_h]))
+    ax.fill_between(np.sort(zt), 0, sgn * drv.motor_r * 1000, color="#55595e", lw=0, zorder=7)
+    zf = np.sort(zc(np.array([0.0, drv.flange_t])))
+    ax.fill_between(zf, sgn * (drv.rim_r + 0.012) * 1000, sgn * drv.frame_od / 2 * 1000, color="#55595e", lw=0, zorder=7)
+
+
+def kick_drawing():
+    """Section through the axis. Upper half: through the wall flats. Lower half: through the corners (fillers)."""
+    k, m, drv = D.KICK, D.MID, D.KICK.drv
+    fig, ax = plt.subplots(figsize=(13.5, 8.8), layout="constrained")
+    zb = -(k.baffle + k.chamber_depth)
+    t = k.ply / math.cos(math.radians(k.half_angle_deg))
+    zz = np.linspace(zb, k.mouth_z, 60)
+    hw = np.array([k.half_width(z) for z in zz])
+    fil = np.array([k.filler(z) if z >= 0 else 0.0 for z in zz])
+    diag = SQ2 * hw - fil / SQ2
+    Z = zz * 1000
+    ax.fill_between(Z, hw * 1000, (hw + t) * 1000, color=WOOD, lw=0)
+    ax.fill_between(Z, -diag * 1000, -(SQ2 * (hw + t)) * 1000, color=WOOD, lw=0)
+    ax.fill_between(Z, -SQ2 * hw * 1000, -diag * 1000, where=zz >= 0, color="#b8925f", lw=0)
+    ax.fill_between([zb * 1000 - k.ply * 1000, zb * 1000], [-SQ2 * (hw[0] + t) * 1000] * 2, [(hw[0] + t) * 1000] * 2,
+                    color=WOOD, lw=0)
+    zc_ = np.linspace(zb, -k.baffle, 10)
+    ax.fill_between(zc_ * 1000, [-SQ2 * k.half_width(z) * 1000 for z in zc_], [k.half_width(z) * 1000 for z in zc_],
+                    color="#ece9e1", lw=0, zorder=0)
+    rc = drv.frame_od / 2 - 0.017
+    ax.fill_between([-k.baffle * 1000, 0], [rc * 1000] * 2, [k.half_width(0) * 1000] * 2, color=WOOD, lw=0)
+    ax.fill_between([-k.baffle * 1000, 0], [-rc * 1000] * 2, [-SQ2 * k.half_width(0) * 1000] * 2, color=WOOD, lw=0)
+    body = _body_outline()
+    for sgn in (1, -1):
+        ax.fill_between(body[:, 0], 0, sgn * body[:, 1], color=PRINT, lw=0, zorder=3)
+    # cavities inside the body: motor, mid pod, mid bore
+    mz0 = float(k.shroud_z(k.channel_start)) * 1000
+    for sgn in (1, -1):
+        ax.fill_between([mz0, (k.motor_front - k.body_wall) * 1000], 0, sgn * (k.motor_body_radius - k.body_wall) * 1000,
+                        color="#d9d6cf", lw=0, zorder=4)
+        ax.fill_between([k.motor_front * 1000, k.mid_flange_z * 1000], 0, sgn * (m.pod_radius - m.wall) * 1000,
+                        color="#d9d6cf", lw=0, zorder=4)
+    ss = np.linspace(0, m.length, 200)
+    zs = (k.mid_throat_z + ss) * 1000
+    ax.fill_between(zs, [-m.radius(s) * 1000 for s in ss], [m.radius(s) * 1000 for s in ss], color="white", lw=0, zorder=5)
+    pr = np.array([m.plug(s) for s in ss]) * 1000
+    ax.fill_between(zs, -pr, pr, where=pr > 0, color=PLUG, lw=0, zorder=6)
+    for sgn in (1, -1):
+        _driver_section(ax, lambda z: z * 1000, sgn, drv, COL["low"])
+        _driver_section(ax, lambda z: (k.mid_flange_z - z) * 1000, sgn, m.drv, COL["mid"])
+    zm, W, We = k.mouth_z * 1000, k.mouth_width * 1000, k.external_mouth * 1000
+    top = (k.half_width(k.mouth_z) + t) * 1000
+    xm = (k.mid_mouth_z + m.lip_radius) * 1000
+    ax.plot([zm, xm + 40], [W / 2, W / 2], color=MUTED, lw=0.6, ls=":")
+    dim(ax, (xm + 40, 0), (xm + 40, W / 2), f"mouth {W:.0f}\nsquare,\ninside", off=(44, 0))
+    ax.plot([zm, xm + 40], [-SQ2 * We / 2] * 2, color=MUTED, lw=0.6, ls=":")
+    dim(ax, (xm + 40, -SQ2 * We / 2), (xm + 40, 0), f"outside\n{We:.0f} x {We:.0f}\n(corner\nsection)", off=(44, 0))
+    dim(ax, ((zb - k.ply) * 1000, top + 40), (zm, top + 40), f"cabinet depth {k.depth*1000:.0f}")
+    dim(ax, (zm, top + 40), (k.mid_mouth_z * 1000, top + 40), f"mid {k.protrusion*1000:.0f}", off=(0, 14))
+    dim(ax, ((zb - k.ply) * 1000, top + 80), ((k.mid_mouth_z + m.lip_radius) * 1000, top + 80),
+        f"overall {k.overall_depth*1000:.0f}")
+    dim(ax, (zb * 1000, -SQ2 * hw[0] * 1000 - 60), (-k.baffle * 1000, -SQ2 * hw[0] * 1000 - 60),
+        f"chamber {k.chamber_depth*1000:.0f}\n{k.chamber_litres:.0f} L sealed", off=(0, -22))
+    dim(ax, (-60, -k.throat_width * 500), (-60, k.throat_width * 500), "", fs=8)
+    ax.text(-75, 30, f"throat\n{k.throat_width*1000:.0f}\nacross\nflats", ha="right", fontsize=8)
+    ax.text(zm - 20, top + 8, f"walls {k.half_angle_deg:.1f} deg, splay {k.splay_deg:.0f} deg between boxes", fontsize=8,
+            color=MUTED, ha="right")
+    ax.text((zb - k.ply) * 1000, -SQ2 * (hw[-1] + t) * 1000 - 10,
+            "Upper half: section through the wall flats. Lower half: through a corner, showing the tapering filler.\n"
+            "Black: one-piece printed centre body. Yellow: mid phase plug (bullet) holding the HF horn. Blue: the "
+            "reversed 15 inch cone and motor. Orange: the mid cone.", fontsize=8, color=MUTED, va="top")
+    ax.set(aspect="equal", xlim=((zb - k.ply) * 1000 - 110, (k.mid_mouth_z + m.lip_radius) * 1000 + 200),
+           ylim=(-SQ2 * (hw[-1] + t) * 1000 - 70, top + 110), xlabel="z, mm from the baffle front face",
+           title="Kick cabinet, section through the axis, mm")
+    ax.grid(False)
+    fig.savefig(OUT / "kick-drawing.png")
+    plt.close(fig)
+
+
+def throat_drawing():
+    """The reversed 15 inch: cone, basket envelope, shroud gap and the turn into the horn."""
+    k, drv = D.KICK, D.KICK.drv
+    fig, ax = plt.subplots(figsize=(12, 6.2), layout="constrained")
+    r = np.linspace(drv.vc_r, drv.rim_r, 120)
+    ax.plot(r * 1000, drv.cone_z(r) * 1000, color=COL["low"], lw=3, label="Cone (estimated profile)")
+    rs = np.linspace(k.channel_start, drv.rim_r, 80)
+    sz = k.shroud_z(rs)
+    body = _body_outline()
+    keep = body[:, 0] < 230
+    ax.fill_between(body[keep, 1], body[keep, 0], 230, color=PRINT, lw=0, zorder=1)
+    ax.fill_betweenx([k.shroud_z(k.channel_start) * 1000, 230], 0, k.motor_body_radius * 1000, color=PRINT, lw=0, zorder=1)
+    ax.fill_betweenx([drv.top_plate_z * 1000, (drv.top_plate_z + drv.motor_h) * 1000], 0, drv.motor_r * 1000,
+                     color="#55595e", zorder=2, label="Motor")
+    arm = drv.cone_z(rs) + k.arm / np.cos(np.arctan(drv.cone_slope(rs)))
+    ax.plot(rs * 1000, arm * 1000, color=MUTED, ls="--", lw=1.4, label="Basket arms (estimated)")
+    ax.fill_between([drv.rim_r * 1000 + 12, drv.frame_od * 500], 0, drv.flange_t * 1000, color="#55595e", lw=0)
+    ax.fill_between([0, k.half_width(0) * 1000], -k.baffle * 1000, 0, color=WOOD, lw=0)
+    ax.fill_between([0, (drv.frame_od / 2 - 0.017) * 1000], -k.baffle * 1000, 0, color="white", lw=0)
+    for rv in (k.channel_start + 0.008, 0.5 * (k.channel_start + drv.rim_r), drv.rim_r - 0.006):
+        z0 = float(drv.cone_z(rv))
+        n = np.array([-float(drv.cone_slope(rv)), 1.0])
+        n /= np.linalg.norm(n)
+        g = float(k.gap(rv))
+        p0 = np.array([rv, z0]) * 1000
+        p1 = p0 + n * g * 1000
+        dim(ax, tuple(p0), tuple(p1), f"{g*1000:.0f}", off=(10, 0), fs=8)
+    W2 = k.half_width(0) * 1000
+    ax.axvline(W2, color=WOOD, lw=4)
+    ax.text(W2 + 4, 140, "wall flat", rotation=90, fontsize=8, color=MUTED)
+    ax.text(drv.rim_r * 1000 + 10, k.turn_z * 1000 - 14, "turn under the lip", fontsize=8, color=INK)
+    ax.text(10, -k.baffle * 1000 - 18, f"Channel area at each radius = cone area inside it / {k.compression:.1f}, less {k.blockage*100:.0f}% "
+            "for the basket arms;\nnever closer to the cone than the arms plus 9 mm or the mechanical travel plus 3 mm. "
+            f"Throat {k.throat_area*1e4:.0f} cm² at the rim.", fontsize=8, color=MUTED, va="top")
+    ax.set(aspect="equal", xlim=(0, W2 + 30), ylim=(-k.baffle * 1000 - 45, 230), xlabel="radius (mm)",
+           ylabel="z (mm from the baffle front)", title="Reversed 15 inch throat: cone, shroud and gap, mm")
+    ax.legend(loc="center right", fontsize=8)
+    ax.grid(False)
+    fig.savefig(OUT / "throat-drawing.png")
+    plt.close(fig)
+
+
 def mid_drawing():
     m, tw = D.MID, D.TW
     fig, ax = plt.subplots(figsize=(12, 6.8), layout="constrained")
     L = m.length * 1000
     ss = np.linspace(0, m.length, 300)
     ro = np.array([m.radius(s) for s in ss]) * 1000
+    rw = np.array([m.outer(s) for s in ss]) * 1000
     ri = np.array([m.plug(s) for s in ss]) * 1000
-    rc = m.can_diameter / 2 * 1000
     z = ss * 1000
-    ax.fill_between(z, ro, rc, color=PRINT, lw=0)
-    ax.fill_between(z, -ro, -rc, color=PRINT, lw=0)
+    for sgn in (1, -1):
+        ax.fill_between(z, sgn * ro, sgn * rw, color=PRINT, lw=0)
+        th = np.linspace(-math.pi / 2, math.pi / 2, 30)
+        lr = m.lip_radius * 1000
+        ax.fill(L + lr * np.cos(th) * 0 + lr * np.sin(th + math.pi / 2) * 0 + lr * np.cos(th),
+                sgn * (ro[-1] + lr + lr * np.sin(th)), color=PRINT, lw=0)
     ax.fill_between(z, -ri, ri, where=ri > 0, color=PLUG, lw=0)
+    rn = np.linspace(0, m.plug_r0, 30)
+    sn = m.nose(rn) * 1000
+    for sgn in (1, -1):
+        ax.fill_betweenx(sgn * rn * 1000, sn, 0, color=PLUG, lw=0)
+    rr = np.linspace(m.outer_throat_radius, m.drv.rim_r + 0.006, 30)
+    for sgn in (1, -1):
+        ax.fill_betweenx(sgn * rr * 1000, m.nose(np.minimum(rr, m.drv.rim_r)) * 1000, 0, color=PRINT, lw=0)
     sh = np.linspace(m.s_exit, m.s_tip, 60)
     hr = np.array([m.hf_horn_radius(s) for s in sh]) * 1000
     ax.fill_between(sh * 1000, -hr, hr, color="white", lw=0)
-    nose = np.linspace(-m.nose_length, 0, 30)
-    nr = np.array([m.plug(s) for s in nose]) * 1000
-    ax.fill_between(nose * 1000, -nr, nr, color=PLUG, lw=0)
     rb = tw.body_radius * 1000
     ax.fill_between([(m.s_exit - tw.body_depth) * 1000, m.s_exit * 1000], [-rb, -rb], [rb, rb], color="#7b7f84", lw=0)
-    rcone = m.cone_diameter / 2 * 1000
+    rc = np.linspace(0, m.drv.rim_r, 80)
     for sgn in (1, -1):
-        ax.plot([0, -0.4 * rcone], [sgn * rcone, sgn * 0.3 * rcone], color=COL["mid"], lw=3)
-    y0 = -rc - 22
-    dim(ax, (0, y0), (L, y0), f"mid horn {L:.0f}")
-    dim(ax, (L + 22, -m.mouth_diameter * 500), (L + 22, m.mouth_diameter * 500), f"mouth\n{m.mouth_diameter*1000:.0f}", off=(24, 0))
-    dim(ax, (L + 70, -rc), (L + 70, rc), f"can\n{rc*2:.0f}", off=(22, 0))
+        ax.plot(m.s_cone(rc) * 1000, sgn * rc * 1000, color=COL["mid"], lw=3)
+    R = rw[-1] + m.lip_radius * 2000
+    dim(ax, (0, -R - 10), (L, -R - 10), f"mid horn {L:.0f}")
+    dim(ax, (L + 16, -m.mouth_diameter * 500), (L + 16, m.mouth_diameter * 500), f"mouth\n{m.mouth_diameter*1000:.0f}",
+        off=(60, 0))
     rt = m.outer_throat_radius * 1000
-    dim(ax, (-14, -rt), (-14, rt), f"throat\n{2*rt:.0f}", off=(-34, 0))
-    dim(ax, (m.s_exit * 1000 - 20, -m.plug_radius * 1000), (m.s_exit * 1000 - 20, m.plug_radius * 1000),
-        f"plug {2*m.plug_radius*1000:.0f}", off=(0, -m.plug_radius * 1000 - 14))
-    dim(ax, (m.s_exit * 1000, rc + 16), (m.s_tip * 1000, rc + 16), f"printed HF horn {m.hf_len*1000:.0f}")
-    dim(ax, (m.s_tip * 1000 + 4, -m.hf_mouth_radius * 1000), (m.s_tip * 1000 + 4, m.hf_mouth_radius * 1000),
-        f"{2*m.hf_mouth_radius*1000:.0f}", off=(14, 0))
-    ax.text(-60, rc + 44, f"{law_name(m.law)} open-area law, {m.compression:.1f}:1 compression. Grey: {tw.model}, "
-            f"{tw.body_diameter*1000:.0f} mm body. Yellow: phase plug, tapering so the open area follows the law.",
-            fontsize=9, color=MUTED)
-    ax.set(aspect="equal", xlim=(-90, L + 125), ylim=(-rc - 50, rc + 56), xlabel="mm from the mid throat (the cone rim)",
+    dim(ax, (-70, -rt), (-70, rt), f"throat\n{2*rt:.0f}", off=(-26, 0))
+    dim(ax, (m.s_exit * 1000 - 18, -m.plug_r0 * 1000), (m.s_exit * 1000 - 18, m.plug_r0 * 1000),
+        f"bullet {2*m.plug_r0*1000:.0f}", off=(0, -m.plug_r0 * 1000 - 14))
+    dim(ax, (m.s_exit * 1000, R - 20), (m.s_tip * 1000, R - 20), f"printed HF horn {m.hf_len*1000:.0f}")
+    ax.text(-110, R + 12, f"{law_name(m.law)} open-area law, {m.compression:.1f}:1 compression, cone-to-plug gap "
+            f"{m.gap*1000:.1f} mm. Grey: {tw.model}, {tw.body_diameter*1000:.0f} mm body. Yellow: the bullet, one smooth "
+            "taper, its open area always subtracted.", fontsize=8.5, color=MUTED)
+    ax.set(aspect="equal", xlim=(-140, L + 150), ylim=(-R - 30, R + 30), xlabel="mm from the mid throat plane",
            title="Mid horn and phase plug, section through the axis, mm")
     ax.grid(False)
     fig.savefig(OUT / "mid-drawing.png")
-    plt.close(fig)
-
-
-def low_drawing():
-    lo, m = D.LOW, D.MID
-    cut = json.loads((ROOT / "cad/cutlist.json").read_text())
-    st = cut["stations_mm"]
-    fig, ax = plt.subplots(figsize=(13, 7.6), layout="constrained")
-    zb, zm = lo.baffle * 1000, lo.mouth_z * 1000
-    t = D.PLY * 1000
-    zback = st["back"]
-    # shell: angled top and bottom, back, baffle
-    zz = np.linspace(zback, zm, 50)
-    ys = np.array([lo.shell_half_height(z / 1000) for z in zz]) * 1000
-    ax.fill_between(zz, ys, ys + t, color=WOOD, lw=0)
-    ax.fill_between(zz, -ys, -ys - t, color=WOOD, lw=0)
-    ax.fill_between([zback, zback + t], [-ys[0]] * 2, [ys[0]] * 2, color=WOOD, lw=0)
-    hb = lo.shell_half_height(0) * 1000
-    ax.fill_between([0, zb], [-hb] * 2, [-lo.cutout_radius * 1000] * 2, color=WOOD, lw=0)
-    ax.fill_between([0, zb], [lo.cutout_radius * 1000] * 2, [hb] * 2, color=WOOD, lw=0)
-    # sealed chamber everywhere inside the shell outside the horn
-    ax.fill_between(zz, -ys, ys, color="#ece9e1", lw=0, zorder=0)
-    # horn top and bottom walls
-    z2 = np.linspace(zb, zm, 50)
-    h = np.array([lo.height(z / 1000) / 2 for z in z2]) * 1000
-    ax.fill_between(z2, -h, h, color="white", lw=0, zorder=1)
-    ax.fill_between(z2, h, h + t, color="#b8925f", lw=0, zorder=2)
-    ax.fill_between(z2, -h, -h - t, color="#b8925f", lw=0, zorder=2)
-    # one-piece centre body
-    zi = np.linspace(lo.throat_z, zm / 1000, 600)
-    ri = np.array([lo.inner_radius(z) for z in zi]) * 1000
-    ax.fill_between(zi * 1000, -ri, ri, color=PRINT, lw=0, zorder=3)
-    b = lo.body
-    a, cd = b.cone_radius * 1000, b.cone_depth * 1000
-    for sgn in (1, -1):
-        ax.plot([0, cd], [sgn * a, sgn * 40], color=COL["low"], lw=3, zorder=4)
-    rr = np.linspace(b.motor_radius * 1000 + 3, lo.throat_radius * 1000, 20)
-    zf = cd * (1 - rr / a) + (b.xmax + lo.gap) * 1000
-    for sgn in (1, -1):
-        ax.fill_betweenx(sgn * rr, zf, zb + 2, color=PRINT, lw=0, zorder=3)
-    ax.fill_between([cd, lo.motor_end * 1000], [-b.motor_radius * 1000] * 2, [b.motor_radius * 1000] * 2, color="#55595e", zorder=4)
-    # mid horn bore and HF plug
-    s0 = st["mid_throat"]
-    ss = np.linspace(0, m.length, 80)
-    ax.fill_between(s0 + ss * 1000, [-m.radius(s) * 1000 for s in ss], [m.radius(s) * 1000 for s in ss], color="white", lw=0, zorder=5)
-    pr = np.array([m.plug(s) for s in ss]) * 1000
-    ax.fill_between(s0 + ss * 1000, -pr, pr, where=pr > 0, color=PLUG, lw=0, zorder=6)
-    zr = st["support_rods"]
-    hr = lo.height(zr / 1000) / 2 * 1000
-    for sgn in (1, -1):
-        ax.plot([zr, zr], [sgn * m.can_diameter * 500, sgn * hr], color="#9aa0a6", lw=2.5, zorder=6)
-    H = lo.mouth_height * 1000
-    dim(ax, (zm + 34, -H / 2), (zm + 34, H / 2), f"mouth\n{H:.0f}\nhigh", off=(40, 0))
-    dim(ax, (zm + 100, -H / 2 - t), (zm + 100, H / 2 + t), f"outside\n{H + 2*t:.0f}", off=(40, 0))
-    dim(ax, (zback - 30, -ys[0] - t), (zback - 30, ys[0] + t), f"{2*(ys[0] + t):.0f}", off=(-30, 0))
-    dim(ax, (zb, -H / 2 - 40), (zm, -H / 2 - 40), f"horn {lo.length*1000:.0f}")
-    dim(ax, (zback, -H / 2 - 80), (zm, -H / 2 - 80), f"cabinet depth {zm - zback:.0f}")
-    dim(ax, (zb + 14, -lo.throat_width * 500), (zb + 14, lo.throat_width * 500), f"throat {lo.throat_width*1000:.0f}",
-        off=(48, 150))
-    dim(ax, (lo.throat_z * 1000, H / 2 + 46), (st["mid_driver_back"], H / 2 + 46), "one-piece centre body")
-    ax.text(zback + 10, 0, f"{D.LOW_REAR_LITRES:.0f} L sealed chamber\n(shaded, joined through the baffle ports)", fontsize=8,
-            color=MUTED, rotation=90, ha="center", va="center", zorder=7)
-    ax.text(zm - 10, H / 2 + 14, f"splay {lo.splay_deg:.1f} deg between stacked boxes", fontsize=8, color=MUTED, ha="right")
-    ax.set(aspect="equal", xlim=(zback - 70, zm + 190), ylim=(-H / 2 - 115, H / 2 + 80),
-           xlabel="z, mm from the 15 inch cone rim", title="Cabinet section through the axis (vertical), mm")
-    ax.grid(False)
-    fig.savefig(OUT / "low-drawing.png")
     plt.close(fig)
 
 
@@ -332,23 +415,41 @@ def tweeter_drawing():
 
 
 def area_figures():
-    lo, m = D.LOW, D.MID
-    fig, ax = plt.subplots(figsize=(11, 3.8), layout="constrained")
-    z = np.linspace(lo.throat_z, lo.mouth_z, 800)
-    x = (z - lo.throat_z) * 1000
-    ax.plot(x, [lo.outer_area(v) * 1e4 for v in z], color=MUTED, lw=1.4, label="Inside the walls")
-    ax.plot(x, [np.pi * lo.inner_radius(v) ** 2 * 1e4 for v in z], color=PRINT, lw=1.4, label="Centre body")
-    ax.plot(x, [lo.area(v) * 1e4 for v in z], color=COL["low"], label=f"Open area ({law_name(lo.law)} law to the can)")
-    ax.set(xlabel="mm from the low throat (baffle front)", ylabel="Area (cm²)", title="Low horn area", ylim=(0, None))
-    ax.legend(loc="upper left")
+    k, m, drv = D.KICK, D.MID, D.KICK.drv
+    fig, axes = plt.subplots(1, 2, figsize=(13, 4.2), layout="constrained", gridspec_kw=dict(width_ratios=(1, 2)))
+    ax = axes[0]
+    r = np.linspace(k.channel_start, drv.rim_r, 100)
+    ax.plot(r * 1000, 2 * np.pi * r * k.gap(r) * (1 - k.blockage) * 1e4, color=COL["low"], label="Channel, open")
+    ax.plot(r * 1000, np.pi * r**2 / k.compression * 1e4, color=MUTED, ls=":", label=f"Cone area inside r / {k.compression:.1f}")
+    ax.set(xlabel="radius on the cone (mm)", ylabel="Area (cm²)", title="Over the reversed cone", ylim=(0, None))
+    ax.legend(loc="upper left", fontsize=8)
+    ax = axes[1]
+    z = np.linspace(k.turn_z, k.mouth_z, 600)
+    x = z * 1000
+    ax.plot(x, [k.wall_area(v) * 1e4 for v in z], color=MUTED, lw=1.4, label="Inside the walls, less the fillers")
+    ax.plot(x, [2 * k.filler(v) ** 2 * 1e4 for v in z], color="#b8925f", lw=1.4, label="Corner fillers")
+    ax.plot(x, [np.pi * k.body_radius(v) ** 2 * 1e4 for v in z], color=PRINT, lw=1.4, label="Centre body")
+    ax.plot(x, [k.area(v) * 1e4 for v in z], color=COL["low"], label=f"Open area ({law_name(k.law)} law)")
+    p = RES / "cad/area-check.csv"
+    if p.exists():
+        d = pd.read_csv(p)
+        if "kind" in d:
+            d = d[d.kind == "kick"]
+        zc = [c for c in d.columns if c.startswith("z")][0]
+        ac = [c for c in d.columns if "cad" in c][0]
+        scale = 1000 if d[zc].max() < 5 else 1
+        sa = 1e4 if d[ac].max() < 5 else (1e-2 if d[ac].max() > 1e5 else 1)
+        ax.plot(d[zc] * scale, d[ac] * sa, "o", ms=3.5, color=COL["low"], mfc="white", label="Sliced from the CAD air volume")
+    ax.set(xlabel="z, mm from the baffle front face", ylabel="Area (cm²)", title="Forward kick horn", ylim=(0, None))
+    ax.legend(loc="upper left", fontsize=8)
     fig.savefig(OUT / "low-area.png")
     plt.close(fig)
     fig, ax = plt.subplots(figsize=(11, 3.8), layout="constrained")
     zm = np.linspace(0, m.length, 400)
     ax.plot(zm * 1000, [np.pi * m.radius(v) ** 2 * 1e4 for v in zm], color=MUTED, lw=1.4, label="Inside the wall")
-    ax.plot(zm * 1000, [np.pi * m.plug(v) ** 2 * 1e4 for v in zm], color=PLUG, lw=1.6, label="Phase plug")
+    ax.plot(zm * 1000, [np.pi * m.plug(v) ** 2 * 1e4 for v in zm], color=PLUG, lw=1.6, label="Bullet")
     ax.plot(zm * 1000, [m.area(v) * 1e4 for v in zm], color=COL["mid"], label=f"Open area ({law_name(m.law)} law)")
-    ax.set(xlabel="mm from the mid throat", ylabel="Area (cm²)", title="Mid horn area: wall minus plug", ylim=(0, None))
+    ax.set(xlabel="mm from the mid throat", ylabel="Area (cm²)", title="Mid horn area: wall minus the bullet", ylim=(0, None))
     ax.legend(loc="upper left")
     fig.savefig(OUT / "mid-area.png")
     plt.close(fig)
@@ -360,7 +461,7 @@ def chain_figure():
     labels = [r[0] for r in rows][::-1]
     vals = [r[1] for r in rows][::-1]
     notes = [r[2] for r in rows][::-1]
-    cols = [COL["tweeter"]] * 2 + [COL["mid"]] * 5 + [COL["low"]] * 3
+    cols = [COL["tweeter"]] * 2 + [COL["mid"]] * 4 + [COL["low"]] * 4
     ax.barh(labels, vals, color=cols[::-1], height=0.6)
     for i, (v, n) in enumerate(zip(vals, notes)):
         unit = "cm²" if "area" in labels[i] else "mm"
@@ -406,6 +507,8 @@ def full_range():
     ax = axes[0]
     for k in ("low", "mid", "tweeter"):
         d = pd.read_csv(RES / f"planewave/{k}.csv")
+        if k == "low":
+            d = d[d.frequency_hz <= 3000]
         ax.plot(d.frequency_hz, d.spl_db + dsp["gain_db"][k], color=COL[k], lw=1.8, label=nm[k] + ", unfiltered")
     marks = [(co["low"]["f_low_3db"], "low -3 dB", COL["low"]),
              (co["low"]["mouth_cutoff_hz"], "low mouth cutoff", COL["low"]),
@@ -450,38 +553,111 @@ def full_range():
     plt.close(fig)
 
 
+def kick_low_end():
+    d = pd.read_csv(RES / "planewave/array.csv")
+    dsp = json.loads((RES / "planewave/dsp.json").read_text())
+    fig, ax = plt.subplots(figsize=(12, 4.4), layout="constrained")
+    ref = d.single_free_db[(d.frequency_hz >= 150) & (d.frequency_hz <= 250)].mean()
+    ax.plot(d.frequency_hz, d.cluster9_free_db - 20 * np.log10(9), color=COL["low"], lw=2.4,
+            label="Per box, in a 3 x 3 cluster (array total less 19 dB)")
+    ax.plot(d.frequency_hz, d.single_half_space_db, color=COL["low"], lw=1.6, ls="--", label="One box on the ground")
+    ax.plot(d.frequency_hz, d.single_free_db, color=MUTED, lw=1.6, label="One box in free space")
+    sh = dsp["no_sub_shelf"]
+    ax.axvline(sh["f_minus6_hz"], color=MUTED, ls=":", lw=1)
+    ax.text(sh["f_minus6_hz"] * 1.03, ref - 21, f"with the no-sub shelf, one box\nreaches -6 dB at {sh['f_minus6_hz']:.0f} Hz",
+            fontsize=8, color=MUTED)
+    for k, lab in (("single_free_db", "free"), ("single_half_space_db", "ground"), ("cluster9_free_db", "cluster")):
+        v = dsp["kick_low_end"][k]["f_minus6_hz"]
+        ax.plot([v], [dsp["kick_low_end"][k]["level_150_250_db"] - 6 - (20 * np.log10(9) if k.startswith("cluster") else 0)],
+                "o", color=COL["low"] if k != "single_free_db" else MUTED, ms=5)
+    ax.set(ylim=(ref - 30, ref + 10), ylabel="dB SPL, 2.83 V per box, 1 m",
+           title="Kick low end: free space, on the ground, and coupled in a 3 x 3 cluster. Dots: -6 dB")
+    freq_axis(ax, 30, 1000)
+    ax.legend(loc="lower right", fontsize=8)
+    fig.savefig(OUT / "kick-low-end.png")
+    plt.close(fig)
+
+
+def array_coverage():
+    """Incoherent coverage of the 3 x 3 cluster in three bands, from the summed box polar and the splay."""
+    sysd = pd.read_csv(RES / "planewave/system.csv")
+    pol = {k: pd.read_csv(RES / f"planewave/{k}-polar.csv") for k in ("mid", "tweeter")}
+    dsp = json.loads((RES / "planewave/dsp.json").read_text())
+    k = D.KICK
+    s = math.radians(k.splay_deg)
+    f2 = D.CROSSOVER_MID_HIGH_HZ
+    bands_ = (1000.0, 4000.0, 10000.0)
+    fig, axes = plt.subplots(1, 3, figsize=(13.5, 4.6), layout="constrained")
+    az = np.radians(np.linspace(-80, 80, 161))
+    AZ, EL = np.meshgrid(az, az)
+    dirs = np.stack([np.sin(AZ) * np.cos(EL), np.sin(EL), np.cos(AZ) * np.cos(EL)], -1)
+    for ax, fc in zip(axes, bands_):
+        sec = "mid" if fc < f2 else "tweeter"
+        p = pol[sec]
+        i = int(np.argmin(np.abs(p.frequency_hz.values - fc)))
+        ang = np.array([0, 15, 30, 45, 60, 90])
+        lv = np.array([p[f"spl_{a}deg_db"].values[i] for a in ang[:-1]])
+        lv = np.append(lv, lv[-1] - 6)
+        lv -= lv[0]
+        tot = np.zeros(AZ.shape)
+        for bi in (-1, 0, 1):
+            for bj in (-1, 0, 1):
+                d = np.array([math.tan(bi * s), math.tan(bj * s), 1.0])
+                d /= np.linalg.norm(d)
+                th = np.degrees(np.arccos(np.clip(dirs @ d, -1, 1)))
+                tot += 10 ** (np.interp(th, ang, lv, right=lv[-1] - 6) / 10)
+        db = 10 * np.log10(tot / tot.max())
+        cs = ax.contourf(np.degrees(az), np.degrees(az), db, levels=np.arange(-18, 0.1, 1.5), cmap="Greys_r", extend="min")
+        ax.contour(np.degrees(az), np.degrees(az), db, levels=[-6], colors=[COL[sec]], linewidths=1.8)
+        ax.set(aspect="equal", xlabel="Horizontal (deg)", ylabel="Vertical (deg)" if fc == bands_[0] else None,
+               title=f"{fc/1000:g} kHz ({'mid' if sec == 'mid' else 'HF'})")
+        ax.grid(False)
+    fig.colorbar(cs, ax=axes, label="dB relative to the loudest direction, power sum")
+    fig.suptitle(f"3 x 3 cluster at {k.splay_deg:.0f} deg splay: coverage map. Line: -6 dB", x=0.02, ha="left",
+                 fontweight="bold", fontsize=11)
+    fig.savefig(OUT / "array-coverage.png")
+    plt.close(fig)
+
+
 def fem_compare():
     nm = names()
-    fig, axes = plt.subplots(1, 2, figsize=(12, 4.2), layout="constrained")
-    for ax, name in zip(axes, ("low", "mid")):
-        d = pd.read_csv(RES / f"fem/{name}.csv")
-        for th, ls in ((0, "-"), (30, ":")):
-            ax.plot(d.frequency_hz, d[f"planewave_{th}deg_spl_db"], color=MUTED, ls=ls, lw=1.6, label=f"Plane-wave {th} deg")
-            ax.plot(d.frequency_hz, d[f"fem_{th}deg_spl_db"], color=COL[name], ls=ls, lw=2.0, label=f"FEM {th} deg")
-        ax.axvspan(*bands()["passband"][name], color=COL[name], alpha=0.06, lw=0)
-        top = math.ceil(d.fem_0deg_spl_db.max() / 5) * 5 + 3
-        ax.set(ylim=(top - 40, top), ylabel="dB SPL, 2.83 V, 1 m", title=f"{nm[name]}: FEM against plane-wave")
+    files = [(n, RES / f"fem/{n}-vs-network.csv") for n in ("kick", "mid")]
+    files = [(n, p) for n, p in files if p.exists()]
+    if not files:
+        return
+    fig, axes = plt.subplots(1, len(files), figsize=(6.2 * len(files), 4.2), layout="constrained", squeeze=False)
+    for ax, (name, p) in zip(axes[0], files):
+        d = pd.read_csv(p)
+        key = "low" if name == "kick" else "mid"
+        fcol = [c for c in d.columns if c.startswith("fem") and "spl" in c and ("0deg" in c or "deg" not in c)][0]
+        ncol = [c for c in d.columns if c.startswith("network") and "spl" in c and ("0deg" in c or "deg" not in c)][0]
+        ax.plot(d.frequency_hz, d[ncol], color=MUTED, lw=1.6, label="Network (plane-wave, sliced areas)")
+        ax.plot(d.frequency_hz, d[fcol], color=COL[key], lw=2.0, label="FEM, cone as a vibrating boundary")
+        ax.axvspan(*bands()["passband"][key], color=COL[key], alpha=0.06, lw=0)
+        top = math.ceil(max(d[fcol].max(), d[ncol].max()) / 5) * 5 + 3
+        ax.set(ylim=(top - 40, top), ylabel="dB SPL, 2.83 V, 1 m, half space", title=f"{nm[key]}: FEM against the network")
         freq_axis(ax, d.frequency_hz.min(), d.frequency_hz.max())
-        ax.legend(loc="lower center", ncol=2, fontsize=8)
+        ax.legend(loc="lower center", fontsize=8)
     fig.savefig(OUT / "fem-vs-planewave.png")
     plt.close(fig)
 
 
 def tradeoff():
-    from sunflower import tweeters as TWS
-    sysd = pd.read_csv(RES / "optimise/system-search.csv")
+    kd = pd.read_csv(RES / "optimise/kick-search.csv")
     sel = D.SELECTED
-    palette = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#6250d6"]
+    palette = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#6250d6", "#7b7f84"]
     fig, ax = plt.subplots(figsize=(12, 5), layout="constrained")
-    for i, (tid, g) in enumerate(sysd.groupby("tweeter")):
-        t = TWS.load(tid)
-        price = f", ${t.price_usd:.0f}" if t.price_usd else ""
-        ax.scatter(g.depth * 1000, g.score, s=34, color=palette[i % len(palette)], edgecolor="white", lw=0.6,
-                   label=f"{t.model}{price}")
-    ax.scatter([sel["cabinet"]["depth"] * 1000], [sel["scores"]["score"]], s=220, facecolor="none",
+    best = kd.sort_values("score").drop_duplicates(["kick_driver", "half_angle_deg", "protrusion", "compression", "law"])
+    for i, (kid, g) in enumerate(best.groupby("kick_driver")):
+        rec = D.load_drivers("kick")[kid]
+        ax.scatter(g.external_mouth * 1000, g.f6, s=26, color=palette[i % len(palette)], edgecolor="white", lw=0.5,
+                   label=f"{rec['manufacturer']} {rec['model_name']}")
+    k = D.KICK
+    dsp = json.loads((RES / "planewave/dsp.json").read_text())
+    ax.scatter([k.external_mouth * 1000], [dsp["kick_low_end"]["single_free_db"]["f_minus6_hz"]], s=220, facecolor="none",
                edgecolor=INK, lw=2, label="Chosen", zorder=3)
-    ax.set(xlabel="Cabinet depth (mm)", ylabel="System score, lower is better",
-           title="Every finalist by HF unit: depth against performance")
+    ax.set(xlabel="Box width at the mouth, outside (mm)", ylabel="Kick -6 dB, one box in free space (Hz)",
+           title="Every kick variant in a 600 mm deep box: size against low-end extension")
     ax.legend(loc="upper right", fontsize=8)
     fig.savefig(OUT / "tradeoff.png")
     plt.close(fig)
@@ -495,10 +671,13 @@ def main():
     for n in ("low", "mid", "tweeter"):
         section_figures(n)
     mid_drawing()
-    low_drawing()
+    kick_drawing()
+    throat_drawing()
     tweeter_drawing()
     area_figures()
     full_range()
+    kick_low_end()
+    array_coverage()
     fem_compare()
     tradeoff()
     chain_figure()

@@ -1,40 +1,43 @@
 {
   "tweeter": "18sound-nd1030",
-  "crossover_hz": [
-    500.0,
-    3500.0
-  ],
   "mid": {
-    "driver_id": "beyma-6mcf200nd",
-    "label": "Beyma 6MCF200Nd",
-    "nominal": "6.5in",
-    "law": "os",
-    "compression": 2.2,
-    "mouth_diameter": 0.22,
-    "length": 0.15,
-    "hf_horn_length": 0.06
+    "driver_id": "beyma-8mi100",
+    "geometry": {
+      "law": "os",
+      "compression": 2.2,
+      "mouth_diameter": 0.36,
+      "length": 0.36,
+      "hf_mouth_ratio": 2.4
+    }
   },
-  "low": {
-    "driver_id": "eminence-delta-15lfa",
-    "law": "exponential",
-    "mouth_width": 0.56,
-    "mouth_height": 0.6,
-    "length": 0.5,
-    "rear_litres": 35.0
+  "kick": {
+    "driver_id": "18sound-15mb700",
+    "geometry": {
+      "compression": 1.6,
+      "law": "hypex",
+      "half_angle_deg": 15.0,
+      "protrusion": 0.15,
+      "chamber_depth": 0.046
+    }
   },
+  "crossover_hz": [
+    250.0,
+    4000.0
+  ],
   "scores": {
-    "score": 2.3408729129023746,
-    "rms_on_db": 1.2439382973894366,
-    "spread_30_db": 1.0268875663885682,
-    "f3_hz": 81.66981664637308
+    "system": 6.605362041515962,
+    "score": 6.291977769648205,
+    "rms_on_db": 2.055994208033228,
+    "spread_30_db": 5.340475188396092,
+    "f3_hz": 121.31491934833862,
+    "sensitivity_db": 103.04041780591487
   },
-  "cabinet": {
-    "width": 0.5960000000000001,
-    "height": 0.636,
-    "depth": 0.588,
-    "volume_m3": 0.222884928,
-    "splay_deg": 15.682815724662966
-  },
-  "hf_price_usd": 150.0,
-  "rule": "among designs within 0.25 of the best score (2.34) and at most 600 mm deep: the cheapest HF unit, then the shallowest cabinet"
+  "rule": "lowest system score; among designs within 0.25 of it, the cheapest",
+  "crossover_note": "The network model alone picks a higher crossover. The FEM shows the mid falling 8 to 12 dB from 3 to 6 kHz (a radial cavity mode over the cone that the network lumps away), so f2 is re-picked with that correction: the highest of 3.5 to 5 kHz scoring within 0.15 of the best.",
+  "f2_after_fem": {
+    "3500": 5.711,
+    "4000": 5.82,
+    "4500": 6.211,
+    "5000": 6.239
+  }
 }

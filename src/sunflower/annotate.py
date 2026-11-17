@@ -1,7 +1,7 @@
 """Dimension lines on the orthographic renders.
 
 render.py writes docs/img/renders/cameras.json with the orthographic scale
-of each view, so CAD millimetres map exactly to pixels.
+and centre of each view, so CAD millimetres map exactly to pixels.
 """
 from __future__ import annotations
 
@@ -18,6 +18,7 @@ from sunflower import design as D  # noqa: E402
 ROOT = D.ROOT
 REN = ROOT / "docs/img/renders"
 INK = "#111111"
+ACCENT = "#b04a00"
 
 
 def _setup(name):
@@ -25,10 +26,12 @@ def _setup(name):
     cam = cams[name]
     img = plt.imread(REN / f"{name}.jpg")
     w, h = cam["res"]
-    s = cam["ortho"] * 1000 / w           # mm per pixel
+    s = cam["ortho"] * 1000 / max(w, h)   # mm per pixel; Blender's ortho scale spans the wider side
     fig = plt.figure(figsize=(w / 150, h / 150), dpi=150)
     ax = fig.add_axes([0, 0, 1, 1])
     ax.imshow(img)
+    ax.set_xlim(0, w)
+    ax.set_ylim(h, 0)
     ax.set_axis_off()
 
     def px(hmm, vmm):
@@ -36,28 +39,46 @@ def _setup(name):
     return fig, ax, px
 
 
+def _label(ax, x, y, text, color=INK, size=11):
+    ax.text(x, y, text, ha="center", va="center", fontsize=size, color=color,
+            bbox=dict(boxstyle="round,pad=0.25", fc="white", ec="#bbbbbb", lw=0.6, alpha=0.95))
+
+
 def _dim(ax, a, b, text, off=(0, 0), color=INK):
     ax.annotate("", xy=b, xytext=a, arrowprops=dict(arrowstyle="<->", color=color, lw=1.4, shrinkA=0, shrinkB=0))
-    ax.text((a[0] + b[0]) / 2 + off[0], (a[1] + b[1]) / 2 + off[1], text, ha="center", va="center", fontsize=11,
-            color=color, bbox=dict(boxstyle="round,pad=0.25", fc="white", ec="#bbbbbb", lw=0.6, alpha=0.95))
+    _label(ax, (a[0] + b[0]) / 2 + off[0], (a[1] + b[1]) / 2 + off[1], text, color)
+
+
+def _line(ax, a, b, color=INK, ls="-", lw=0.8):
+    ax.plot([a[0], b[0]], [a[1], b[1]], color=color, ls=ls, lw=lw)
+
+
+def _arc(ax, P, centre, r, t0, t1, color=ACCENT):
+    """Arc in CAD (h, v) millimetres about centre, angles in degrees from +h."""
+    n = 40
+    pts = [P(centre[0] + r * math.cos(math.radians(t0 + (t1 - t0) * i / n)),
+             centre[1] + r * math.sin(math.radians(t0 + (t1 - t0) * i / n))) for i in range(n + 1)]
+    ax.plot([p[0] for p in pts], [p[1] for p in pts], color=color, lw=1.4)
 
 
 def front():
     cut = json.loads((ROOT / "cad/cutlist.json").read_text())
-    lo, m, tw = D.LOW, D.MID, D.TW
+    m = D.MID
     fig, ax, px = _setup("front")
     ex = cut["external_mm"]
     we, he = ex["width"] / 2, ex["height_front"] / 2
-    wm, hm = lo.mouth_width * 500, lo.mouth_height * 500
-    _dim(ax, px(-we, he + 40), px(we, he + 40), f"{2*we:.0f} outside")
-    _dim(ax, px(we + 40, -he), px(we + 40, he), f"{2*he:.0f}\noutside", off=(46, 0))
-    _dim(ax, px(-wm, -hm - 30), px(wm, -hm - 30), f"mouth {2*wm:.0f} x {2*hm:.0f}")
+    wi = cut["walls"]["inner_face"]["mouth_edge"] / 2       # inside of the mouth, ply faces
+    _dim(ax, px(-we, he + 45), px(we, he + 45), f"{2*we:.0f} outside")
+    _dim(ax, px(we + 45, -he), px(we + 45, he), f"{2*he:.0f}\nsquare", off=(48, 0))
+    _line(ax, px(-wi, -wi), px(-wi, -he - 55), lw=0.7)
+    _line(ax, px(wi, -wi), px(wi, -he - 55), lw=0.7)
+    _dim(ax, px(-wi, -he - 45), px(wi, -he - 45), f"mouth {2*wi:.0f} inside, square")
     rm = m.mouth_diameter * 500
-    _dim(ax, px(-rm, rm + 25), px(rm, rm + 25), f"mid mouth {2*rm:.0f}")
-    rc = m.can_diameter * 500
-    _dim(ax, px(-rc - 25, -rc), px(-rc - 25, rc), f"can\n{2*rc:.0f}", off=(-42, 0))
+    _line(ax, px(-rm, 0), px(-rm, 300), lw=0.7)
+    _line(ax, px(rm, 0), px(rm, 300), lw=0.7)
+    _dim(ax, px(-rm, 290), px(rm, 290), f"mid mouth {2*rm:.0f}")
     rh = m.hf_mouth_radius * 1000
-    _dim(ax, px(-rh, -rh - 22), px(rh, -rh - 22), f"HF mouth {2*rh:.0f}", off=(0, 24))
+    _dim(ax, px(-rh, -rh - 30), px(rh, -rh - 30), f"HF mouth {2*rh:.0f}", off=(0, 26))
     fig.savefig(REN / "front-dims.jpg", dpi=150, pil_kwargs=dict(quality=88))
     plt.close(fig)
 
@@ -65,36 +86,69 @@ def front():
 def section_side():
     cut = json.loads((ROOT / "cad/cutlist.json").read_text())
     st = cut["stations_mm"]
-    lo, m = D.LOW, D.MID
+    ex = cut["external_mm"]
+    k = D.KICK
+    s = k.summary()
     fig, ax, px = _setup("section-side")
-    P = lambda z, y: px(-z, y)  # noqa: E731
-    he = cut["external_mm"]["height_front"] / 2
-    hb = cut["external_mm"]["height_back"] / 2
-    _dim(ax, P(st["back"], -he - 50), P(st["mouth"], -he - 50), f"cabinet depth {cut['external_mm']['depth']:.0f}")
-    _dim(ax, P(st["baffle_front"], he + 45), P(st["mouth"], he + 45), f"kick horn {lo.length*1000:.0f}")
-    _dim(ax, P(st["mid_throat"], m.can_diameter * 500 + 25), P(st["mouth"], m.can_diameter * 500 + 25),
-         f"mid horn {m.length*1000:.0f}")
-    _dim(ax, P(st["throat"], -m.can_diameter * 500 - 30), P(st["mid_driver_back"], -m.can_diameter * 500 - 30),
-         "one-piece centre body")
-    _dim(ax, P(st["mouth"] + 30, -he), P(st["mouth"] + 30, he), f"{2*he:.0f}", off=(-36, 0))
-    _dim(ax, P(st["back"] - 30, -hb), P(st["back"] - 30, hb), f"{2*hb:.0f}", off=(36, 0))
+    P = lambda z, y: px(-z, y)  # noqa: E731   mouth on the left
+    he, hb = ex["height_front"] / 2, ex["height_back"] / 2
+    z_back, z_mouth = st["back"], st["mouth"]
+    z_front = z_back + ex["overall_depth"]
+    lip = D.MID.mouth_diameter * 500 + 40
+    _dim(ax, P(z_back, -he - 50), P(z_mouth, -he - 50), f"cabinet depth {ex['depth']:.0f}")
+    _dim(ax, P(z_back, he + 55), P(z_front, he + 55), f"overall {ex['overall_depth']:.0f}")
+    _line(ax, P(z_front, he + 65), P(z_front, lip - 40), lw=0.7)
+    _line(ax, P(z_mouth, -he - 60), P(z_mouth, he + 10), lw=0.7, ls=":")
+    _line(ax, P(st["mid_mouth"], lip + 20), P(st["mid_mouth"], -lip), lw=0.7, ls=":")
+    _dim(ax, P(z_mouth, lip + 10), P(st["mid_mouth"], lip + 10), f"protrudes {k.protrusion*1000:.0f}", off=(0, -22))
+    _dim(ax, P(z_mouth + 40, -he), P(z_mouth + 40, he), f"{2*he:.0f}", off=(-36, (P(0, -0.8 * he)[1] - P(0, 0)[1])))
+    _dim(ax, P(z_back - 40, -hb), P(z_back - 40, hb), f"{2*hb:.0f}", off=(36, 0))
+    # splay: the bottom wall against a line parallel to the axis
+    half = s["splay_deg"] / 2
+    pivot = (-z_back, -hb)                      # (h, v) in mm at the back bottom corner
+    _line(ax, P(z_back, -hb), P(z_mouth, -hb), ls="--", color=ACCENT, lw=1.0)
+    r = 0.8 * (z_mouth - z_back)
+    _arc(ax, lambda h, v: px(h, v), pivot, r, 180, 180 + half)
+    mid_t = math.radians(180 + half / 2)
+    lx, ly = px(pivot[0] + (r + 70) * math.cos(mid_t), pivot[1] + (r + 70) * math.sin(mid_t))
+    _label(ax, lx, ly, f"{half:.0f} deg per wall,\nsplay {s['splay_deg']:.0f} deg", color=ACCENT, size=10)
     fig.savefig(REN / "section-side-dims.jpg", dpi=150, pil_kwargs=dict(quality=88))
     plt.close(fig)
 
 
 def stack_side():
-    p = REN / "stack-side.jpg"
-    if not p.exists():
+    """Centre column of the 3 x 3 array from the side: box axes from the common apex and the splay."""
+    cams = json.loads((REN / "cameras.json").read_text())
+    if "stack-side" not in cams or not (REN / "stack-side.jpg").exists():
         return
-    st = json.loads((ROOT / "cad/stack.json").read_text())
-    img = plt.imread(p)
-    fig = plt.figure(figsize=(img.shape[1] / 150, img.shape[0] / 150), dpi=150)
-    ax = fig.add_axes([0, 0, 1, 1])
-    ax.imshow(img)
-    ax.set_axis_off()
-    ax.text(img.shape[1] * 0.04, img.shape[0] * 0.06,
-            f"Three boxes, {st['splay_deg']:.1f} degrees between neighbours, {2*st['splay_deg']:.0f} degrees top to bottom",
-            fontsize=12, color=INK, bbox=dict(boxstyle="round,pad=0.3", fc="white", ec="#bbbbbb"))
+    arr = json.loads((ROOT / "cad/array.json").read_text())
+    fig, ax, px = _setup("stack-side")
+    P = lambda z, y: px(-z, y)  # noqa: E731
+    apex = (0.0, -arr["apex_behind_baffle_mm"])           # (y, z) mm in the array frame
+    reach = arr["apex_behind_baffle_mm"] + 790
+    angles = []
+    for b in arr["boxes"]:
+        if b["i"] != 0:
+            continue
+        M = b["matrix"]
+        ay, az = M[1][2], M[2][2]                          # box +z axis in the array frame
+        oy, oz = M[1][3] * 1000, M[2][3] * 1000
+        _line(ax, P(oz - 120 * az, oy - 120 * ay), P(apex[1] + reach * az, apex[0] + reach * ay),
+              color=ACCENT, ls="--", lw=1.0)
+        angles.append(math.degrees(math.atan2(ay, az)))
+    angles.sort()
+    r = reach - 40
+    Q = P                                                 # arcs in (z, y) about the apex
+    for a0, a1 in zip(angles, angles[1:]):
+        _arc(ax, Q, (apex[1], apex[0]), r, a0, a1)
+        t = math.radians((a0 + a1) / 2)
+        _label(ax, *Q(apex[1] + (r + 75) * math.cos(t), apex[0] + (r + 75) * math.sin(t)),
+               f"{a1 - a0:.0f} deg", color=ACCENT)
+    w = cams["stack-side"]["res"][0]
+    ax.text(w * 0.03, 50, f"3 x 3 array, {arr['splay_deg']:.0f} degrees between neighbours, "
+            f"{2*arr['splay_deg']:.0f} degrees top to bottom and side to side.\n"
+            f"Axes meet {arr['apex_behind_baffle_mm']:.0f} mm behind the centre baffle. Centre column shown.",
+            fontsize=11, color=INK, va="top", bbox=dict(boxstyle="round,pad=0.3", fc="white", ec="#bbbbbb"))
     fig.savefig(REN / "stack-side-dims.jpg", dpi=150, pil_kwargs=dict(quality=88))
     plt.close(fig)
 

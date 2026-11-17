@@ -1,0 +1,415 @@
+{
+ "source": "Curated for Sunflower from manufacturer datasheets (each checked by an independent second pass on 2026-11-17). Geometry is from dimensioned drawings where stated, otherwise estimated; measure your driver before printing.",
+ "drivers": [
+  {
+   "driver_id": "18sound-8nmb420",
+   "manufacturer": "18 Sound",
+   "model_name": "8NMB420",
+   "driver_type": "cone",
+   "nominal_diameter": "8in",
+   "parameters": {
+    "fs_hz": 61,
+    "re_ohm": 5,
+    "bl_tm": 10,
+    "sd_m2": 0.023,
+    "mms_kg": 0.0149,
+    "le_h": 0.00035,
+    "qms": 4,
+    "qes": 0.31,
+    "xmax_m": 0.0058,
+    "power_w": 280,
+    "nominal_impedance_ohm": 8.0,
+    "sensitivity_db_2p83v": 95
+   },
+   "usable_f_high_hz": 5500,
+   "parameter_source": "https://www.eighteensound.it/en/products/lf-driver/8-0/8/8NMB420.pdf",
+   "physical_envelope_mm": {
+    "maximum_width": 210,
+    "cutout": 186,
+    "depth": 99,
+    "flange_thickness": 14
+   },
+   "geometry_mm": {
+    "voice_coil": 51,
+    "basis": "datasheet mounting table; no cone geometry published"
+   },
+   "geometry_source": "Datasheet table (overall diameter, cutout, depth, flange plus gasket thickness). No cone geometry published.",
+   "status": "current",
+   "price_usd": 186,
+   "price_source": "Thomann US https://www.thomannmusic.com/eighteensound_8nmb420_8_ohm.htm lists it at $186, in stock (fetched 2026-11-17). Thomann UK lists it at GBP 169, in stock. A search snippet put Walmart at $189.99, but I could not confirm the earlier $174.97 figure.",
+   "notes": "Qts 0.28, Vas 33 L, EBP 196 Hz, external neo motor, double-roll surround, 50 mm ISV coil. Datasheet range is 60 Hz to 5.5 kHz, though the maker describes it as a midbass for lowpass up to 2 to 2.5 kHz. Effective diameter from Sd is about 171 mm (derived). Lowest Mms and Le of the high-excursion group. Sd times Xmax is about 133 cm3.",
+   "catalogue_status": "manufacturer_verified",
+   "verification": "corrected",
+   "role": "mid"
+  },
+  {
+   "driver_id": "bc-8pe21",
+   "manufacturer": "B&C",
+   "model_name": "8PE21",
+   "driver_type": "cone",
+   "nominal_diameter": "8in",
+   "parameters": {
+    "fs_hz": 87,
+    "re_ohm": 5.6,
+    "bl_tm": 16.6,
+    "sd_m2": 0.022,
+    "mms_kg": 0.018,
+    "le_h": 0.0005,
+    "qms": 3.8,
+    "qes": 0.2,
+    "xmax_m": 0.0025,
+    "power_w": 200,
+    "nominal_impedance_ohm": 8.0,
+    "sensitivity_db_2p83v": 98
+   },
+   "usable_f_high_hz": 5000,
+   "parameter_source": "https://www.bcspeakers.com/en/products/lf-driver/8-0/8/8pe21",
+   "physical_envelope_mm": {
+    "maximum_width": 225,
+    "cutout": 187,
+    "depth": 91,
+    "flange_thickness": 11
+   },
+   "geometry_mm": {
+    "voice_coil": 51,
+    "basis": "datasheet mounting table; no cone geometry published"
+   },
+   "geometry_source": "B&C product page table plus drawing https://bcspeakers.com/uploads/products/dataSheetDrawings/2016_07_29_11_41_06_906_8PE21_drawing.png (rear and side view only, no cone section)",
+   "status": "current: listed on bcspeakers.com with no discontinued notice. US Speaker lists it at $156.54 (8 ohm), 'available now'.",
+   "price_usd": 156.54,
+   "price_source": "US Speaker https://usspeaker.com/B&C-8PE21-1.htm ('available now'); Thomann FR about 109 EUR",
+   "notes": "Dedicated midrange. Qts 0.19, Vas 13 L, eta0 4.1%, EBP 435 Hz, ferrite, copper winding 9 mm in an 8 mm gap (nearly equal winding and gap), Xvar 4.5 mm. Xmax 2.5 mm is the limit at 250 Hz. Effective diameter from Sd is about 167 mm (derived).",
+   "catalogue_status": "manufacturer_verified",
+   "verification": "confirmed",
+   "role": "mid"
+  },
+  {
+   "driver_id": "bc-8mdn51",
+   "manufacturer": "B&C",
+   "model_name": "8MDN51",
+   "driver_type": "cone",
+   "nominal_diameter": "8in",
+   "parameters": {
+    "fs_hz": 70,
+    "re_ohm": 5.1,
+    "bl_tm": 15.3,
+    "sd_m2": 0.022,
+    "mms_kg": 0.023,
+    "le_h": 0.0008,
+    "qms": 3.7,
+    "qes": 0.21,
+    "xmax_m": 0.006,
+    "power_w": 200,
+    "nominal_impedance_ohm": 8.0,
+    "sensitivity_db_2p83v": 97
+   },
+   "usable_f_high_hz": 4000,
+   "parameter_source": "https://www.bcspeakers.com/en/products/lf-driver/8-0/8/8mdn51",
+   "physical_envelope_mm": {
+    "maximum_width": 225,
+    "cutout": 187,
+    "depth": 95,
+    "flange_thickness": 11
+   },
+   "geometry_mm": {
+    "voice_coil": 51,
+    "basis": "datasheet mounting table; no cone geometry published"
+   },
+   "geometry_source": "B&C product page table plus drawing https://bcspeakers.com/uploads/products/dataSheetDrawings/2016_07_29_12_42_52_543_8MDN51_drawing.png (no cone section)",
+   "status": "current: listed on bcspeakers.com in 8 and 16 ohm versions, with no discontinued notice. US Speaker lists the 8 ohm at $221.34 as \"available now\".",
+   "price_usd": 221.34,
+   "price_source": "US Speaker https://usspeaker.com/B&C-8MDN51-1.htm; VIP Pro Audio $199.35; Parts Express 8 ohm $190.50, back-ordered",
+   "notes": "Qts 0.20, Vas 16 L, eta0 2.4%, EBP 333 Hz, neo ring T-pole, 16 mm winding in an 8 mm gap, 1.45 T. Rated only to 4 kHz, below the 5 kHz target. Sd times Xmax is about 132 cm3. Effective diameter from Sd is about 167 mm (derived).",
+   "catalogue_status": "manufacturer_verified",
+   "verification": "confirmed",
+   "role": "mid"
+  },
+  {
+   "driver_id": "beyma-8mi100",
+   "manufacturer": "Beyma",
+   "model_name": "8MI100",
+   "driver_type": "cone",
+   "nominal_diameter": "8in",
+   "parameters": {
+    "fs_hz": 90,
+    "re_ohm": 6,
+    "bl_tm": 11.5,
+    "sd_m2": 0.022,
+    "mms_kg": 0.019,
+    "le_h": 0.0002,
+    "qms": 7.5,
+    "qes": 0.48,
+    "xmax_m": 0.003,
+    "power_w": 250,
+    "nominal_impedance_ohm": 8.0,
+    "sensitivity_db_2p83v": 96
+   },
+   "usable_f_high_hz": 7000,
+   "parameter_source": "https://www.Lautsprechershop.de/pdf/beyma/beyma_8mi100.pdf",
+   "physical_envelope_mm": {
+    "maximum_width": 212,
+    "cutout": 181,
+    "depth": 94,
+    "flange_thickness": null
+   },
+   "geometry_mm": {
+    "voice_coil": 50.8,
+    "basis": "datasheet mounting table; no cone geometry published"
+   },
+   "geometry_source": "Datasheet mounting table (overall diameter, bolt circle 198, front cutout 181, depth 94)",
+   "status": "current: Beyma datasheet dated 06/18 (lautsprechershop.de copy). US Speaker lists it at $112.95 (fetched and confirmed). Search results also show Parts Express $113.42 in stock and Sound Imports EUR 92.45 in stock.",
+   "price_usd": 112.95,
+   "price_source": "US Speaker https://usspeaker.com/beyma%208MI100-1.htm",
+   "notes": "Qts 0.45, Vas 12 L, eta0 1.6%, Vd 66 cm3, 9 mm coil in a 7 mm gap. Lowest Le of the set and the widest rated top end (7 kHz). The high Qes and modest Bl mean weaker damping. Xmax 3 mm. Cheapest option.",
+   "catalogue_status": "manufacturer_verified",
+   "verification": "confirmed",
+   "role": "mid"
+  },
+  {
+   "driver_id": "18sound-10m600",
+   "manufacturer": "18 Sound",
+   "model_name": "10M600",
+   "driver_type": "cone",
+   "nominal_diameter": "10in",
+   "parameters": {
+    "fs_hz": 70,
+    "re_ohm": 5.2,
+    "bl_tm": 17.6,
+    "sd_m2": 0.035,
+    "mms_kg": 0.032,
+    "le_h": 0.00128,
+    "qms": 4.5,
+    "qes": 0.25,
+    "xmax_m": 0.004,
+    "power_w": 400,
+    "nominal_impedance_ohm": 8.0,
+    "sensitivity_db_2p83v": 102
+   },
+   "usable_f_high_hz": 5200,
+   "parameter_source": "https://www.eighteensound.it/en/products/lf-driver/10-0/8/10M600.pdf",
+   "physical_envelope_mm": {
+    "maximum_width": 260,
+    "cutout": 232,
+    "depth": 126,
+    "flange_thickness": 14
+   },
+   "geometry_mm": {
+    "voice_coil": 75,
+    "basis": "datasheet mounting table; no cone geometry published"
+   },
+   "geometry_source": "Datasheet table (overall diameter, bolt circle 244, cutout, depth, flange)",
+   "status": "current: the eighteensound.it product page under LF drivers 10.0 in has a live datasheet and drawing, with no archive or discontinued notice. Retailers still list it, though at least one has it out of stock.",
+   "price_usd": 274.8,
+   "price_source": "Sweetheart Deals listing on reach.dog at $274.80 (indexed by search, but the URL now returns HTTP 410 Gone); Hobstop listing on reach.dog at $289.99; Canal Sound Light $199.99 (out of stock); Audiokit IT 205.80 EUR (not rechecked)",
+   "notes": "Ferrite 10 inch midrange, sold for direct-radiating or horn-loaded use in 3 and 4 way touring systems. Qts 0.23, Vas 25.6 L, EBP 280 Hz, 75 mm ISV coil, 7.35 kg. Effective diameter from Sd is about 211 mm (derived), which leaves the most cone area outside an 80 to 90 mm plug. Sd times Xmax is about 140 cm3. Le 1.28 mH is high for 5 kHz.",
+   "catalogue_status": "manufacturer_verified",
+   "verification": "confirmed",
+   "role": "mid"
+  },
+  {
+   "driver_id": "bc-10md26",
+   "manufacturer": "B&C",
+   "model_name": "10MD26",
+   "driver_type": "cone",
+   "nominal_diameter": "10in",
+   "parameters": {
+    "fs_hz": 76,
+    "re_ohm": 5.8,
+    "bl_tm": 19.6,
+    "sd_m2": 0.032,
+    "mms_kg": 0.031,
+    "le_h": 0.0012,
+    "qms": 4.8,
+    "qes": 0.22,
+    "xmax_m": 0.0015,
+    "power_w": 350,
+    "nominal_impedance_ohm": 8.0,
+    "sensitivity_db_2p83v": 100
+   },
+   "usable_f_high_hz": 4000,
+   "parameter_source": "https://www.bcspeakers.com/en/products/lf-driver/10-0/8/10md26",
+   "physical_envelope_mm": {
+    "maximum_width": 262,
+    "cutout": 230,
+    "depth": 124,
+    "flange_thickness": 14
+   },
+   "geometry_mm": {
+    "voice_coil": 76,
+    "basis": "datasheet mounting table; no cone geometry published"
+   },
+   "geometry_source": "B&C product page table plus drawing https://bcspeakers.com/uploads/products/dataSheetDrawings/2016_07_28_14_09_01_199_10MD26_drawing.png",
+   "status": "current: on the bcspeakers.com product page and not marked discontinued. US retail stock could not be checked.",
+   "price_usd": 246.18,
+   "price_source": "Walmart https://www.walmart.com/ip/44389058; Canal Sound Light $209.94 (out of stock); Parts Express 294-658 back-ordered",
+   "notes": "Qts 0.21, Vas 20 L, eta0 3.9%, EBP 345 Hz, ferrite, 11 mm winding in an 8 mm gap, Xvar 4.5 mm. Xmax 1.5 mm is very short for 250 Hz at high SPL, and it is rated only to 4 kHz.",
+   "catalogue_status": "manufacturer_verified",
+   "verification": "confirmed",
+   "role": "mid"
+  },
+  {
+   "driver_id": "faital-8pr200",
+   "manufacturer": "Faital Pro",
+   "model_name": "8PR200",
+   "driver_type": "cone",
+   "nominal_diameter": "8in",
+   "parameters": {
+    "fs_hz": 58,
+    "re_ohm": 5.1,
+    "bl_tm": 11.5,
+    "sd_m2": 0.0209,
+    "mms_kg": 0.0272,
+    "le_h": 0.00055,
+    "qms": 9.4,
+    "qes": 0.38,
+    "xmax_m": 0.008150000000000001,
+    "power_w": 200,
+    "nominal_impedance_ohm": 8.0,
+    "sensitivity_db_2p83v": 95
+   },
+   "usable_f_high_hz": 5000,
+   "parameter_source": "https://www.dibirama.it/images/ingrandimenti/faital_8pr200-8/faital_8pr200-8_spec.pdf",
+   "physical_envelope_mm": {
+    "maximum_width": 223.75,
+    "cutout": 183,
+    "depth": 116.7,
+    "flange_thickness": 10.7
+   },
+   "geometry_mm": {
+    "voice_coil": 52,
+    "basis": "datasheet mounting table; no cone geometry published"
+   },
+   "geometry_source": "Faital datasheet (Italian, printed June 2021) mounting table: max diameter 223.75/207.9 mm, bolt circle 210, cutout 183, depth 116.7, flange 10.7",
+   "status": "current. Still sold in 2026 at Parts Express ($240, free shipping, per search snippet), Thomann (132.77 EUR ex VAT; about $157 on thomannmusic.com), Masori (109 EUR sale, 189 EUR list, incl. VAT), Avecorp AU and others. Solen CA listing was out of stock when crawled. The 8PR200 A is a separate variant; don't confuse the two.",
+   "price_usd": 240,
+   "price_source": "Parts Express https://www.parts-express.com/FaitalPRO-8PR200-8-Neodymium-Professional-Woofer-8-Ohm-294-1175 (search snippet); Thomann about 133 EUR ex VAT",
+   "notes": "Qts 0.37, Vas 16.9 L, Mmd 23.8 g, Xdamage 13.5 mm, 19.3 mm winding in a 9 mm gap, neo ring, aluminium demodulating ring, triple-roll treated-cotton surround, eta0 0.84%. The heavier cone and higher Qes make it a midbass first. The datasheet range is 70 Hz to 5 kHz.",
+   "catalogue_status": "manufacturer_verified",
+   "verification": "confirmed",
+   "role": "mid"
+  },
+  {
+   "driver_id": "beyma-8mc500nd",
+   "manufacturer": "Beyma",
+   "model_name": "8MC500Nd",
+   "driver_type": "cone",
+   "nominal_diameter": "8in",
+   "parameters": {
+    "fs_hz": 75,
+    "re_ohm": 5.3,
+    "bl_tm": 17.5,
+    "sd_m2": 0.022,
+    "mms_kg": 0.024,
+    "le_h": 0.0005,
+    "qms": 3,
+    "qes": 0.2,
+    "xmax_m": 0.005,
+    "power_w": 500,
+    "nominal_impedance_ohm": 8.0,
+    "sensitivity_db_2p83v": 98
+   },
+   "usable_f_high_hz": 6000,
+   "parameter_source": "https://en.toutlehautparleur.com/media/catalog/product/datasheet/beyma/8MC500ND-8.pdf",
+   "physical_envelope_mm": {
+    "maximum_width": 212,
+    "cutout": 182,
+    "depth": 100,
+    "flange_thickness": null
+   },
+   "geometry_mm": {
+    "voice_coil": 63.5,
+    "basis": "datasheet mounting table; no cone geometry published"
+   },
+   "geometry_source": "Datasheet mounting table (overall diameter, bolt circle 195, cutout 182, depth 100)",
+   "status": "in production (on Beyma's current catalogue; preliminary datasheet); price on request only",
+   "price_usd": null,
+   "price_source": "No price found; toutlehautparleur.com lists it as price on request",
+   "notes": "Qts 0.19, Vas 12.2 L, eta0 2.5%, Vd 110 cm3, 14 mm in/out copper coil in an 8 mm gap, 42 mm p-p Xdamage, aluminium demodulating ring, waterproof cone. Strong motor and a 6 kHz rated top. Confirm availability with a Beyma distributor.",
+   "catalogue_status": "manufacturer_verified",
+   "verification": "corrected",
+   "role": "mid"
+  },
+  {
+   "driver_id": "18sound-10nw650",
+   "manufacturer": "18 Sound",
+   "model_name": "10NW650",
+   "driver_type": "cone",
+   "nominal_diameter": "10in",
+   "parameters": {
+    "fs_hz": 51,
+    "re_ohm": 5,
+    "bl_tm": 14,
+    "sd_m2": 0.0346,
+    "mms_kg": 0.034,
+    "le_h": 0.0007,
+    "qms": 8,
+    "qes": 0.29,
+    "xmax_m": 0.007,
+    "power_w": 300,
+    "nominal_impedance_ohm": 8.0,
+    "sensitivity_db_2p83v": 96
+   },
+   "usable_f_high_hz": 6000,
+   "parameter_source": "https://www.eighteensound.it/en/products/lf-driver/10-0/8/10NW650.pdf",
+   "physical_envelope_mm": {
+    "maximum_width": 260,
+    "cutout": 230,
+    "depth": 131,
+    "flange_thickness": 9
+   },
+   "geometry_mm": {
+    "voice_coil": 65,
+    "basis": "datasheet mounting table; no cone geometry published"
+   },
+   "geometry_source": "Datasheet table (overall diameter, bolt circle 243, cutout, depth, flange)",
+   "status": "current",
+   "price_usd": 199,
+   "price_source": "Retail, not a manufacturer list price: Walmart $198.99, Zoro $259.99, AudioKit (IT) EUR 213 in stock. Search done 2026-11-17.",
+   "notes": "Qts 0.28, Vas 48 L, EBP 175 Hz, 65 mm edgewound aluminium coil on fiberglass former, 2.7 kg net, neo. Continuous program power 600 W (nominal 300 W). Minimum impedance 6.0 ohm. Recommended enclosure 30 L tuned to 55 Hz. Datasheet says the low pass can go as high as 2 kHz. Sd x Xmax is about 242 cm3. Le is lower than the 10M600 (0.7 vs 1.28 mH), and sensitivity is 6 dB lower (96 vs 102 dB); both 10M600 values checked against its datasheet. Rated for line arrays, 60 Hz to 6 kHz. The sister 8NW650 has Mms 26 g, Le 0.71 mH, 55 Hz to 6.3 kHz, Xmax 5.5 mm, 96 dB, cutout 185 mm, depth 111 mm (https://www.eighteensound.it/en/products/lf-driver/8-0/8/8NW650.pdf).",
+   "catalogue_status": "manufacturer_verified",
+   "verification": "corrected",
+   "role": "mid"
+  },
+  {
+   "driver_id": "rcf-mr8n301",
+   "manufacturer": "RCF",
+   "model_name": "MR8N301",
+   "driver_type": "cone",
+   "nominal_diameter": "8in",
+   "parameters": {
+    "fs_hz": 310,
+    "re_ohm": 6.6,
+    "bl_tm": 17.8,
+    "sd_m2": 0.021,
+    "mms_kg": 0.0101,
+    "le_h": 0.00116,
+    "qms": 3.45,
+    "qes": 0.41,
+    "xmax_m": 0.0035,
+    "power_w": 200,
+    "nominal_impedance_ohm": 8.0,
+    "sensitivity_db_2p83v": 102
+   },
+   "usable_f_high_hz": 3000,
+   "parameter_source": "https://www.rcf.it/en/products/product-detail/mr8n301 (official spec sheet PDF dated 20-10-2025, product code STP0025). The URL in the record is a reseller-hosted copy (lautsprechershop.de) of an older RCF sheet.",
+   "physical_envelope_mm": {
+    "maximum_width": 238,
+    "cutout": 202,
+    "depth": 101.5,
+    "flange_thickness": null
+   },
+   "geometry_mm": {
+    "voice_coil": 76,
+    "basis": "datasheet mounting table; no cone geometry published"
+   },
+   "geometry_source": "Datasheet: effective piston diameter 168 mm stated; front-mount cutout 202, rear-mount cutout 182, bolt circle 220, depth 101.5",
+   "status": "Manufacturer still lists it (rcf.it product page, spec sheet dated 2025-10-20). Retail availability is poor: Bax says discontinued, Adorama says no longer available, Full Compass is out of stock. SoundPro still lists it.",
+   "price_usd": 479,
+   "price_source": "SoundPro https://soundpro.com/products/rcf-mr8n301 (MAP $479); Full Compass $417.49, out of stock",
+   "notes": "Sealed-basket horn midrange with a calibrated back volume (Vas 1.65 L, Qts 0.37). Fs 310 Hz and a rated range of 300 Hz to 3 kHz put it above a 250 Hz high-pass and short of 5 kHz. Included as a reference for a purpose-built horn mid with very low Mms; not recommended for this brief.",
+   "catalogue_status": "manufacturer_verified",
+   "verification": "corrected",
+   "role": "mid"
+  }
+ ]
+}

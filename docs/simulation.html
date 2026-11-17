@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Sunflower simulation</title>
-<meta name="description" content="Sunflower v0.2: each horn with all its plots, and the full range.">
+<meta name="description" content="Sunflower responses, crossover, FEM checks and limits.">
 <link rel="stylesheet" href="assets/style.css">
 <link rel="icon" href="data:image/svg+xml,<svg viewBox='0 0 32 32' aria-hidden='true'><g fill='none' stroke-width='2.4'><rect x='3' y='3' width='26' height='26' rx='4' stroke='%23d38a0c'/><circle cx='16' cy='16' r='8' stroke='%23eb6834'/><circle cx='16' cy='16' r='3.2' fill='%231baf7a' stroke='none'/></g></svg>">
 </head>
@@ -13,60 +13,70 @@
 <a class="brand" href="index.html"><svg viewBox="0 0 32 32" aria-hidden="true"><g fill="none" stroke-width="2.4">
 <rect x="3" y="3" width="26" height="26" rx="4" stroke="#d38a0c"/><circle cx="16" cy="16" r="8" stroke="#eb6834"/>
 <circle cx="16" cy="16" r="3.2" fill="#1baf7a" stroke="none"/></g></svg>Sunflower</a>
-<nav><a href="index.html">Product</a><a href="review.html">v0.2 review</a><a href="design.html">Design</a><a href="simulation.html" aria-current=page>Simulation</a><a href="build.html">Build</a><a href="downloads.html">Downloads</a></nav>
+<nav><a href="index.html">Product</a><a href="design.html">Design</a><a href="simulation.html" aria-current=page>Simulation</a><a href="build.html">Build</a><a href="downloads.html">Downloads</a></nav>
 </div></header>
 <main><div class="wrap">
 
 <h1>Simulation</h1>
-<p class="lede">Each horn on its own with all its plots, then the full range with its cutoffs. All at 2.83 V, 1 m.</p>
-<p><a href="#low">Kick horn</a> · <a href="#mid">Mid horn</a> · <a href="#tweeter">HF</a> · <a href="#full-range">Full range</a> ·
-<a href="#method">Method</a></p>
-<h2 id="low">Kick horn</h2>
-<p>Eminence DELTA-15LFA in the kick horn: exponential law to the mid can, 2.3:1 throat,
-500 mm long, 35 litre sealed chamber. From 80 Hz to 500 Hz: 6.1 dB variation at
-103.1 dB. Lower -3 dB at 82 Hz; the mouth cutoff is 167 Hz. FEM
-agrees within 1.2 dB in band.</p>
-<figure class="figure"><img class="plot" src="img/plots/low-drawing.png" alt="Dimensioned section, mm." loading="lazy"><figcaption>Dimensioned section, mm.</figcaption></figure><figure class="figure"><img class="plot" src="img/plots/low-area.png" alt="Open area along the horn." loading="lazy"><figcaption>Open area along the horn.</figcaption></figure><figure class="figure"><img class="plot" src="img/plots/low-magnitude.png" alt="Magnitude on axis, unfiltered, with its cutoffs." loading="lazy"><figcaption>Magnitude on axis, unfiltered, with its cutoffs.</figcaption></figure><figure class="figure"><img class="plot" src="img/plots/low-phase.png" alt="Phase and group delay." loading="lazy"><figcaption>Phase and group delay.</figcaption></figure><figure class="figure"><img class="plot" src="img/plots/low-polar.png" alt="Off-axis responses and polar map." loading="lazy"><figcaption>Off-axis responses and polar map.</figcaption></figure><figure class="figure"><img class="plot" src="img/plots/low-electrical.png" alt="Impedance and cone excursion." loading="lazy"><figcaption>Impedance and cone excursion.</figcaption></figure>
-<h2 id="mid">Mid horn</h2>
-<p>Beyma 6MCF200Nd in an oblate spheroidal (OS) horn round the tapering plug: 113 mm
-throat, 220 mm mouth, 150 mm long. From 500 Hz to 3500 Hz: 3.3 dB variation
-at 104.9 dB. Lower -3 dB at 430 Hz, upper at 3936 Hz, mouth cutoff
-496 Hz. FEM agrees within 0.7 dB in band.</p>
-<figure class="figure"><img class="plot" src="img/plots/mid-drawing.png" alt="Dimensioned section, mm." loading="lazy"><figcaption>Dimensioned section, mm.</figcaption></figure><figure class="figure"><img class="plot" src="img/plots/mid-area.png" alt="Open area along the horn." loading="lazy"><figcaption>Open area along the horn.</figcaption></figure><figure class="figure"><img class="plot" src="img/plots/mid-magnitude.png" alt="Magnitude on axis, unfiltered, with its cutoffs." loading="lazy"><figcaption>Magnitude on axis, unfiltered, with its cutoffs.</figcaption></figure><figure class="figure"><img class="plot" src="img/plots/mid-phase.png" alt="Phase and group delay." loading="lazy"><figcaption>Phase and group delay.</figcaption></figure><figure class="figure"><img class="plot" src="img/plots/mid-polar.png" alt="Off-axis responses and polar map." loading="lazy"><figcaption>Off-axis responses and polar map.</figcaption></figure><figure class="figure"><img class="plot" src="img/plots/mid-electrical.png" alt="Impedance and cone excursion." loading="lazy"><figcaption>Impedance and cone excursion.</figcaption></figure>
-<h2 id="tweeter">HF</h2>
-<p>18 Sound ND1030: on-axis response from the <a href="https://www.dibirama.it/images/ingrandimenti/eighteen_sound_nd1030/eighteen_sound_nd1030_spec.pdf">datasheet</a>, read by eye to about 2 dB, with
-minimum phase. Off axis from the FEM of its printed horn mouth inside the mid horn. From 3500 Hz to 16 kHz: 11.7 dB
-variation at 106.6 dB.</p>
-<figure class="figure"><img class="plot" src="img/plots/hf-in-mid.png" alt="HF mouth inside the mid horn, axisymmetric FEM, against a free piston of the same size." loading="lazy"><figcaption>HF mouth inside the mid horn, axisymmetric FEM, against a free piston of the same size.</figcaption></figure>
-<p>In the FEM, sitting in the mid horn changes the HF's on-axis level by +1.5 dB on
-average from 3.5 to 16 kHz and narrows it: -4.6 dB at 30 degrees against
--3.6 dB for the free piston.</p>
-<figure class="figure"><img class="plot" src="img/plots/tweeter-drawing.png" alt="Dimensioned section, mm." loading="lazy"><figcaption>Dimensioned section, mm.</figcaption></figure><figure class="figure"><img class="plot" src="img/plots/tweeter-magnitude.png" alt="Magnitude on axis, unfiltered, with its cutoffs." loading="lazy"><figcaption>Magnitude on axis, unfiltered, with its cutoffs.</figcaption></figure><figure class="figure"><img class="plot" src="img/plots/tweeter-phase.png" alt="Phase and group delay." loading="lazy"><figcaption>Phase and group delay.</figcaption></figure><figure class="figure"><img class="plot" src="img/plots/tweeter-polar.png" alt="Off-axis responses and polar map." loading="lazy"><figcaption>Off-axis responses and polar map.</figcaption></figure>
-
+<p class="lede">Each horn is modelled from its real profile. A plane-wave network, built slice by slice from the
+geometry, screens thousands of designs; the cone is a distributed source, not a piston. Axisymmetric FEM (and a 3D
+check of the square kick horn) then validates the chosen one, with the cone as a vibrating boundary.</p>
 <h2 id="full-range">Full range</h2>
-<figure class="figure"><img class="plot" src="img/plots/full-range.png" alt="Top: each section unfiltered and level-matched, with its cutoffs. Bottom: through the crossover; dashed blue is the no-sub shelf." loading="lazy"><figcaption>Top: each section unfiltered and level-matched, with its cutoffs. Bottom: through the crossover; dashed blue is the no-sub shelf.</figcaption></figure>
-<div class="table-wrap"><table><thead><tr><th class="">Section</th><th class="">Lower -3 dB</th><th class="">Upper -3 dB</th><th class="">Other limit</th></tr></thead><tbody><tr><td class="">Kick</td><td class="">82 Hz</td><td class="">1289 Hz</td><td class="">Mouth cutoff 167 Hz</td></tr><tr><td class="">Mid</td><td class="">430 Hz</td><td class="">3936 Hz</td><td class="">Mouth cutoff 496 Hz</td></tr><tr><td class="">HF</td><td class="">1073 Hz</td><td class="">20058 Hz</td><td class="">Datasheet cutoff 1500 Hz</td></tr><tr><td class="">Crossovers</td><td class="">500 Hz</td><td class="">3500 Hz</td><td class="">LR4</td></tr></tbody></table></div>
-<p>On axis the sum stays within 7.6 dB peak to peak from 100 Hz to 16 kHz (RMS 1.67 dB),
-before any EQ.</p>
+<figure class="figure"><img class="plot" src="img/plots/full-range.png" alt="Top: each section on its own with the cutoffs that limit it. Bottom: through the crossover." loading="lazy"><figcaption>Top: each section on its own with the cutoffs that limit it. Bottom: through the crossover.</figcaption></figure>
 <figure class="figure"><img class="plot" src="img/plots/full-range-group-delay.png" alt="Group delay of the sum." loading="lazy"><figcaption>Group delay of the sum.</figcaption></figure>
-<h3>DSP settings</h3>
-<div class="table-wrap"><table><thead><tr><th class="">Channel</th><th class="">Filter</th><th class="num">Gain</th><th class="num">Delay</th><th class="">Polarity in the model</th></tr></thead><tbody><tr><td class="">Kick</td><td class="">LR4 low-pass 500 Hz</td><td class="num">+0.0 dB</td><td class="num">0.00 ms</td><td class="">Inverted</td></tr><tr><td class="">Mid</td><td class="">LR4 high-pass 500 Hz, LR4 low-pass 3500 Hz</td><td class="num">-1.7 dB</td><td class="num">0.64 ms</td><td class="">Normal</td></tr><tr><td class="">HF</td><td class="">LR4 high-pass 3500 Hz</td><td class="num">-2.0 dB</td><td class="num">0.88 ms</td><td class="">Normal</td></tr></tbody></table></div>
-<div class="note"><p>The reversed 15 inch pulls air out of the horn when wired red to positive, the opposite of the model's
-convention. Where the table says the kick is normal, invert that DSP channel; where it says inverted, leave it normal.</p>
-<p><b>Without a sub.</b> A +6 dB second-order low shelf at 84 Hz on the kick channel, with a
-30 Hz LR4 high-pass, moves -6 dB to 61 Hz. It needs 15.4 mm
-of excursion at the rated 500 W against 4.8 mm Xmax, so limit the kick
-channel to about 48 W when the shelf is on.</p></div>
+<div class="table-wrap"><table><thead><tr><th class="">DSP</th><th class="">Setting</th></tr></thead><tbody><tr><td class="">Crossover</td><td class="">Linkwitz-Riley 24 dB/oct at 250 Hz and 4000 Hz</td></tr><tr><td class="">Gains (dB)</td><td class="">low -2.3, mid -5.0, tweeter +0.0</td></tr><tr><td class="">Delays (ms)</td><td class="">low 0.00, mid 1.26, tweeter 0.26</td></tr><tr><td class="">Polarity</td><td class="">low +, mid +, tweeter +</td></tr><tr><td class="">Mid EQ</td><td class="">high shelf +12.0 dB at 2200 Hz</td></tr><tr><td class="">No-sub option</td><td class="">+6 dB low shelf at 124 Hz with a 30 Hz high-pass: -6 dB at 92 Hz, safe to about 163 W</td></tr></tbody></table></div>
+<h2 id="low-end">Kick low end</h2>
+<p>The kick is a kick bin, not a sub, and like the HD-15 it is meant to run with one. One box on the ground is down
+6 dB at 104 Hz (109 Hz in free space).
+The small sealed chamber (sealed resonance about 161 Hz) keeps the cone under control
+below the horn's range, at the cost of extension. Without a sub, the no-sub shelf takes one box to
+92 Hz, but excursion then limits it to about 163 W.</p>
+<figure class="figure"><img class="plot" src="img/plots/kick-low-end.png" alt="Free space, on the ground, and per box in a 3 x 3 cluster." loading="lazy"><figcaption>Free space, on the ground, and per box in a 3 x 3 cluster.</figcaption></figure>
 
-<h2 id="method">Method</h2>
-<ol>
-<li><b>Plane-wave horns.</b> Thin annular slices cascaded as transfer matrices, open area = wall minus inner body.</li>
-<li><b>Drivers.</b> Thiele/Small motors with their sealed volumes and front chambers (cone area times Xmax plus clearance).</li>
-<li><b>Radiation.</b> Curved-wavefront far field at each mouth.</li>
-<li><b>FEM.</b> Axisymmetric Helmholtz (dolfinx 0.8) for the kick horn, the mid horn and the HF mouth in the mid horn, in a
-baffled half-space. Straight-tube check: median 3% error in throat impedance.</li>
-</ol>
-<figure class="figure"><img class="plot" src="img/plots/fem-vs-planewave.png" alt="FEM against plane-wave, kick and mid. Solid on axis, dotted 30 degrees." loading="lazy"><figcaption>FEM against plane-wave, kick and mid. Solid on axis, dotted 30 degrees.</figcaption></figure>
+<h2 id="low">Kick</h2>
+<p>Reversed 18 Sound 15MB700, hyperbolic-exponential (T = 0.6) horn, square mouth.</p>
+<figure class="figure"><img class="plot" src="img/plots/low-magnitude.png" alt="Magnitude on axis." loading="lazy"><figcaption>Magnitude on axis.</figcaption></figure>
+<figure class="figure"><img class="plot" src="img/plots/low-phase.png" alt="Phase and group delay." loading="lazy"><figcaption>Phase and group delay.</figcaption></figure>
+<figure class="figure"><img class="plot" src="img/plots/low-polar.png" alt="Off axis." loading="lazy"><figcaption>Off axis.</figcaption></figure>
+<figure class="figure"><img class="plot" src="img/plots/low-electrical.png" alt="Impedance and excursion." loading="lazy"><figcaption>Impedance and excursion.</figcaption></figure>
+
+
+<h2 id="mid">Mid</h2>
+<p>Beyma 8MI100 in the OS horn round the bullet. The response above 1 kHz includes the FEM correction (below).</p>
+<figure class="figure"><img class="plot" src="img/plots/mid-magnitude.png" alt="Magnitude on axis." loading="lazy"><figcaption>Magnitude on axis.</figcaption></figure>
+<figure class="figure"><img class="plot" src="img/plots/mid-phase.png" alt="Phase and group delay." loading="lazy"><figcaption>Phase and group delay.</figcaption></figure>
+<figure class="figure"><img class="plot" src="img/plots/mid-polar.png" alt="Off axis." loading="lazy"><figcaption>Off axis.</figcaption></figure>
+<figure class="figure"><img class="plot" src="img/plots/mid-electrical.png" alt="Impedance and excursion." loading="lazy"><figcaption>Impedance and excursion.</figcaption></figure>
+<figure class="figure"><img class="plot" src="img/plots/hf-in-mid.png" alt="The HF horn inside the mid horn, FEM." loading="lazy"><figcaption>The HF horn inside the mid horn, FEM.</figcaption></figure>
+
+<h2 id="tweeter">HF</h2>
+<p>18 Sound ND1030: datasheet response on axis, with the off-axis shape from the FEM of its printed horn inside the mid horn.</p>
+<figure class="figure"><img class="plot" src="img/plots/tweeter-magnitude.png" alt="Magnitude on axis." loading="lazy"><figcaption>Magnitude on axis.</figcaption></figure>
+<figure class="figure"><img class="plot" src="img/plots/tweeter-phase.png" alt="Phase and group delay." loading="lazy"><figcaption>Phase and group delay.</figcaption></figure>
+<figure class="figure"><img class="plot" src="img/plots/tweeter-polar.png" alt="Off axis." loading="lazy"><figcaption>Off axis.</figcaption></figure>
+
+
+<h2 id="fem">FEM validation</h2>
+<p><b>Kick.</b> FEM against the network, coupled to the driver, 40 to 250 Hz: 0.9 dB RMS,
+2.5 dB worst. Above about 400 Hz the FEM shows cross modes in the wide passage near the mouth,
+which a plane-wave model cannot; they are well above the 250 Hz crossover.</p>
+<p><b>Mid.</b> Within about 1 dB of the network up to 2.7 kHz. Above that the FEM falls 8 to 12 dB by 3 to 6 kHz:
+the air over the cone behaves as a radial cavity, which the network lumps into one node. So the upper crossover was
+picked again with the FEM correction applied
+(3500 Hz: 5.71, 4000 Hz: 5.82, 4500 Hz: 6.21, 5000 Hz: 6.24, lower is better), and 4 kHz is the highest that
+scores within 0.15 of the best. It needs the full 12 dB mid shelf. A two-slot phase plug, as in compression drivers,
+would push this up; that is the main open item for the mid.</p>
+<figure class="figure"><img class="plot" src="img/plots/fem-vs-planewave.png" alt="FEM against the network model." loading="lazy"><figcaption>FEM against the network model.</figcaption></figure>
+<h2 id="limits">Limits</h2>
+<ul>
+<li>Cone, spider and basket shapes are estimated from datasheet drawings; the shroud gap and bullet nose depend on them.</li>
+<li>Cones are rigid in the models. Mid cone breakup above about 1.5 to 3 kHz is not modelled.</li>
+<li>The felt is a loss factor, not a measured material.</li>
+<li>Free-space results use a baffle-step shelf for the box front; the FEM is in half space.</li>
+<li>The HF unit uses its datasheet curve, read by eye (about 2 dB), measured by the maker on their own horn.</li>
+<li>Array results are power sums of one box's polar; the low-frequency cluster uses a mutual-load approximation.</li>
+<li>Nothing has been built or measured.</li>
+</ul>
 
 </div></main>
 <footer><div class="wrap">

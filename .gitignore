@@ -5,3 +5,4 @@ __pycache__/
 .tmp/
 .DS_Store
 docs/img/renders/turntable/
+results/fem/work/

@@ -1,9 +1,9 @@
 {
- "splay_deg": 15.682815724662966,
+ "splay_deg": 30.0,
  "boxes": 3,
- "note": "Each box sits on the one below with its bottom panel on the neighbour's top panel; the angle between neighbours is the splay.",
+ "note": "Three boxes in a vertical column, each turned by the splay about the mouth front edge it shares with its neighbour. See array.json for the 3 x 3 array.",
  "pivot_mm": {
-  "y": 318.0,
-  "z": 525.0
+  "y": 395.4,
+  "z": 510.5
  }
 }

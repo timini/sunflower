@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Sunflower build</title>
-<meta name="description" content="Sunflower v0.2 bill of materials, cut list, printed parts and assembly.">
+<meta name="description" content="Sunflower cut list, printed parts and assembly.">
 <link rel="stylesheet" href="assets/style.css">
 <link rel="icon" href="data:image/svg+xml,<svg viewBox='0 0 32 32' aria-hidden='true'><g fill='none' stroke-width='2.4'><rect x='3' y='3' width='26' height='26' rx='4' stroke='%23d38a0c'/><circle cx='16' cy='16' r='8' stroke='%23eb6834'/><circle cx='16' cy='16' r='3.2' fill='%231baf7a' stroke='none'/></g></svg>">
 </head>
@@ -13,49 +13,35 @@
 <a class="brand" href="index.html"><svg viewBox="0 0 32 32" aria-hidden="true"><g fill="none" stroke-width="2.4">
 <rect x="3" y="3" width="26" height="26" rx="4" stroke="#d38a0c"/><circle cx="16" cy="16" r="8" stroke="#eb6834"/>
 <circle cx="16" cy="16" r="3.2" fill="#1baf7a" stroke="none"/></g></svg>Sunflower</a>
-<nav><a href="index.html">Product</a><a href="review.html">v0.2 review</a><a href="design.html">Design</a><a href="simulation.html">Simulation</a><a href="build.html" aria-current=page>Build</a><a href="downloads.html">Downloads</a></nav>
+<nav><a href="index.html">Product</a><a href="design.html">Design</a><a href="simulation.html">Simulation</a><a href="build.html" aria-current=page>Build</a><a href="downloads.html">Downloads</a></nav>
 </div></header>
 <main><div class="wrap">
 
 <h1>Build</h1>
-<p class="lede">Flat birch-ply panels and printed round parts. Everything here is generated from the same design file as the
-simulations.</p>
-<figure class="figure"><img class="plot" src="img/plots/low-drawing.png" alt="Cabinet section, mm." loading="lazy"><figcaption>Cabinet section, mm.</figcaption></figure>
-<figure class="figure"><img class="plot" src="img/plots/mid-drawing.png" alt="Mid horn, phase plug and HF horn, mm." loading="lazy"><figcaption>Mid horn, phase plug and HF horn, mm.</figcaption></figure>
-<figure class="figure"><img class="plot" src="img/plots/tweeter-drawing.png" alt="HF unit and its printed horn, mm." loading="lazy"><figcaption>HF unit and its printed horn, mm.</figcaption></figure>
-<figure class="figure"><img class="render" src="img/renders/exploded.jpg" alt="Exploded view." loading="lazy"><figcaption>Exploded view.</figcaption></figure>
-
-<h2>Bill of materials</h2>
-<div class="table-wrap"><table><thead><tr><th class="">Item</th><th class="">Qty</th><th class="">Notes</th></tr></thead><tbody><tr><td class="">Eminence DELTA-15LFA</td><td class="">1</td><td class="">Kick, rear-mounted, motor forward</td></tr><tr><td class="">Beyma 6MCF200Nd</td><td class="">1</td><td class="">Mid, 6.5 inch</td></tr><tr><td class="">18 Sound ND1030</td><td class="">1</td><td class="">HF, $150 each</td></tr><tr><td class="">Birch ply 18 mm</td><td class="">About 3 m²</td><td class=""></td></tr><tr><td class="">Birch ply 25 mm</td><td class="">1 baffle</td><td class=""></td></tr><tr><td class="">Birch ply 12 mm</td><td class="">About 0.3 m²</td><td class="">Corner filler faces and ribs</td></tr><tr><td class="">Aluminium tube, 12 mm OD</td><td class="">4</td><td class="">Centre body supports; the top one carries the mid and HF cables</td></tr><tr><td class="">PETG or ASA filament</td><td class="">About 3 to 4 kg</td><td class="">Printed parts below</td></tr><tr><td class="">M6 inserts and bolts</td><td class="">8</td><td class="">15 inch, from the chamber side</td></tr><tr><td class="">M4 heat-set inserts and screws</td><td class="">12</td><td class="">Mid driver, HF unit, part joints</td></tr><tr><td class="">Speaker cable 2 x 1.0 mm²</td><td class="">About 3 m</td><td class=""></td></tr><tr><td class="">Terminal cup</td><td class="">1</td><td class="">One pair per amplifier channel</td></tr><tr><td class="">Polyester wadding</td><td class="">0.5 m²</td><td class="">Chamber</td></tr><tr><td class="">Closed-cell foam blocks</td><td class="">1 litres</td><td class="">Fill the chamber down from 36 to 35 litres</td></tr><tr><td class="">3-way DSP and 3 amplifier channels</td><td class="">per box</td><td class="">LR4, delay, gain, shelf, limiter</td></tr></tbody></table></div>
-
-<h2>Cut list</h2>
-<div class="table-wrap"><table><thead><tr><th class="">Part</th><th class="num">Qty</th><th class="">Size (mm)</th><th class="num">Ply (mm)</th><th class="">Notes</th></tr></thead><tbody><tr><td class="">Sides</td><td class="num">2</td><td class="">588 long, 479 tall at the back, 636 at the front</td><td class="num">18</td><td class="">side.dxf</td></tr><tr><td class="">Top and bottom (shell)</td><td class="num">2</td><td class="">560 wide, angled 7.8 deg</td><td class="num">18</td><td class="">Fit between the sides</td></tr><tr><td class="">Back</td><td class="num">1</td><td class="">560 x 443</td><td class="num">18</td><td class="">Terminal cup</td></tr><tr><td class="">Baffle</td><td class="num">1</td><td class="">560 x 455</td><td class="num">25</td><td class="">baffle.dxf: cutout and four 40 mm chamber ports</td></tr><tr><td class="">Horn side walls</td><td class="num">2</td><td class="">Trapezoid 360 to 600, 510 long</td><td class="num">18</td><td class="">flare 11.3 deg</td></tr><tr><td class="">Horn top and bottom walls</td><td class="num">2</td><td class="">Trapezoid 396 to 596, 514 long</td><td class="num">18</td><td class="">flare 13.5 deg</td></tr><tr><td class="">Corner filler faces</td><td class="num">4</td><td class="">Triangle, base 149</td><td class="num">12</td><td class="">Three ribs each</td></tr></tbody></table></div>
-<p>DXF: <a href="cad/dxf/side.dxf">side</a>, <a href="cad/dxf/baffle.dxf">baffle</a>,
-<a href="cad/dxf/horn_side_wall.dxf">horn side wall</a>, <a href="cad/dxf/horn_top_wall.dxf">horn top wall</a>.</p>
-
+<p class="lede">A single-ply birch frustum, four tapering corner fillers, a printed centre body in sections, and three
+drivers. Files are on the <a href="downloads.html">downloads</a> page.</p>
+<figure class="figure"><video controls loop muted playsinline preload="none" poster="img/renders/assemble-poster.jpg"><source src="img/renders/assemble.webm" type="video/webm"><source src="img/renders/assemble.mp4" type="video/mp4"></video><figcaption>Assembly order.</figcaption></figure>
+<h2>Drivers</h2>
+<div class="table-wrap"><table><thead><tr><th class="">Section</th><th class="">Driver</th><th class="">Source</th><th class="num">Price (USD)</th></tr></thead><tbody><tr><td class="">Kick</td><td class="">18 Sound 15MB700, 15 inch, mounted reversed</td><td class=""><a href="https://www.eighteensound.it/en/products/lf-driver/15-0/8/15MB700.pdf">datasheet</a></td><td class="num">$246</td></tr><tr><td class="">Mid</td><td class="">Beyma 8MI100, 8 inch</td><td class=""><a href="https://www.Lautsprechershop.de/pdf/beyma/beyma_8mi100.pdf">datasheet</a></td><td class="num">$113</td></tr><tr><td class="">HF</td><td class="">18 Sound ND1030, 1 inch exit, 65 mm body</td><td class=""><a href="https://www.dibirama.it/images/ingrandimenti/eighteen_sound_nd1030/eighteen_sound_nd1030_spec.pdf">datasheet</a></td><td class="num">$150</td></tr><tr><td class=""></td><td class=""><b>Drivers per box</b></td><td class=""></td><td class="num"><b>$509</b></td></tr></tbody></table></div>
+<h2>Wood</h2>
+<div class="table-wrap"><table><thead><tr><th class="">Part</th><th class="">Qty</th><th class="">Notes</th></tr></thead><tbody><tr><td class="">Walls</td><td class="">4</td><td class="">18 mm birch trapezoids, outer face 479 to 791 mm, 602 mm long. Blade bevel 43.1 deg on both long edges, ends bevelled 15 deg.</td></tr><tr><td class="">Baffle</td><td class="">1</td><td class="">25 mm, 480 mm square at the front, 353 mm cutout, edges bevelled 15 deg. Glued inside the frustum; the kick flange screws to its front face.</td></tr><tr><td class="">Back</td><td class="">1</td><td class="">18 mm, removable: 12 x M5 into threaded inserts in the wall end grain; 3 mm closed-cell foam in a 7 mm wide, 2 mm deep groove over the wall ends.</td></tr><tr><td class="">Corner fillers</td><td class="">4</td><td class="">141 mm legs at the baffle, tapering to nothing at the mouth, 510 mm long. Rip a square hardwood blank of the leg size on its diagonal for two fillers, then taper each to a point at the mouth. Or stack 18 mm ply triangles (laminations below) and plane the face.</td></tr><tr><td class="">Array spacers</td><td class="">8</td><td class="">Tapered, 17 to 126 mm, for the 3 x 3 cluster's corner joints.</td></tr></tbody></table></div>
 <h2>Printed parts</h2>
-<p>Each part is already cut into sections and quarters that fit a 250 mm bed, in <code>cad/print/</code>.</p>
-<div class="table-wrap"><table><thead><tr><th class="">Part</th><th class="">Print files</th><th class="num">Est. mass (kg)</th></tr></thead><tbody><tr><td class="">One-piece centre body</td><td class=""><code>centre_body-1-q1.stl</code>, <code>centre_body-1-q2.stl</code>, <code>centre_body-1-q3.stl</code>, <code>centre_body-1-q4.stl</code>, <code>centre_body-2-q1.stl</code>, <code>centre_body-2-q2.stl</code>, <code>centre_body-2-q3.stl</code>, <code>centre_body-2-q4.stl</code></td><td class="num">4.82</td></tr><tr><td class="">Mid horn</td><td class=""><code>mid_horn-1.stl</code></td><td class="num">1.92</td></tr><tr><td class="">Mid driver sleeve</td><td class=""><code>mid_sleeve-1.stl</code></td><td class="num">1.66</td></tr><tr><td class="">Phase plug and HF horn</td><td class=""><code>phase_plug-1.stl</code></td><td class="num">0.32</td></tr></tbody></table></div>
-<p>Before printing, measure: the 15 inch cone profile and motor (the centre body's rear face follows the cone at Xmax plus
-3 mm and clears the motor by 3 mm), the mid cone profile (lead-in at 1.5 mm), and the HF unit's body cylinder (the plug is bored
-to 66 mm).</p>
-
+<p>The centre body, mid horn and bullet are split into 8 pieces that each fit a
+250 mm bed, with spigots and through bolts. Print the parts near the kick motor in ASA, PC or nylon (the motor runs hot);
+the rest can be PETG. Add the 3 mm felt layer to the recess under the bullet nose.</p>
 <h2>Assembly</h2>
 <ol class="steps">
-<li><b>Shell.</b> Glue the sides to the angled top and bottom and the back. Fit the baffle 45 mm in front of the back.
-Seal every joint.</li>
-<li><b>Kick driver.</b> Pass it motor-first through the baffle from behind; flange on the back face, on gasket, eight M6 bolts.</li>
-<li><b>Horn walls.</b> Glue in the four internal horn walls and the corner fillers. The space outside them is the sealed chamber,
-joined to the box behind the baffle through the four baffle ports. Add foam blocks to bring it to 35 litres.</li>
-<li><b>Centre body.</b> Glue the printed sections into one piece. Its rear face sits 8 mm in front
-of the 15 inch cone and does not touch the motor; it hangs on the rods, with a foam ring at the motor.</li>
-<li><b>Mid and HF.</b> Fit the HF unit into the phase plug, the plug's vanes into the mid horn throat, the mid driver to the back of
-the mid horn, then the sleeve and the centre body.</li>
-<li><b>Supports.</b> Four 12 mm tubes through the horn walls into the can; cables out through the top tube, through the chamber,
-to the terminal cup.</li>
-<li><b>DSP.</b> Start from the settings on the <a href="simulation.html#full-range">simulation page</a>, then measure each section.</li>
-<li><b>Stacking.</b> Boxes sit splayed at 15.7 degrees, angled panel on angled panel; fly or strap them as a column.</li>
+<li><b>Measure the drivers first.</b> Check the kick cone profile and basket against the shroud, and the mid cone
+against the bullet nose, before printing those parts.</li>
+<li>Glue the four walls with the fillers in the corners, then the baffle inside the frustum.</li>
+<li>Screw the kick driver to the front of the baffle, reversed, with its cone facing the chamber.</li>
+<li>Fit the four standoffs (one is the cable duct) and the shroud, then the motor fairing, mid pod with its driver, the
+mid horn sections and the bullet with the HF unit.</li>
+<li>Fit the four vanes from the body to the wall corners, then the back with its gasket.</li>
+<li>DSP: start from the settings on the <a href="simulation.html#full-range">simulation page</a>, then measure each section.</li>
 </ol>
+<figure class="figure"><img class="render" src="img/renders/exploded.jpg" alt="Exploded." loading="lazy"><figcaption>Exploded.</figcaption></figure>
+<figure class="figure"><img class="render" src="img/renders/section.jpg" alt="Cutaway." loading="lazy"><figcaption>Cutaway.</figcaption></figure>
 <figure class="figure"><img class="render" src="img/renders/rear-open.jpg" alt="Back removed." loading="lazy"><figcaption>Back removed.</figcaption></figure>
 
 </div></main>

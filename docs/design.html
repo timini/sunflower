@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Sunflower design</title>
-<meta name="description" content="How Sunflower v0.2 was sized from the inside out.">
+<meta name="description" content="How Sunflower is sized, from the HF body out to the square mouth.">
 <link rel="stylesheet" href="assets/style.css">
 <link rel="icon" href="data:image/svg+xml,<svg viewBox='0 0 32 32' aria-hidden='true'><g fill='none' stroke-width='2.4'><rect x='3' y='3' width='26' height='26' rx='4' stroke='%23d38a0c'/><circle cx='16' cy='16' r='8' stroke='%23eb6834'/><circle cx='16' cy='16' r='3.2' fill='%231baf7a' stroke='none'/></g></svg>">
 </head>
@@ -13,49 +13,67 @@
 <a class="brand" href="index.html"><svg viewBox="0 0 32 32" aria-hidden="true"><g fill="none" stroke-width="2.4">
 <rect x="3" y="3" width="26" height="26" rx="4" stroke="#d38a0c"/><circle cx="16" cy="16" r="8" stroke="#eb6834"/>
 <circle cx="16" cy="16" r="3.2" fill="#1baf7a" stroke="none"/></g></svg>Sunflower</a>
-<nav><a href="index.html">Product</a><a href="review.html">v0.2 review</a><a href="design.html" aria-current=page>Design</a><a href="simulation.html">Simulation</a><a href="build.html">Build</a><a href="downloads.html">Downloads</a></nav>
+<nav><a href="index.html">Product</a><a href="design.html" aria-current=page>Design</a><a href="simulation.html">Simulation</a><a href="build.html">Build</a><a href="downloads.html">Downloads</a></nav>
 </div></header>
 <main><div class="wrap">
 
 <h1>Design</h1>
-<p class="lede">Every size comes from the one inside it. The optimiser searched that chain for every HF unit, mid
-driver and kick driver in the catalogue, within a 600 mm depth limit.</p>
-<figure class="figure"><img class="plot" src="img/plots/chain.png" alt="The design chain, from the HF body cylinder out to the kick horn mouth." loading="lazy"><figcaption>The design chain, from the HF body cylinder out to the kick horn mouth.</figcaption></figure>
-<div class="table-wrap"><table><thead><tr><th class="">Step</th><th class="num">mm (cm² for areas)</th><th class="">Set by</th></tr></thead><tbody><tr><td class="">HF unit body cylinder</td><td class="num">65</td><td class="">18 Sound ND1030, flange ignored</td></tr><tr><td class="">Mid phase plug</td><td class="num">69</td><td class="">body cylinder plus a 2 mm sleeve</td></tr><tr><td class="">Smallest mid cone allowed</td><td class="num">110</td><td class="">1.6 times the plug</td></tr><tr><td class="">Mid cone used</td><td class="num">134</td><td class="">Beyma 6MCF200Nd</td></tr><tr><td class="">Mid throat, outer</td><td class="num">113</td><td class="">Sd / 2.2 as an annulus round the plug</td></tr><tr><td class="">Mid mouth</td><td class="num">220</td><td class="">os law, 150 mm long</td></tr><tr><td class="">Mid can</td><td class="num">232</td><td class="">mouth or driver frame plus the wall</td></tr><tr><td class="">Low centre body at the throat</td><td class="num">296</td><td class="">covers the 15 inch cone in front of it</td></tr><tr><td class="">Low throat area</td><td class="num">385</td><td class="">2.3:1 compression</td></tr><tr><td class="">Low mouth</td><td class="num">560</td><td class="">x 600 mm, exponential law to the can</td></tr></tbody></table></div>
-<figure class="figure"><img class="plot" src="img/plots/low-drawing.png" alt="Cabinet section, mm. Shaded: sealed chamber. Black: the one-piece centre body. Yellow: the mid phase plug." loading="lazy"><figcaption>Cabinet section, mm. Shaded: sealed chamber. Black: the one-piece centre body. Yellow: the mid phase plug.</figcaption></figure>
+<p class="lede">Sized from the inside out: the HF unit's body sets the mid phase plug, the plug sets the smallest
+mid cone and the throat, the mid horn and its pod set the kick's centre body, and the centre body and the walls set
+the kick horn. Every inner body is subtracted from its horn's area.</p>
+<figure class="figure"><img class="plot" src="img/plots/chain.png" alt="The inside-out chain: each size and what set it." loading="lazy"><figcaption>The inside-out chain: each size and what set it.</figcaption></figure>
+<h2>The reference: Funktion-One Res 2</h2>
+<p>The Res 2's selling point is a horn-loaded 8 inch cone that carries everything from 250 Hz up to the compression
+driver, so the voice, including the 2 to 4 kHz consonant band, stays on one paper cone. Funktion-One's Res 4 and 5
+run the same 8 inch to 5.7 and 7.5 kHz with their Axhead loading device. Sunflower keeps the 250 Hz low crossover and
+pushes the mid as high as the models allow: 4 kHz (see <a href="#mid">mid</a>).</p>
 
-<h2>Phase plugs shape the expansion</h2>
-<p>Each horn is designed as an open-area law. The inner body is always subtracted. In the mid, the plug is fixed by the
-HF unit (its body plus a 2 mm sleeve) and tapers to the HF horn mouth; the outer wall is solved so that wall minus plug
-follows the law. In the kick horn the walls are flat panels, so the centre body is solved instead: its radius is whatever
-leaves the open area on the law, from the throat to the mid can.</p>
-<div class="grid2">
-<figure class="figure"><img class="plot" src="img/plots/mid-area.png" alt="Mid: wall, plug and open area." loading="lazy"><figcaption>Mid: wall, plug and open area.</figcaption></figure>
-<figure class="figure"><img class="plot" src="img/plots/low-area.png" alt="Kick: walls, centre body and open area." loading="lazy"><figcaption>Kick: walls, centre body and open area.</figcaption></figure>
-</div>
+<h2 id="mid">Mid horn and its phase plug</h2>
+<p>Beyma 8MI100 in an oblate spheroidal (OS) horn, 360 mm mouth,
+360 mm long, 2.2:1 compression. The phase plug is one smooth bullet: its nose follows the
+cone 6.5 mm away, it holds the 18 Sound ND1030's 65 mm body, and it tapers to the
+printed HF horn's 61 mm mouth just inside the mid mouth. The wall is solved so the open area
+(wall minus bullet) follows the law exactly. The mid sits in a sealed 3.3 litre printed pod,
+separate from the kick motor.</p>
+<figure class="figure"><img class="plot" src="img/plots/mid-drawing.png" alt="Mid horn, bullet and HF horn, section, mm." loading="lazy"><figcaption>Mid horn, bullet and HF horn, section, mm.</figcaption></figure>
+<figure class="figure"><img class="plot" src="img/plots/mid-area.png" alt="Mid horn area: the bullet is always subtracted." loading="lazy"><figcaption>Mid horn area: the bullet is always subtracted.</figcaption></figure>
+<h3>Felt under the bullet</h3>
+<p>The air between the cone and the bullet nose is a radial cavity closed at the centre. Half a wavelength across the
+bullet radius puts a deep notch near 3.6 kHz, right where the mid hands over. Both the network model and the FEM show
+it. A felt layer on the underside of the nose damps it; the CAD has a 3 mm felt part recessed into the nose so the
+designed gap is kept.</p>
+<div class="table-wrap"><table><thead><tr><th class="num">Felt loss factor</th><th class="num">FEM notch depth (dB)</th><th class="num">Network notch depth (dB)</th></tr></thead><tbody><tr><td class="num">0.00</td><td class="num">24.2</td><td class="num">20.2</td></tr><tr><td class="num">0.05</td><td class="num">9.5</td><td class="num">5.1</td></tr><tr><td class="num">0.10</td><td class="num">4.4</td><td class="num">2.4</td></tr><tr><td class="num">0.20</td><td class="num">0.7</td><td class="num">0.7</td></tr><tr><td class="num">0.30</td><td class="num">0.9</td><td class="num">0.3</td></tr><tr><td class="num">0.50</td><td class="num">1.6</td><td class="num">0.1</td></tr><tr><td class="num">0.80</td><td class="num">1.8</td><td class="num">0.1</td></tr></tbody></table></div>
 
-<h2>HF units</h2>
-<p>Bullet super tweeters and 1 inch compression drivers, sized by their body cylinder only (flanges are cut off or
-ignored). A compression driver gets a small printed horn whose outside is the plug's tapering tip, the way Funktion-One
-puts the HF at the centre of the mid.</p>
-<div class="table-wrap"><table><thead><tr><th class="">Unit</th><th class="">Type</th><th class="num">Body (mm)</th><th class="num">Lowest crossover (kHz)</th><th class="">Price each</th><th class="">Best system score</th></tr></thead><tbody><tr><td class="">18 Sound ND1030</td><td class="">compression</td><td class="num">65</td><td class="num">1.8</td><td class="">$150</td><td class="">2.34</td></tr><tr><td class="">Celestion CDX1-1731</td><td class="">compression</td><td class="num">82</td><td class="num">2.2</td><td class="">$120</td><td class="">3.40</td></tr><tr><td class="">Faital HF108R</td><td class="">compression</td><td class="num">87</td><td class="num">1.3</td><td class="">$247</td><td class="">3.38</td></tr><tr><td class="">Fostex T90A</td><td class="">bullet</td><td class="num">60</td><td class="num">7.0</td><td class="">$252</td><td class="">3.82</td></tr><tr><td class="">Fostex T925A</td><td class="">bullet</td><td class="num">82</td><td class="num">6.0</td><td class="">$453</td><td class="">5.28</td></tr><tr><td class="">JBL 2402H</td><td class="">bullet</td><td class="num">119</td><td class="num">3.0</td><td class="">none found</td><td class="">excluded: No current price or listing found (probably discontinued). Checked 2026-11-17.</td></tr></tbody></table></div>
-<figure class="figure"><img class="plot" src="img/plots/tradeoff.png" alt="Every finalist, by HF unit: depth against score." loading="lazy"><figcaption>Every finalist, by HF unit: depth against score.</figcaption></figure>
-<p>Rule: among designs within 0.25 of the best score (2.34) and at most 600 mm deep: the cheapest HF unit, then the shallowest cabinet. Chosen: 18 Sound ND1030 with the Beyma 6MCF200Nd and the Eminence DELTA-15LFA.</p>
+<h2 id="kick">Kick horn and the reversed 15 inch</h2>
+<p>18 Sound 15MB700, reversed: the flange sits on the front of the baffle, the motor points into the horn and
+the cone's concave side faces a sealed 15 litre chamber. The centre body's underside is a shroud
+over the cone, outside the basket arms. The gap at each radius makes the channel area equal to the cone area inside
+that radius divided by 1.6, so every ring of the cone sees the same compression; it never comes closer
+than the basket arms plus 9 mm or the cone's mechanical travel plus 3 mm. The air leaves at the rim, turns under the
+shroud lip and runs forward through a 463 cm² throat.</p>
+<figure class="figure"><img class="plot" src="img/plots/throat-drawing.png" alt="The reversed cone, the shroud and the gap, mm." loading="lazy"><figcaption>The reversed cone, the shroud and the gap, mm.</figcaption></figure>
+<p>From the throat forward the body's radius is solved from the hyperbolic-exponential (T = 0.6) law, so the open area between the
+four walls, less the corner fillers, and the body follows it all the way to the square mouth. The body swells to
+572 mm, holds the kick motor, the mid pod and the mid horn, and meets the mid horn's
+outside at the kick mouth.</p>
+<figure class="figure"><img class="plot" src="img/plots/kick-drawing.png" alt="The cabinet in section. Upper half through the wall flats, lower half through a corner filler." loading="lazy"><figcaption>The cabinet in section. Upper half through the wall flats, lower half through a corner filler.</figcaption></figure>
+<figure class="figure"><img class="plot" src="img/plots/low-area.png" alt="Kick areas. Dots: areas sliced from the CAD air volume." loading="lazy"><figcaption>Kick areas. Dots: areas sliced from the CAD air volume.</figcaption></figure>
+<p>The horn profiles are checked against the solid model: the kick's air volume was built in CAD (walls, fillers,
+body, standoffs and vanes) and sliced at 60 planes. It matches the model to 0.001%, the mid to
+0.23% (the worst point is the HF cable hole). The support vanes block at most
+1.9% of the kick horn.</p>
+<div class="note"><p><b>Measure before printing.</b> No maker publishes cone sections. The 18 Sound 15MB700 geometry here
+is estimated from dimensioned drawings: cone rim (from Sd), cone profile and neck position, spider diameter, basket arm envelope. The shroud and the bullet nose must be checked against a real driver.</p></div>
 
-<h2>The search</h2>
-<ol>
-<li><b>HF and mid.</b> Four area laws, three throat compressions, five mouths (220 to 380 mm), five lengths (120 to 260 mm),
-crossovers f1 of 250, 315, 400 and 500 Hz, and each HF unit's upper crossovers. Only cones at least 1.6 times the plug, and
-the 60 most efficient per pool plus every verified driver. 123,344 rows kept. Score: in-band variation, coverage
-mismatch with the HF unit, a loading penalty when the mouth is smaller than c / (pi f1), an output floor, and a reward for a
-wider mid band.</li>
-<li><b>Kick.</b> The best mids became the end of the centre body in kick horns of three laws, three mouth widths, three
-heights and three lengths, at most 600 mm deep. Every 15 inch with at least 4 mm Xmax that is not an instrument or coaxial
-driver: 1,441 rows passing -3 dB at or below 80 Hz and at least 96 dB. Score: variation from 80 Hz to 1.4 f1,
-coverage match with the mid, low Qes for horn loading, and an output penalty below 100 dB.</li>
-<li><b>System.</b> The best combinations for each HF unit through the full crossover, scored on on-axis flatness, off-axis
-smoothness and bass extension.</li>
-</ol>
+<h2 id="box">Cabinet and splay</h2>
+<p>Single-ply 18 mm birch. The four horn walls are the outside of the box: four identical trapezoids with compound
+mitres, from a 470 mm square back to a 791 mm
+square mouth, 600 mm deep. The mid horn protrudes 150 mm beyond the kick mouth on a
+rolled lip, which keeps the box within 600 mm and keeps mid sound from diffracting into the kick horn.</p>
+<p>The splay between boxes is twice the wall angle, 30 degrees. It was chosen against the mid's coverage:
+about 0.8 of its -6 dB beamwidth from 1 to 4 kHz, the point-source rule Funktion-One also uses when it flies Res tops.</p>
+<figure class="figure"><img class="plot" src="img/plots/array-coverage.png" alt="Coverage of the 3 x 3 cluster (power sum of nine boxes)." loading="lazy"><figcaption>Coverage of the 3 x 3 cluster (power sum of nine boxes).</figcaption></figure>
+<figure class="figure"><img class="plot" src="img/plots/tradeoff.png" alt="Every kick variant in a 600 mm box: width against low-end extension." loading="lazy"><figcaption>Every kick variant in a 600 mm box: width against low-end extension.</figcaption></figure>
 
 </div></main>
 <footer><div class="wrap">

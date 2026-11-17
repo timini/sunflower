@@ -250,3 +250,121 @@ def beamwidth(f, polar_fn, angles=np.arange(0, 91, 2.5)):
 def group_delay(f, p):
     ph = np.unwrap(np.angle(p))
     return -np.gradient(ph, 2 * np.pi * np.asarray(f))
+
+
+# ---------------------------------------------------------------- nodal network
+class Network:
+    """Plane-wave duct network solved by nodal analysis, with distributed cone sources.
+
+    Nodes carry pressure; ducts (lossless, exact for a uniform segment)
+    join two nodes; a shunt volume at a node is an air compliance; a source
+    at a node is a share of the cone's projected area, so a rigid cone moving
+    at velocity v injects v x area there. One node radiates into a load.
+    For unit cone velocity the solve gives every nodal pressure. The
+    mechanical radiation impedance on the cone is sum(area_i p_i), and the
+    mouth volume velocity is p_mouth / Z_load. This replaces a lumped piston
+    and front volume: path-length spread across the cone, the cavity under
+    a phase plug and the bends all come out of the same equations.
+    """
+
+    def __init__(self):
+        self.n = 0
+        self.ducts = []
+        self.shunts = {}
+        self.sources = {}
+        self.mouth = None
+        self.mouth_radius = None
+        self.mouth_load = None
+
+    def node(self):
+        self.n += 1
+        return self.n - 1
+
+    def duct(self, a, b, area, length, loss=0.0):
+        """``loss`` > 0 makes the wavenumber k (1 - j loss): a lumped stand-in for a damping layer."""
+        if area <= 0 or length <= 0:
+            raise ValueError(f"bad duct {area} {length}")
+        self.ducts.append((a, b, float(area), float(length), float(loss)))
+
+    def path(self, a, areas, lengths):
+        """Chain of ducts from node a; returns the node list including a."""
+        nodes = [a]
+        for S, L in zip(areas, lengths):
+            nxt = self.node()
+            self.duct(nodes[-1], nxt, S, L)
+            nodes.append(nxt)
+        return nodes
+
+    def volume(self, node, v):
+        self.shunts[node] = self.shunts.get(node, 0.0) + float(v)
+
+    def source(self, node, area):
+        self.sources[node] = self.sources.get(node, 0.0) + float(area)
+
+    def radiate(self, node, radius, load=None):
+        self.mouth, self.mouth_radius, self.mouth_load = node, radius, load
+
+    @property
+    def source_area(self):
+        return sum(self.sources.values())
+
+    def solve(self, f):
+        f = np.asarray(f, float)
+        w = 2 * np.pi * f
+        k = w / C
+        F, N = len(f), self.n
+        Y = np.zeros((F, N, N), complex)
+        for a, b, S, L, eta in self.ducts:
+            zc = RHO * C / S
+            kk = k * (1 - 1j * eta)
+            s, c = np.sin(kk * L), np.cos(kk * L)
+            y0 = 1 / (1j * zc * s)
+            Y[:, a, a] += y0 * c
+            Y[:, b, b] += y0 * c
+            Y[:, a, b] -= y0
+            Y[:, b, a] -= y0
+        for n, v in self.shunts.items():
+            Y[:, n, n] += 1j * w * v / (RHO * C**2)
+        zl = self.mouth_load(f) if self.mouth_load is not None else piston_load(f, self.mouth_radius)
+        Y[:, self.mouth, self.mouth] += 1 / zl
+        q = np.zeros((F, N), complex)
+        for n, a in self.sources.items():
+            q[:, n] = a
+        p = np.linalg.solve(Y, q[..., None])[..., 0]
+        z_rad = (p * q).sum(1)
+        return dict(f=f, p=p, z_rad=z_rad, u_mouth=p[:, self.mouth] / zl, load=zl)
+
+
+def couple(driver: Driver, net: dict, *, v=2.83, rear_litres=None, mmd=None):
+    """Drive a solved network (unit cone velocity) with a Thiele-Small motor.
+
+    ``mmd`` is the moving mass without air load; the network supplies the
+    front air load. Without it, Mms less 1.5 times the one-side baffled air
+    mass is used (the datasheet Mms carries air on both sides, and the
+    sealed rear chamber adds back about half of one side).
+    """
+    f = net["f"]
+    w = 2 * np.pi * f
+    drv = driver.with_rear_volume(rear_litres)
+    if mmd is None:
+        a = np.sqrt(drv.sd / np.pi)
+        mmd = drv.mms - 1.5 * 8 * RHO * a**3 / 3
+    zm = drv.rms + 1j * w * mmd + 1 / (1j * w * drv.cms) + net["z_rad"]
+    ze = drv.re + 1j * w * drv.le
+    den = ze * zm + drv.bl**2
+    vel = drv.bl * v / den
+    cur = v * zm / den
+    return dict(vel=vel, u_mouth=vel * net["u_mouth"], z_e=v / cur, x_peak_m=np.sqrt(2) * np.abs(vel) / w,
+                input_power_w=np.real(v * np.conj(cur)),
+                radiated_power_w=np.abs(vel * net["u_mouth"]) ** 2 * net["load"].real)
+
+
+def baffle_step(f, width):
+    """Free-space box: first-order shelf from half space (above) to -6 dB (below), f3 near 115/width."""
+    x = 1j * np.asarray(f) / (115.0 / width)
+    return (x + 0.5) / (x + 1)
+
+
+def array_load(f, radius, n):
+    """Per-box mouth load in a tight cluster of n coherent boxes: n times the load of one piston of n times the area."""
+    return n * piston_load(f, radius * np.sqrt(n))

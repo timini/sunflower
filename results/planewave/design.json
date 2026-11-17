@@ -1,83 +1,111 @@
 {
-  "low": {
-    "driver": "Eminence DELTA-15LFA",
-    "throat_width_mm": 360.0,
-    "mouth_width_mm": 560.0,
-    "mouth_height_mm": 600.0,
-    "length_mm": 500.0,
-    "law": "exponential",
-    "rear_chamber_litres": 35.0,
-    "throat_area_m2": 0.03852605119984108,
-    "mouth_area_m2": 0.29372672925329574,
-    "min_area_m2": 0.03852605119984108,
-    "compression": 2.265999168904186,
-    "expansion": 7.624106808395338,
-    "front_chamber_litres": 0.68094,
-    "splay_deg": 15.682815724662966,
-    "chamber_available_litres": 35.53494914493099,
-    "depth_m": 0.588
+  "kick": {
+    "driver": "18 Sound 15MB700",
+    "law": "hypex",
+    "throat_width_mm": 480.0,
+    "mouth_width_mm": 753.5761254721763,
+    "protrusion_mm": 150.0,
+    "estimated_geometry": [
+      "cone rim (from Sd)",
+      "cone profile and neck position",
+      "spider diameter",
+      "basket arm envelope"
+    ],
+    "throat_area_m2": 0.046257206410359165,
+    "mouth_area_m2": 0.518235293715658,
+    "compression": 1.6,
+    "cone_to_throat": 1.837551521074228,
+    "horn_length_m": 0.44577733922380536,
+    "mouth_width_m": 0.7535761254721762,
+    "external_mouth_m": 0.7908460679669392,
+    "external_back_m": 0.46957498624202315,
+    "depth_m": 0.5995,
+    "overall_depth_m": 0.7895000000000001,
+    "splay_deg": 30.0,
+    "chamber_litres": 14.907485325379211,
+    "trapped_litres": 0.9616297074337197,
+    "turn_z_m": 0.06472266077619468,
+    "max_body_radius_m": 0.2862048327259766
   },
   "mid": {
-    "driver": "Beyma 6MCF200Nd",
-    "nominal": "6.5in",
+    "driver": "Beyma 8MI100",
     "law": "os",
     "compression": 2.2,
-    "plug_diameter_mm": 69.0,
-    "outer_throat_diameter_mm": 113.41707749054589,
-    "mouth_diameter_mm": 220.0,
-    "length_mm": 150.0,
-    "can_diameter_mm": 232.0,
-    "can_length_mm": 242.99999999999997
+    "plug_diameter_mm": 71.10818710315162,
+    "outer_throat_diameter_mm": 133.3745467488023,
+    "mouth_diameter_mm": 360.0,
+    "length_mm": 360.0,
+    "half_angle_deg": 8.482788134972886,
+    "gap_mm": 6.45,
+    "front_cavity_litres": 0.12386039408029506,
+    "rear_litres": 3.261621599149906,
+    "estimated_geometry": [
+      "cone rim (from Sd)",
+      "motor height",
+      "motor diameter",
+      "top plate position",
+      "cone profile and neck position",
+      "spider diameter",
+      "basket arm envelope"
+    ]
   },
   "tweeter": {
     "driver": "18 Sound ND1030",
     "kind": "compression",
     "body_diameter_mm": 65.0,
-    "hf_horn_mouth_mm": 40.64,
+    "hf_horn_mouth_mm": 60.959999999999994,
     "price_usd": 150
   },
   "crossover_hz": [
-    500.0,
-    3500.0
+    250.0,
+    4000.0
   ],
+  "prices_usd": {
+    "kick": 245.95,
+    "mid": 112.95,
+    "hf": 150
+  },
   "selection": {
     "tweeter": "18sound-nd1030",
-    "crossover_hz": [
-      500.0,
-      3500.0
-    ],
     "mid": {
-      "driver_id": "beyma-6mcf200nd",
-      "label": "Beyma 6MCF200Nd",
-      "nominal": "6.5in",
-      "law": "os",
-      "compression": 2.2,
-      "mouth_diameter": 0.22,
-      "length": 0.15,
-      "hf_horn_length": 0.06
+      "driver_id": "beyma-8mi100",
+      "geometry": {
+        "law": "os",
+        "compression": 2.2,
+        "mouth_diameter": 0.36,
+        "length": 0.36,
+        "hf_mouth_ratio": 2.4
+      }
     },
-    "low": {
-      "driver_id": "eminence-delta-15lfa",
-      "law": "exponential",
-      "mouth_width": 0.56,
-      "mouth_height": 0.6,
-      "length": 0.5,
-      "rear_litres": 35.0
+    "kick": {
+      "driver_id": "18sound-15mb700",
+      "geometry": {
+        "compression": 1.6,
+        "law": "hypex",
+        "half_angle_deg": 15.0,
+        "protrusion": 0.15,
+        "chamber_depth": 0.046
+      }
     },
+    "crossover_hz": [
+      250.0,
+      4000.0
+    ],
     "scores": {
-      "score": 2.3408729129023746,
-      "rms_on_db": 1.2439382973894366,
-      "spread_30_db": 1.0268875663885682,
-      "f3_hz": 81.66981664637308
+      "system": 6.605362041515962,
+      "score": 6.291977769648205,
+      "rms_on_db": 2.055994208033228,
+      "spread_30_db": 5.340475188396092,
+      "f3_hz": 121.31491934833862,
+      "sensitivity_db": 103.04041780591487
     },
-    "cabinet": {
-      "width": 0.5960000000000001,
-      "height": 0.636,
-      "depth": 0.588,
-      "volume_m3": 0.222884928,
-      "splay_deg": 15.682815724662966
-    },
-    "hf_price_usd": 150.0,
-    "rule": "among designs within 0.25 of the best score (2.34) and at most 600 mm deep: the cheapest HF unit, then the shallowest cabinet"
+    "rule": "lowest system score; among designs within 0.25 of it, the cheapest",
+    "crossover_note": "The network model alone picks a higher crossover. The FEM shows the mid falling 8 to 12 dB from 3 to 6 kHz (a radial cavity mode over the cone that the network lumps away), so f2 is re-picked with that correction: the highest of 3.5 to 5 kHz scoring within 0.15 of the best.",
+    "f2_after_fem": {
+      "3500": 5.711,
+      "4000": 5.82,
+      "4500": 6.211,
+      "5000": 6.239
+    }
   }
 }

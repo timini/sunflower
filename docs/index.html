@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Sunflower</title>
-<meta name="description" content="A three-way nested coaxial horn: kick, wide-band mid and HF on one axis.">
+<meta name="description" content="Sunflower: a three-way nested coaxial horn after the Funktion-One Res 2.">
 <link rel="stylesheet" href="assets/style.css">
 <link rel="icon" href="data:image/svg+xml,<svg viewBox='0 0 32 32' aria-hidden='true'><g fill='none' stroke-width='2.4'><rect x='3' y='3' width='26' height='26' rx='4' stroke='%23d38a0c'/><circle cx='16' cy='16' r='8' stroke='%23eb6834'/><circle cx='16' cy='16' r='3.2' fill='%231baf7a' stroke='none'/></g></svg>">
 </head>
@@ -13,56 +13,42 @@
 <a class="brand" href="index.html"><svg viewBox="0 0 32 32" aria-hidden="true"><g fill="none" stroke-width="2.4">
 <rect x="3" y="3" width="26" height="26" rx="4" stroke="#d38a0c"/><circle cx="16" cy="16" r="8" stroke="#eb6834"/>
 <circle cx="16" cy="16" r="3.2" fill="#1baf7a" stroke="none"/></g></svg>Sunflower</a>
-<nav><a href="index.html" aria-current=page>Product</a><a href="review.html">v0.2 review</a><a href="design.html">Design</a><a href="simulation.html">Simulation</a><a href="build.html">Build</a><a href="downloads.html">Downloads</a></nav>
+<nav><a href="index.html" aria-current=page>Product</a><a href="design.html">Design</a><a href="simulation.html">Simulation</a><a href="build.html">Build</a><a href="downloads.html">Downloads</a></nav>
 </div></header>
 <main><div class="wrap">
 
 <h1>Sunflower</h1>
-<p class="lede">A three-way coaxial horn where each horn's phase plug is the next horn. A 18 Sound ND1030 on a small
-printed horn sits in the middle of an oblate spheroidal (OS) mid horn and is its phase plug. The mid horn and its
-6.5 inch driver sit in a can that is the end of a one-piece centre body, which is the phase plug of a reversed
-15 inch kick horn. It follows the Funktion-One Res layout (kick, wide-band mid, small HF) on one axis.</p>
+<p class="lede">A three-way coaxial horn built on the idea behind the Funktion-One Res 2: a kick horn up to
+250 Hz, a cone mid that carries the voice from 250 Hz to 4 kHz, and a 1 inch compression driver above.
+Here the three are nested on one axis. The HF horn is the mid's phase plug, and the mid horn is the core of the kick
+horn's centre body.</p>
 <figure class="hero"><img src="img/renders/hero.jpg" alt="Rendered Sunflower cabinet"></figure>
 <div class="stat">
-<div><b>103 dB</b><span>2.83 V, 1 m</span></div>
-<div><b>81 Hz</b><span>low -3 dB; pair with a sub</span></div>
-<div><b>500 Hz / 3.5 kHz</b><span>crossovers: kick, wide-band mid, HF</span></div>
-<div><b>596 x 636 x 588</b><span>mm, width x height x depth</span></div>
+<div><b>104 dB</b><span>2.83 V, 1 m</span></div>
+<div><b>104 Hz</b><span>kick -6 dB on the ground; 92 Hz with the no-sub shelf</span></div>
+<div><b>250 Hz / 4 kHz</b><span>crossovers: kick, vocal-range mid, HF</span></div>
+<div><b>791 x 791 x 600</b><span>mm at the mouth; the mid horn stands
+150 mm proud</span></div>
 </div>
-<div class="note"><p><b>Status.</b> Version 0.2, simulated only. What changed from v0.1 and what is still missing is on the
-<a href="review.html">v0.2 review</a> page.</p></div>
-<h2>Stacks</h2>
-<p>The top and bottom of the cabinet are angled, so boxes stack into a splayed column: 15.7 degrees
-between neighbours.</p>
-<figure class="figure"><img class="render" src="img/renders/stack.jpg" alt="Three cabinets splayed in a vertical stack." loading="lazy"><figcaption>Three cabinets splayed in a vertical stack.</figcaption></figure>
+<div class="note"><p><b>Status.</b> Simulated, not built or measured. The cone and basket shapes of the drivers are
+estimated from datasheet drawings, and the phase plugs must be checked against real drivers before printing. The
+<a href="simulation.html#limits">limits</a> section lists what the models leave out.</p></div>
+<figure class="figure"><video controls loop muted playsinline preload="none" poster="img/renders/turntable-poster.jpg"><source src="img/renders/turntable.webm" type="video/webm"><source src="img/renders/turntable.mp4" type="video/mp4"></video><figcaption>One box, all the way round.</figcaption></figure>
+<h2>Nine boxes, one point source</h2>
+<p>All four walls are angled at 15 degrees, so neighbouring boxes splay 30 degrees in
+both directions and a 3 x 3 block forms a curved point source. The edge joints close flush. Identical square boxes
+cannot also close at the four corners, so tapered spacers fill those joints (up to
+126 mm thick).</p>
+<figure class="figure"><img class="render" src="img/renders/stack.jpg" alt="Nine boxes as a curved point source, with the corner spacers." loading="lazy"><figcaption>Nine boxes as a curved point source, with the corner spacers.</figcaption></figure>
+<figure class="figure"><video controls loop muted playsinline preload="none" poster="img/renders/orbit-poster.jpg"><source src="img/renders/orbit.webm" type="video/webm"><source src="img/renders/orbit.mp4" type="video/mp4"></video><figcaption>Around the 3 x 3 cluster.</figcaption></figure>
 <div class="grid2">
-<figure class="figure"><img class="render" src="img/renders/front-dims.jpg" alt="Into the mouth, mm. The corner fillers turn the rectangle into an octagon at the throat." loading="lazy"><figcaption>Into the mouth, mm. The corner fillers turn the rectangle into an octagon at the throat.</figcaption></figure>
-<figure class="figure"><img class="render" src="img/renders/stack-side-dims.jpg" alt="The stack from the side." loading="lazy"><figcaption>The stack from the side.</figcaption></figure>
+<figure class="figure"><img class="render" src="img/renders/front-dims.jpg" alt="Into the mouth, mm. Completely square at the mouth; the corner fillers make the throat an octagon." loading="lazy"><figcaption>Into the mouth, mm. Completely square at the mouth; the corner fillers make the throat an octagon.</figcaption></figure>
+<figure class="figure"><img class="render" src="img/renders/section-side-dims.jpg" alt="Side section, mm." loading="lazy"><figcaption>Side section, mm.</figcaption></figure>
 </div>
-
-<h2>Three horns, one axis, designed from the inside out</h2>
-<div class="grid3">
-<div class="card"><h3><span class="swatch" style="background:var(--tw)"></span>HF, 3.5 kHz up</h3>
-<p>18 Sound ND1030 (compression), 65 mm body cylinder. A printed horn, 41 mm at
-the mouth, runs to just inside the mid mouth. Its outside is the tapering tip of the mid phase plug.</p></div>
-<div class="card"><h3><span class="swatch" style="background:var(--mid)"></span>Mid, 500 Hz to 3.5 kHz</h3>
-<p>Beyma 6MCF200Nd (6.5 inch). Its cone is at least 1.6 times the 69 mm plug.
-Oblate spheroidal (os) open-area law from a 2.2:1 annular throat to a 220 mm mouth over
-150 mm, with the plug always subtracted.</p></div>
-<div class="card"><h3><span class="swatch" style="background:var(--low)"></span>Kick, up to 500 Hz</h3>
-<p>Eminence DELTA-15LFA, mounted backwards. The one-piece centre body's rear face follows the cone, so the throat is a
-narrow 2.3:1 annulus. A tube-like kick horn, 500 mm long, 560 x
-600 mm mouth.</p></div>
-</div>
-<figure class="figure"><img class="render" src="img/renders/section-side-dims.jpg" alt="Cutaway on the axis, mouth on the left, mm." loading="lazy"><figcaption>Cutaway on the axis, mouth on the left, mm.</figcaption></figure>
-<div class="grid2">
-<figure class="figure"><img class="render" src="img/renders/section.jpg" alt="Cutaway: chamber, reversed 15 inch, centre body, mid can, phase plug and HF horn." loading="lazy"><figcaption>Cutaway: chamber, reversed 15 inch, centre body, mid can, phase plug and HF horn.</figcaption></figure>
-<figure class="figure"><img class="render" src="img/renders/detail.jpg" alt="The mid mouth with the HF horn at its centre." loading="lazy"><figcaption>The mid mouth with the HF horn at its centre.</figcaption></figure>
-</div>
-
-<h2>Specification</h2>
-<div class="table-wrap"><table><thead><tr><th class=""></th><th class="">Value</th><th class="">Notes</th></tr></thead><tbody><tr><td class="">Type</td><td class="">Three-way coaxial horn, active</td><td class="">Kick bin with wide-band mid and HF; use with a sub</td></tr><tr><td class="">Sensitivity</td><td class="">103.5 dB</td><td class="">2.83 V, 1 m</td></tr><tr><td class="">Response</td><td class="">81 Hz to 16 kHz, -3 dB</td><td class="">On axis after DSP. No-sub shelf: -6 dB at 61 Hz, up to about 48 W</td></tr><tr><td class="">Crossovers</td><td class="">500 Hz and 3.5 kHz</td><td class="">Linkwitz-Riley 24 dB/oct</td></tr><tr><td class="">Drivers</td><td class="">Eminence DELTA-15LFA, Beyma 6MCF200Nd, 18 Sound ND1030</td><td class=""></td></tr><tr><td class="">Cabinet</td><td class="">596 wide, 636 high at the front, 479 at the back, 588 deep</td><td class="">18 mm birch ply; 15.7 degree splay</td></tr><tr><td class="">HF unit price</td><td class="">$150</td><td class="">Retail, see the Design page</td></tr></tbody></table></div>
-<figure class="figure"><img class="render" src="img/renders/turntable.gif" alt="Turntable animation"><figcaption>Turntable, rendered in Blender from the CAD.</figcaption></figure>
+<h2>Drivers</h2>
+<div class="table-wrap"><table><thead><tr><th class="">Section</th><th class="">Driver</th><th class="">Source</th><th class="num">Price (USD)</th></tr></thead><tbody><tr><td class="">Kick</td><td class="">18 Sound 15MB700, 15 inch, mounted reversed</td><td class=""><a href="https://www.eighteensound.it/en/products/lf-driver/15-0/8/15MB700.pdf">datasheet</a></td><td class="num">$246</td></tr><tr><td class="">Mid</td><td class="">Beyma 8MI100, 8 inch</td><td class=""><a href="https://www.Lautsprechershop.de/pdf/beyma/beyma_8mi100.pdf">datasheet</a></td><td class="num">$113</td></tr><tr><td class="">HF</td><td class="">18 Sound ND1030, 1 inch exit, 65 mm body</td><td class=""><a href="https://www.dibirama.it/images/ingrandimenti/eighteen_sound_nd1030/eighteen_sound_nd1030_spec.pdf">datasheet</a></td><td class="num">$150</td></tr><tr><td class=""></td><td class=""><b>Drivers per box</b></td><td class=""></td><td class="num"><b>$509</b></td></tr></tbody></table></div>
+<p>Chosen by an optimiser that tried 5,112 mid and HF combinations and 784 kick and cabinet
+variants, then tuned the best through the crossover. See <a href="design.html">design</a>.</p>
 
 </div></main>
 <footer><div class="wrap">

@@ -23,7 +23,7 @@ LOGO = """<svg viewBox="0 0 32 32" aria-hidden="true"><g fill="none" stroke-widt
 <rect x="3" y="3" width="26" height="26" rx="4" stroke="#d38a0c"/><circle cx="16" cy="16" r="8" stroke="#eb6834"/>
 <circle cx="16" cy="16" r="3.2" fill="#1baf7a" stroke="none"/></g></svg>"""
 
-PAGES = [("index.html", "Product"), ("review.html", "v0.2 review"), ("design.html", "Design"), ("simulation.html", "Simulation"),
+PAGES = [("index.html", "Product"), ("design.html", "Design"), ("simulation.html", "Simulation"),
          ("build.html", "Build"), ("downloads.html", "Downloads")]
 
 
@@ -74,401 +74,314 @@ def load():
         dsp=json.loads((R / "planewave/dsp.json").read_text()),
         fem=json.loads((R / "fem/summary.json").read_text()),
         cut=json.loads((ROOT / "cad/cutlist.json").read_text()),
-        stack=json.loads((ROOT / "cad/stack.json").read_text()),
+        array=json.loads((ROOT / "cad/array.json").read_text()),
         parts=json.loads((ROOT / "cad/parts.json").read_text()),
         cutoffs=json.loads((R / "planewave/cutoffs.json").read_text()),
         system=pd.read_csv(R / "planewave/system.csv"),
-        low=pd.read_csv(R / "planewave/low.csv"),
-        mid=pd.read_csv(R / "planewave/mid.csv"),
-        tweeter=pd.read_csv(R / "planewave/tweeter.csv"),
-        mids=pd.read_csv(R / "optimise/mid-shortlist.csv"),
-        midsearch_n=len(pd.read_csv(R / "optimise/mid-search.csv.gz", usecols=[0])),
-        lowsearch_n=len(pd.read_csv(R / "optimise/low-search.csv.gz", usecols=[0])),
-        sysdf=pd.read_csv(R / "optimise/system-search.csv"),
+        area=pd.read_csv(R / "cad/area-check.csv"),
+        felt=pd.read_csv(R / "fem/mid-felt-sweep.csv") if (R / "fem/mid-felt-sweep.csv").exists() else None,
+        n_mid=len(pd.read_csv(R / "optimise/mid-search.csv", usecols=[0])),
+        n_kick=len(pd.read_csv(R / "optimise/kick-search.csv", usecols=[0])),
         summary=D.summary(),
     )
     s = data["system"]
     f = s.frequency_hz.values
     on = s.sum_0deg_spl_db.values
     ref = on[(f >= 200) & (f <= 2000)].mean()
-    b = (f >= 100) & (f <= 16000)
-    data["kpi"] = dict(sensitivity=float(data["dsp"]["target_db"]), ptp=float(np.ptp(on[b])),
-                       f3=float(f[np.argmax(on > ref - 3)]), f6=float(f[np.argmax(on > ref - 6)]))
+    data["kpi"] = dict(sensitivity=float(data["dsp"]["target_db"]), f6=float(f[np.argmax(on > ref - 6)]))
     return data
 
 
-def section_band(df, lo, hi):
-    b = (df.frequency_hz >= lo) & (df.frequency_hz <= hi)
-    return float(np.ptp(df.spl_db[b])), float(df.spl_db[b].mean())
+def video(name, caption):
+    return (f'<figure class="figure"><video controls loop muted playsinline preload="none" '
+            f'poster="img/renders/{name}-poster.jpg"><source src="img/renders/{name}.webm" type="video/webm">'
+            f'<source src="img/renders/{name}.mp4" type="video/mp4"></video><figcaption>{caption}</figcaption></figure>')
 
 
-def an(word):
-    return "an" if word[0] in "aeiou" else "a"
+def price(v):
+    return f"${v:.0f}" if v else "not found"
 
 
-def inch(nominal):
-    return nominal.replace("in", " inch")
+def drivers_table(d):
+    k, m, tw = D.KICK_RECORD, D.MID_RECORD, D.TW
+    rows = [["Kick", f"{D.label(k)}, 15 inch, mounted reversed", f'<a href="{k["parameter_source"]}">datasheet</a>',
+             price(k.get("price_usd"))],
+            ["Mid", f"{D.label(m)}, 8 inch", f'<a href="{m["parameter_source"]}">datasheet</a>', price(m.get("price_usd"))],
+            ["HF", f"{tw.model}, 1 inch exit, {tw.body_diameter*1000:.0f} mm body", f'<a href="{tw.source}">datasheet</a>',
+             price(tw.price_usd)]]
+    total = sum(x for x in (k.get("price_usd"), m.get("price_usd"), tw.price_usd) if x)
+    rows.append(["", "<b>Drivers per box</b>", "", f"<b>${total:.0f}</b>"])
+    return table(["Section", "Driver", "Source", "Price (USD)"], rows, num=(3,))
 
 
 # ---------------------------------------------------------------- pages
 def index(d):
-    k, cut, sm, st = d["kpi"], d["cut"], d["summary"], d["stack"]
+    k, cut, dsp = d["kpi"], d["cut"], d["dsp"]
     ex = cut["external_mm"]
     f1, f2 = D.CROSSOVER_LOW_MID_HZ, D.CROSSOVER_MID_HIGH_HZ
-    m, lo, tw = D.MID, D.LOW, D.TW
-    shelf = d["dsp"].get("no_sub_shelf", {})
+    K, m, tw = D.KICK, D.MID, D.TW
+    low = dsp["kick_low_end"]["single_half_space_db"]
+    shelf = dsp["no_sub_shelf"]
     body = f"""
 <h1>Sunflower</h1>
-<p class="lede">A three-way coaxial horn where each horn's phase plug is the next horn. A {tw.model} on a small
-printed horn sits in the middle of {an(law_name(m.law))} {law_name(m.law)} mid horn and is its phase plug. The mid horn and its
-{inch(m.nominal)} driver sit in a can that is the end of a one-piece centre body, which is the phase plug of a reversed
-15 inch kick horn. It follows the Funktion-One Res layout (kick, wide-band mid, small HF) on one axis.</p>
+<p class="lede">A three-way coaxial horn built on the idea behind the Funktion-One Res 2: a kick horn up to
+{f1:.0f} Hz, a cone mid that carries the voice from {f1:.0f} Hz to {f2/1000:.0f} kHz, and a 1 inch compression driver above.
+Here the three are nested on one axis. The HF horn is the mid's phase plug, and the mid horn is the core of the kick
+horn's centre body.</p>
 <figure class="hero"><img src="img/renders/hero.jpg" alt="Rendered Sunflower cabinet"></figure>
 <div class="stat">
 <div><b>{k['sensitivity']:.0f} dB</b><span>2.83 V, 1 m</span></div>
-<div><b>{k['f3']:.0f} Hz</b><span>low -3 dB; pair with a sub</span></div>
-<div><b>{f1:.0f} Hz / {f2/1000:.1f} kHz</b><span>crossovers: kick, wide-band mid, HF</span></div>
-<div><b>{ex['width']:.0f} x {ex['height_front']:.0f} x {ex['depth']:.0f}</b><span>mm, width x height x depth</span></div>
+<div><b>{low['f_minus6_hz']:.0f} Hz</b><span>kick -6 dB on the ground; {shelf['f_minus6_hz']:.0f} Hz with the no-sub shelf</span></div>
+<div><b>{f1:.0f} Hz / {f2/1000:.0f} kHz</b><span>crossovers: kick, vocal-range mid, HF</span></div>
+<div><b>{ex['width']:.0f} x {ex['height_front']:.0f} x {ex['depth']:.0f}</b><span>mm at the mouth; the mid horn stands
+{K.protrusion*1000:.0f} mm proud</span></div>
 </div>
-<div class="note"><p><b>Status.</b> Version 0.2, simulated only. What changed from v0.1 and what is still missing is on the
-<a href="review.html">v0.2 review</a> page.</p></div>
-<h2>Stacks</h2>
-<p>The top and bottom of the cabinet are angled, so boxes stack into a splayed column: {st['splay_deg']:.1f} degrees
-between neighbours.</p>
-{fig("img/renders/stack.jpg", "Three cabinets splayed in a vertical stack.", "render")}
+<div class="note"><p><b>Status.</b> Simulated, not built or measured. The cone and basket shapes of the drivers are
+estimated from datasheet drawings, and the phase plugs must be checked against real drivers before printing. The
+<a href="simulation.html#limits">limits</a> section lists what the models leave out.</p></div>
+{video("turntable", "One box, all the way round.")}
+<h2>Nine boxes, one point source</h2>
+<p>All four walls are angled at {K.half_angle_deg:.0f} degrees, so neighbouring boxes splay {K.splay_deg:.0f} degrees in
+both directions and a 3 x 3 block forms a curved point source. The edge joints close flush. Identical square boxes
+cannot also close at the four corners, so tapered spacers fill those joints (up to
+{d['cut']['array_spacers']['max_thickness_mm']:.0f} mm thick).</p>
+{fig("img/renders/stack.jpg", "Nine boxes as a curved point source, with the corner spacers.", "render")}
+{video("orbit", "Around the 3 x 3 cluster.")}
 <div class="grid2">
-{fig("img/renders/front-dims.jpg", "Into the mouth, mm. The corner fillers turn the rectangle into an octagon at the throat.", "render")}
-{fig("img/renders/stack-side-dims.jpg", "The stack from the side.", "render")}
+{fig("img/renders/front-dims.jpg", "Into the mouth, mm. Completely square at the mouth; the corner fillers make the throat an octagon.", "render")}
+{fig("img/renders/section-side-dims.jpg", "Side section, mm.", "render")}
 </div>
-
-<h2>Three horns, one axis, designed from the inside out</h2>
-<div class="grid3">
-<div class="card"><h3><span class="swatch" style="background:var(--tw)"></span>HF, {f2/1000:.1f} kHz up</h3>
-<p>{tw.model} ({tw.kind}), {tw.body_diameter*1000:.0f} mm body cylinder. A printed horn, {2*m.hf_mouth_radius*1000:.0f} mm at
-the mouth, runs to just inside the mid mouth. Its outside is the tapering tip of the mid phase plug.</p></div>
-<div class="card"><h3><span class="swatch" style="background:var(--mid)"></span>Mid, {f1:.0f} Hz to {f2/1000:.1f} kHz</h3>
-<p>{sm['mid']['driver']} ({inch(m.nominal)}). Its cone is at least 1.6 times the {2*m.plug_radius*1000:.0f} mm plug.
-{law_name(m.law).capitalize()} open-area law from a {m.compression:.1f}:1 annular throat to a {m.mouth_diameter*1000:.0f} mm mouth over
-{m.length*1000:.0f} mm, with the plug always subtracted.</p></div>
-<div class="card"><h3><span class="swatch" style="background:var(--low)"></span>Kick, up to {f1:.0f} Hz</h3>
-<p>{sm['low']['driver']}, mounted backwards. The one-piece centre body's rear face follows the cone, so the throat is a
-narrow {lo.compression:.1f}:1 annulus. A tube-like kick horn, {lo.length*1000:.0f} mm long, {lo.mouth_width*1000:.0f} x
-{lo.mouth_height*1000:.0f} mm mouth.</p></div>
-</div>
-{fig("img/renders/section-side-dims.jpg", "Cutaway on the axis, mouth on the left, mm.", "render")}
-<div class="grid2">
-{fig("img/renders/section.jpg", "Cutaway: chamber, reversed 15 inch, centre body, mid can, phase plug and HF horn.", "render")}
-{fig("img/renders/detail.jpg", "The mid mouth with the HF horn at its centre.", "render")}
-</div>
-
-<h2>Specification</h2>
-{table(["", "Value", "Notes"], [
-    ["Type", "Three-way coaxial horn, active", "Kick bin with wide-band mid and HF; use with a sub"],
-    ["Sensitivity", f"{k['sensitivity']:.1f} dB", "2.83 V, 1 m"],
-    ["Response", f"{k['f3']:.0f} Hz to 16 kHz, -3 dB", f"On axis after DSP. No-sub shelf: -6 dB at {shelf.get('f_minus6_hz', float('nan')):.0f} Hz, up to about {shelf.get('safe_power_w', float('nan')):.0f} W"],
-    ["Crossovers", f"{f1:.0f} Hz and {f2/1000:.1f} kHz", "Linkwitz-Riley 24 dB/oct"],
-    ["Drivers", f"{sm['low']['driver']}, {sm['mid']['driver']}, {tw.model}", ""],
-    ["Cabinet", f"{ex['width']:.0f} wide, {ex['height_front']:.0f} high at the front, {ex['height_back']:.0f} at the back, {ex['depth']:.0f} deep", f"18 mm birch ply; {st['splay_deg']:.1f} degree splay"],
-    ["HF unit price", f"${tw.price_usd:.0f}" if tw.price_usd else "", "Retail, see the Design page"],
-])}
-<figure class="figure"><img class="render" src="img/renders/turntable.gif" alt="Turntable animation"><figcaption>Turntable, rendered in Blender from the CAD.</figcaption></figure>
+<h2>Drivers</h2>
+{drivers_table(d)}
+<p>Chosen by an optimiser that tried {d['n_mid']:,} mid and HF combinations and {d['n_kick']:,} kick and cabinet
+variants, then tuned the best through the crossover. See <a href="design.html">design</a>.</p>
 """
-    return page("index.html", "Sunflower", body, "A three-way nested coaxial horn: kick, wide-band mid and HF on one axis.")
-
-
-GAPS = [
-    ("Design order", "Tweeter, mid and low searched on separate grids. The PRV cone was barely wider than the 86 mm plug",
-     "Inside out: HF body cylinder, then plug, then mid cones at least 1.6 times the plug, then throat, mouth, can, centre body, kick horn"),
-    ("Mid phase plug", "A cylinder that stopped dead at the tweeter face: a step in open area",
-     "The plug tapers to the HF horn mouth and the wall follows the area law, so open area has no step"),
-    ("HF unit", "Fostex T925A super tweeter, $453, read by its outside envelope",
-     "Five HF units compared, including 1 inch compression drivers on our own printed horn (Funktion-One style), sized by body cylinder only, with prices"),
-    ("HF in the mid horn", "Not modelled", "Axisymmetric FEM of the HF mouth inside the mid horn. It showed a deep notch when the mouth was deep inside, so the HF horn now runs to 10 mm inside the mid mouth"),
-    ("Low centre body", "15 inch nose and mid-can tail separate, with a gap between", "One piece from the cone to the mid can"),
-    ("Low throat", "No compression (throat bigger than the cone)", "The centre body's rear face follows the cone, giving a narrow compressed annulus"),
-    ("Low front chamber", "8.4 litres, roll-off near 660 Hz", "Cone area times (Xmax + 3 mm), well under a litre"),
-    ("Depth", "982 mm", "At most 600 mm"),
-    ("Cabinet", "Square box with dead voids", "Angled top and bottom, voids are the sealed chamber, splayed stacking"),
-    ("Band split", "Kick to 400 Hz, mid to 6 kHz", "Crossovers chosen by the optimiser from 250 to 500 Hz and the HF unit's range, rewarding a wide mid band"),
-    ("Print sizes", "302 mm can, larger than common beds", "Every printed part cut into sections and quarters within 250 mm"),
-    ("Cost", "None", "HF price is the tie-breaker among near-equal designs; prices listed"),
-]
-REMAINING = [
-    "Nothing is built or measured.",
-    "HF responses are datasheet curves on the maker's horn, read by eye; the printed HF horn changes them. Only its coverage is modelled (FEM).",
-    "Low and mid FEM are axisymmetric: the rectangular kick horn becomes a circle of equal area.",
-    "Thiele/Small data for most catalogue drivers are unverified; the chosen ones are checked by hand.",
-    "The 15 inch cone profile and motor size, and the mid cone profile, are estimated. Measure before printing the centre body and plug.",
-    "Mid and low driver prices are not in the cost score; only the HF unit's.",
-    "Cone breakup is not modelled; cone sizes are only trusted to fixed crossover limits.",
-]
-
-
-def review(d):
-    body = f"""
-<h1>v0.2 review</h1>
-<p class="lede">v0.1 was reviewed against the design brief. v0.2 closes these gaps. The v0.1 site and files are kept at
-the <a href="{REPO}/tree/v0.1">v0.1 tag</a>.</p>
-<h2>Gaps and what v0.2 does about them</h2>
-{table(["Area", "v0.1", "v0.2"], GAPS)}
-<h2>References</h2>
-{table(["Reference", "Layout", "Use here"], [
-    ["Funktion-One Res 2", "15 inch kick horn to 250 Hz, 8 inch mid with Axhead from 250 Hz up, 1 inch HF. 102 dB bass, 106 dB mid/HF, 60 Hz to 18 kHz", "Overall band split"],
-    ["Funktion-One Res 4T", "12 inch 114 to 445 Hz, 8 inch 445 Hz to 5.77 kHz, 1 inch compression driver 5.55 to 18 kHz", "HF type and crossover region"],
-    ["HD-15 kick bin", "Front-loaded 15 inch straight horn, about 578 x 578 x 472 mm outside, useful from about 90 Hz", "Depth target and kick-horn character"],
-])}
-<p>Funktion-One figures are from <a href="https://funktion-one.com/product/res-2">funktion-one.com</a>. HD-15 figures
-are from a <a href="https://www.diyaudio.com/community/posts/7749785">diyAudio thread</a>; the plans themselves are on
-Speakerplans and are not reproduced here.</p>
-<h2>Still open</h2>
-<ul>{"".join(f"<li>{r}</li>" for r in REMAINING)}</ul>
-"""
-    return page("review.html", "Sunflower v0.2 review", body, "Gap analysis of Sunflower v0.1 and what v0.2 changed.")
+    return page("index.html", "Sunflower", body, "Sunflower: a three-way nested coaxial horn after the Funktion-One Res 2.")
 
 
 def design(d):
-    lo, m, tw, sel = D.LOW, D.MID, D.TW, D.SELECTED
-    sysdf = d["sysdf"]
-    from sunflower import tweeters as TWS
-    hf_rows = []
-    for tid in TWS.all_ids(include_excluded=True):
-        t = TWS.load(tid)
-        g = sysdf[sysdf.tweeter == tid]
-        best = g.sort_values("score").iloc[0] if len(g) else None
-        excluded = json.loads((ROOT / "data/drivers/excluded.json").read_text())["drivers"].get(tid)
-        hf_rows.append([t.model, t.kind, f"{t.body_diameter*1000:.0f}", f"{t.crossover_min_hz/1000:.1f}",
-                        f"${t.price_usd:.0f}" if t.price_usd else "none found",
-                        f"{best.score:.2f}" if best is not None else ("excluded: " + excluded if excluded else "no feasible design")])
-    chain = [[n, f"{v:.0f}", note] for n, v, note in D.chain()]
+    K, m, tw = D.KICK, D.MID, D.TW
+    kd, md = K.drv, m.drv
+    a = d["area"]
+    ka = a[a.kind == "kick"]
+    mi = a[a.kind == "mid"]
+    felt = d["felt"]
+    felt_rows = ""
+    if felt is not None and "eta" in felt:
+        g = felt.groupby("eta").first().reset_index()
+    f1, f2 = D.CROSSOVER_LOW_MID_HZ, D.CROSSOVER_MID_HIGH_HZ
+    fs = d["fem"]["mid"].get("felt_sweep", {}).get("rows", [])
+    if fs:
+        felt_rows = table(["Felt loss factor", "FEM notch depth (dB)", "Network notch depth (dB)"],
+                          [[f"{r['eta']:.2f}", f"{r['fem_null_depth_db']:.1f}", f"{r['network_null_depth_db']:.1f}"]
+                           for r in fs], num=(0, 1, 2))
+    est = ", ".join(kd.estimated)
     body = f"""
 <h1>Design</h1>
-<p class="lede">Every size comes from the one inside it. The optimiser searched that chain for every HF unit, mid
-driver and kick driver in the catalogue, within a 600 mm depth limit.</p>
-{fig("img/plots/chain.png", "The design chain, from the HF body cylinder out to the kick horn mouth.")}
-{table(["Step", "mm (cm² for areas)", "Set by"], chain, num=(1,))}
-{fig("img/plots/low-drawing.png", "Cabinet section, mm. Shaded: sealed chamber. Black: the one-piece centre body. Yellow: the mid phase plug.")}
+<p class="lede">Sized from the inside out: the HF unit's body sets the mid phase plug, the plug sets the smallest
+mid cone and the throat, the mid horn and its pod set the kick's centre body, and the centre body and the walls set
+the kick horn. Every inner body is subtracted from its horn's area.</p>
+{fig("img/plots/chain.png", "The inside-out chain: each size and what set it.")}
+<h2>The reference: Funktion-One Res 2</h2>
+<p>The Res 2's selling point is a horn-loaded 8 inch cone that carries everything from 250 Hz up to the compression
+driver, so the voice, including the 2 to 4 kHz consonant band, stays on one paper cone. Funktion-One's Res 4 and 5
+run the same 8 inch to 5.7 and 7.5 kHz with their Axhead loading device. Sunflower keeps the 250 Hz low crossover and
+pushes the mid as high as the models allow: {f2/1000:.0f} kHz (see <a href="#mid">mid</a>).</p>
 
-<h2>Phase plugs shape the expansion</h2>
-<p>Each horn is designed as an open-area law. The inner body is always subtracted. In the mid, the plug is fixed by the
-HF unit (its body plus a 2 mm sleeve) and tapers to the HF horn mouth; the outer wall is solved so that wall minus plug
-follows the law. In the kick horn the walls are flat panels, so the centre body is solved instead: its radius is whatever
-leaves the open area on the law, from the throat to the mid can.</p>
-<div class="grid2">
-{fig("img/plots/mid-area.png", "Mid: wall, plug and open area.")}
-{fig("img/plots/low-area.png", "Kick: walls, centre body and open area.")}
-</div>
+<h2 id="mid">Mid horn and its phase plug</h2>
+<p>{D.label(D.MID_RECORD)} in an {law_name(m.law)} horn, {m.mouth_diameter*1000:.0f} mm mouth,
+{m.length*1000:.0f} mm long, {m.compression:.1f}:1 compression. The phase plug is one smooth bullet: its nose follows the
+cone {m.gap*1000:.1f} mm away, it holds the {tw.model}'s {tw.body_diameter*1000:.0f} mm body, and it tapers to the
+printed HF horn's {2*m.hf_mouth_radius*1000:.0f} mm mouth just inside the mid mouth. The wall is solved so the open area
+(wall minus bullet) follows the law exactly. The mid sits in a sealed {m.rear_volume_litres:.1f} litre printed pod,
+separate from the kick motor.</p>
+{fig("img/plots/mid-drawing.png", "Mid horn, bullet and HF horn, section, mm.")}
+{fig("img/plots/mid-area.png", "Mid horn area: the bullet is always subtracted.")}
+<h3>Felt under the bullet</h3>
+<p>The air between the cone and the bullet nose is a radial cavity closed at the centre. Half a wavelength across the
+bullet radius puts a deep notch near 3.6 kHz, right where the mid hands over. Both the network model and the FEM show
+it. A felt layer on the underside of the nose damps it; the CAD has a 3 mm felt part recessed into the nose so the
+designed gap is kept.</p>
+{felt_rows}
 
-<h2>HF units</h2>
-<p>Bullet super tweeters and 1 inch compression drivers, sized by their body cylinder only (flanges are cut off or
-ignored). A compression driver gets a small printed horn whose outside is the plug's tapering tip, the way Funktion-One
-puts the HF at the centre of the mid.</p>
-{table(["Unit", "Type", "Body (mm)", "Lowest crossover (kHz)", "Price each", "Best system score"], hf_rows, num=(2, 3))}
-{fig("img/plots/tradeoff.png", "Every finalist, by HF unit: depth against score.")}
-<p>Rule: {sel['rule']}. Chosen: {tw.model} with the {d['summary']['mid']['driver']} and the {d['summary']['low']['driver']}.</p>
+<h2 id="kick">Kick horn and the reversed 15 inch</h2>
+<p>{D.label(D.KICK_RECORD)}, reversed: the flange sits on the front of the baffle, the motor points into the horn and
+the cone's concave side faces a sealed {K.chamber_litres:.0f} litre chamber. The centre body's underside is a shroud
+over the cone, outside the basket arms. The gap at each radius makes the channel area equal to the cone area inside
+that radius divided by {K.compression:.1f}, so every ring of the cone sees the same compression; it never comes closer
+than the basket arms plus 9 mm or the cone's mechanical travel plus 3 mm. The air leaves at the rim, turns under the
+shroud lip and runs forward through a {K.throat_area*1e4:.0f} cm² throat.</p>
+{fig("img/plots/throat-drawing.png", "The reversed cone, the shroud and the gap, mm.")}
+<p>From the throat forward the body's radius is solved from the {law_name(K.law)} law, so the open area between the
+four walls, less the corner fillers, and the body follows it all the way to the square mouth. The body swells to
+{2*K.summary()['max_body_radius_m']*1000:.0f} mm, holds the kick motor, the mid pod and the mid horn, and meets the mid horn's
+outside at the kick mouth.</p>
+{fig("img/plots/kick-drawing.png", "The cabinet in section. Upper half through the wall flats, lower half through a corner filler.")}
+{fig("img/plots/low-area.png", "Kick areas. Dots: areas sliced from the CAD air volume.")}
+<p>The horn profiles are checked against the solid model: the kick's air volume was built in CAD (walls, fillers,
+body, standoffs and vanes) and sliced at 60 planes. It matches the model to {ka.diff_pct.abs().max():.3f}%, the mid to
+{mi.diff_pct.abs().max():.2f}% (the worst point is the HF cable hole). The support vanes block at most
+{ka.vane_blockage_pct.max():.1f}% of the kick horn.</p>
+<div class="note"><p><b>Measure before printing.</b> No maker publishes cone sections. The {kd.label} geometry here
+is estimated from dimensioned drawings: {est}. The shroud and the bullet nose must be checked against a real driver.</p></div>
 
-<h2>The search</h2>
-<ol>
-<li><b>HF and mid.</b> Four area laws, three throat compressions, five mouths (220 to 380 mm), five lengths (120 to 260 mm),
-crossovers f1 of 250, 315, 400 and 500 Hz, and each HF unit's upper crossovers. Only cones at least 1.6 times the plug, and
-the 60 most efficient per pool plus every verified driver. {d['midsearch_n']:,} rows kept. Score: in-band variation, coverage
-mismatch with the HF unit, a loading penalty when the mouth is smaller than c / (pi f1), an output floor, and a reward for a
-wider mid band.</li>
-<li><b>Kick.</b> The best mids became the end of the centre body in kick horns of three laws, three mouth widths, three
-heights and three lengths, at most 600 mm deep. Every 15 inch with at least 4 mm Xmax that is not an instrument or coaxial
-driver: {d['lowsearch_n']:,} rows passing -3 dB at or below 80 Hz and at least 96 dB. Score: variation from 80 Hz to 1.4 f1,
-coverage match with the mid, low Qes for horn loading, and an output penalty below 100 dB.</li>
-<li><b>System.</b> The best combinations for each HF unit through the full crossover, scored on on-axis flatness, off-axis
-smoothness and bass extension.</li>
-</ol>
+<h2 id="box">Cabinet and splay</h2>
+<p>Single-ply 18 mm birch. The four horn walls are the outside of the box: four identical trapezoids with compound
+mitres, from a {d['cut']['external_mm']['height_back']:.0f} mm square back to a {d['cut']['external_mm']['width']:.0f} mm
+square mouth, {K.depth*1000:.0f} mm deep. The mid horn protrudes {K.protrusion*1000:.0f} mm beyond the kick mouth on a
+rolled lip, which keeps the box within 600 mm and keeps mid sound from diffracting into the kick horn.</p>
+<p>The splay between boxes is twice the wall angle, {K.splay_deg:.0f} degrees. It was chosen against the mid's coverage:
+about 0.8 of its -6 dB beamwidth from 1 to 4 kHz, the point-source rule Funktion-One also uses when it flies Res tops.</p>
+{fig("img/plots/array-coverage.png", "Coverage of the 3 x 3 cluster (power sum of nine boxes).")}
+{fig("img/plots/tradeoff.png", "Every kick variant in a 600 mm box: width against low-end extension.")}
 """
-    return page("design.html", "Sunflower design", body, "How Sunflower v0.2 was sized from the inside out.")
+    return page("design.html", "Sunflower design", body, "How Sunflower is sized, from the HF body out to the square mouth.")
 
 
-def horn_section(name, title, intro):
-    figs = [(f"img/plots/{name}-drawing.png", "Dimensioned section, mm."),
-            (f"img/plots/{name}-area.png", "Open area along the horn."),
-            (f"img/plots/{name}-magnitude.png", "Magnitude on axis, unfiltered, with its cutoffs."),
-            (f"img/plots/{name}-phase.png", "Phase and group delay."),
-            (f"img/plots/{name}-polar.png", "Off-axis responses and polar map."),
-            (f"img/plots/{name}-electrical.png", "Impedance and cone excursion.")]
-    blocks = "".join(fig(f, c) for f, c in figs if (DOCS / f).exists())
-    return f'<h2 id="{name}">{title}</h2>\n{intro}\n{blocks}'
+def section(name, title, intro, extra=""):
+    return f"""
+<h2 id="{name}">{title}</h2>
+<p>{intro}</p>
+{fig(f"img/plots/{name}-magnitude.png", "Magnitude on axis.")}
+{fig(f"img/plots/{name}-phase.png", "Phase and group delay.")}
+{fig(f"img/plots/{name}-polar.png", "Off axis.")}
+{fig(f"img/plots/{name}-electrical.png", "Impedance and excursion.") if name != "tweeter" else ""}
+{extra}"""
 
 
 def simulation(d):
-    dsp, fem, co = d["dsp"], d["fem"], d["cutoffs"]
+    dsp, co, fem = d["dsp"], d["cutoffs"], d["fem"]
+    K, m = D.KICK, D.MID
     f1, f2 = D.CROSSOVER_LOW_MID_HZ, D.CROSSOVER_MID_HIGH_HZ
-    lr, lm = section_band(d["low"], 80, f1)
-    mr, mm = section_band(d["mid"], f1, f2)
-    tr, tm = section_band(d["tweeter"], f2, 16000)
-    sm = d["summary"]
-    m, lo, tw = D.MID, D.LOW, D.TW
-    fmt = lambda v: f"{v:.0f} Hz" if v else "outside the plotted range"  # noqa: E731
-    shelf = dsp.get("no_sub_shelf", {})
-    hf = fem.get("hf", {})
-    low_intro = f"""<p>{sm['low']['driver']} in the kick horn: {law_name(lo.law)} law to the mid can, {lo.compression:.1f}:1 throat,
-{lo.length*1000:.0f} mm long, {D.LOW_REAR_LITRES:.0f} litre sealed chamber. From 80 Hz to {f1:.0f} Hz: {lr:.1f} dB variation at
-{lm:.1f} dB. Lower -3 dB at {fmt(co['low']['f_low_3db'])}; the mouth cutoff is {co['low']['mouth_cutoff_hz']:.0f} Hz. FEM
-agrees within {fem['low']['max_abs_difference_db']:.1f} dB in band.</p>"""
-    mid_intro = f"""<p>{sm['mid']['driver']} in {an(law_name(m.law))} {law_name(m.law)} horn round the tapering plug: {m.outer_throat_radius*2000:.0f} mm
-throat, {m.mouth_diameter*1000:.0f} mm mouth, {m.length*1000:.0f} mm long. From {f1:.0f} Hz to {f2:.0f} Hz: {mr:.1f} dB variation
-at {mm:.1f} dB. Lower -3 dB at {fmt(co['mid']['f_low_3db'])}, upper at {fmt(co['mid']['f_high_3db'])}, mouth cutoff
-{co['mid']['mouth_cutoff_hz']:.0f} Hz. FEM agrees within {fem['mid']['max_abs_difference_db']:.1f} dB in band.</p>"""
-    tw_intro = f"""<p>{tw.model}: on-axis response from the <a href="{tw.source}">datasheet</a>, read by eye to about 2 dB, with
-minimum phase. Off axis from the FEM of its printed horn mouth inside the mid horn. From {f2:.0f} Hz to 16 kHz: {tr:.1f} dB
-variation at {tm:.1f} dB.</p>
-{fig("img/plots/hf-in-mid.png", "HF mouth inside the mid horn, axisymmetric FEM, against a free piston of the same size.")}
-<p>In the FEM, sitting in the mid horn changes the HF's on-axis level by {hf.get('onaxis_change_db_mean', float('nan')):+.1f} dB on
-average from {f2/1000:.1f} to 16 kHz and narrows it: {hf.get('rel_30deg_fem_mean_db', float('nan')):.1f} dB at 30 degrees against
-{hf.get('rel_30deg_piston_mean_db', float('nan')):.1f} dB for the free piston.</p>"""
+    le = dsp["kick_low_end"]
+    sh = dsp["no_sub_shelf"]
+    kp = fem["kick"]["passband"]["spl_0deg"]
+    k3 = fem.get("kick3d", {})
+    k3t = ""
+    for key in ("passband", "comparison", "agreement"):
+        if isinstance(k3.get(key), dict):
+            v = k3[key].get("spl_0deg", k3[key])
+            if isinstance(v, dict) and "max_abs_db" in v:
+                k3t = f" A 3D model of the real square frustum with its fillers agrees with the round equal-area model to {v['max_abs_db']:.1f} dB from 40 to 250 Hz."
+    sel = D.SELECTED
+    f2s = sel.get("f2_after_fem", {})
+    dsp_rows = [["Crossover", f"Linkwitz-Riley 24 dB/oct at {f1:.0f} Hz and {f2:.0f} Hz"],
+                ["Gains (dB)", ", ".join(f"{k} {v:+.1f}" for k, v in dsp["gain_db"].items())],
+                ["Delays (ms)", ", ".join(f"{k} {v:.2f}" for k, v in dsp["delay_ms"].items())],
+                ["Polarity", ", ".join(f"{k} {'+' if v > 0 else '-'}" for k, v in dsp["polarity"].items())],
+                ["Mid EQ", f"high shelf +{dsp['eq']['mid_high_shelf_db']:.1f} dB at {dsp['eq']['mid_high_shelf_hz']:.0f} Hz"],
+                ["No-sub option", f"+6 dB low shelf at {sh['shelf_hz']:.0f} Hz with a 30 Hz high-pass: -6 dB at "
+                                  f"{sh['f_minus6_hz']:.0f} Hz, safe to about {sh.get('safe_power_w', 0):.0f} W"]]
     body = f"""
 <h1>Simulation</h1>
-<p class="lede">Each horn on its own with all its plots, then the full range with its cutoffs. All at 2.83 V, 1 m.</p>
-<p><a href="#low">Kick horn</a> · <a href="#mid">Mid horn</a> · <a href="#tweeter">HF</a> · <a href="#full-range">Full range</a> ·
-<a href="#method">Method</a></p>
-{horn_section("low", "Kick horn", low_intro)}
-{horn_section("mid", "Mid horn", mid_intro)}
-{horn_section("tweeter", "HF", tw_intro)}
-
+<p class="lede">Each horn is modelled from its real profile. A plane-wave network, built slice by slice from the
+geometry, screens thousands of designs; the cone is a distributed source, not a piston. Axisymmetric FEM (and a 3D
+check of the square kick horn) then validates the chosen one, with the cone as a vibrating boundary.</p>
 <h2 id="full-range">Full range</h2>
-{fig("img/plots/full-range.png", "Top: each section unfiltered and level-matched, with its cutoffs. Bottom: through the crossover; dashed blue is the no-sub shelf.")}
-{table(["Section", "Lower -3 dB", "Upper -3 dB", "Other limit"], [
-    ["Kick", fmt(co['low']['f_low_3db']), fmt(co['low']['f_high_3db']), f"Mouth cutoff {co['low']['mouth_cutoff_hz']:.0f} Hz"],
-    ["Mid", fmt(co['mid']['f_low_3db']), fmt(co['mid']['f_high_3db']), f"Mouth cutoff {co['mid']['mouth_cutoff_hz']:.0f} Hz"],
-    ["HF", fmt(co['tweeter']['f_low_3db']), fmt(co['tweeter']['f_high_3db']), f"Datasheet cutoff {tw.cutoff_hz:.0f} Hz"],
-    ["Crossovers", f"{f1:.0f} Hz", f"{f2:.0f} Hz", "LR4"],
-])}
-<p>On axis the sum stays within {d['kpi']['ptp']:.1f} dB peak to peak from 100 Hz to 16 kHz (RMS {dsp['rms_deviation_100_16k_db']:.2f} dB),
-before any EQ.</p>
+{fig("img/plots/full-range.png", "Top: each section on its own with the cutoffs that limit it. Bottom: through the crossover.")}
 {fig("img/plots/full-range-group-delay.png", "Group delay of the sum.")}
-<h3>DSP settings</h3>
-{table(["Channel", "Filter", "Gain", "Delay", "Polarity in the model"], [
-    ["Kick", f"LR4 low-pass {f1:.0f} Hz", f"{dsp['gain_db']['low']:+.1f} dB", f"{dsp['delay_ms']['low']:.2f} ms", "Inverted" if dsp['polarity']['low'] < 0 else "Normal"],
-    ["Mid", f"LR4 high-pass {f1:.0f} Hz, LR4 low-pass {f2:.0f} Hz", f"{dsp['gain_db']['mid']:+.1f} dB", f"{dsp['delay_ms']['mid']:.2f} ms", "Normal"],
-    ["HF", f"LR4 high-pass {f2:.0f} Hz", f"{dsp['gain_db']['tweeter']:+.1f} dB", f"{dsp['delay_ms']['tweeter']:.2f} ms", "Inverted" if dsp['polarity']['tweeter'] < 0 else "Normal"],
-], num=(2, 3))}
-<div class="note"><p>The reversed 15 inch pulls air out of the horn when wired red to positive, the opposite of the model's
-convention. Where the table says the kick is normal, invert that DSP channel; where it says inverted, leave it normal.</p>
-<p><b>Without a sub.</b> A +6 dB second-order low shelf at {shelf.get('shelf_hz', float('nan')):.0f} Hz on the kick channel, with a
-30 Hz LR4 high-pass, moves -6 dB to {shelf.get('f_minus6_hz', float('nan')):.0f} Hz. It needs {shelf.get('max_excursion_mm', float('nan')):.1f} mm
-of excursion at the rated {shelf.get('rated_power_w', float('nan')):.0f} W against {shelf.get('xmax_mm', float('nan')):.1f} mm Xmax, so limit the kick
-channel to about {shelf.get('safe_power_w', float('nan')):.0f} W when the shelf is on.</p></div>
-
-<h2 id="method">Method</h2>
-<ol>
-<li><b>Plane-wave horns.</b> Thin annular slices cascaded as transfer matrices, open area = wall minus inner body.</li>
-<li><b>Drivers.</b> Thiele/Small motors with their sealed volumes and front chambers (cone area times Xmax plus clearance).</li>
-<li><b>Radiation.</b> Curved-wavefront far field at each mouth.</li>
-<li><b>FEM.</b> Axisymmetric Helmholtz (dolfinx 0.8) for the kick horn, the mid horn and the HF mouth in the mid horn, in a
-baffled half-space. Straight-tube check: median {fem['tube']['median']*100:.0f}% error in throat impedance.</li>
-</ol>
-{fig("img/plots/fem-vs-planewave.png", "FEM against plane-wave, kick and mid. Solid on axis, dotted 30 degrees.")}
+{table(["DSP", "Setting"], dsp_rows)}
+<h2 id="low-end">Kick low end</h2>
+<p>The kick is a kick bin, not a sub, and like the HD-15 it is meant to run with one. One box on the ground is down
+6 dB at {le['single_half_space_db']['f_minus6_hz']:.0f} Hz ({le['single_free_db']['f_minus6_hz']:.0f} Hz in free space).
+The small sealed chamber (sealed resonance about {co['low']['sealed_resonance_hz']:.0f} Hz) keeps the cone under control
+below the horn's range, at the cost of extension. Without a sub, the no-sub shelf takes one box to
+{sh['f_minus6_hz']:.0f} Hz, but excursion then limits it to about {sh.get('safe_power_w', 0):.0f} W.</p>
+{fig("img/plots/kick-low-end.png", "Free space, on the ground, and per box in a 3 x 3 cluster.")}
+{section("low", "Kick", f"Reversed {D.label(D.KICK_RECORD)}, {law_name(K.law)} horn, square mouth.")}
+{section("mid", "Mid", f"{D.label(D.MID_RECORD)} in the OS horn round the bullet. The response above 1 kHz includes the FEM correction (below).",
+         fig("img/plots/hf-in-mid.png", "The HF horn inside the mid horn, FEM."))}
+{section("tweeter", "HF", f"{D.TW.model}: datasheet response on axis, with the off-axis shape from the FEM of its printed horn inside the mid horn.")}
+<h2 id="fem">FEM validation</h2>
+<p><b>Kick.</b> FEM against the network, coupled to the driver, 40 to 250 Hz: {kp['rms_db']:.1f} dB RMS,
+{kp['max_abs_db']:.1f} dB worst.{k3t} Above about 400 Hz the FEM shows cross modes in the wide passage near the mouth,
+which a plane-wave model cannot; they are well above the {f1:.0f} Hz crossover.</p>
+<p><b>Mid.</b> Within about 1 dB of the network up to 2.7 kHz. Above that the FEM falls 8 to 12 dB by 3 to 6 kHz:
+the air over the cone behaves as a radial cavity, which the network lumps into one node. So the upper crossover was
+picked again with the FEM correction applied
+({", ".join(f"{k} Hz: {v:.2f}" for k, v in f2s.items())}, lower is better), and {f2/1000:.0f} kHz is the highest that
+scores within 0.15 of the best. It needs the full 12 dB mid shelf. A two-slot phase plug, as in compression drivers,
+would push this up; that is the main open item for the mid.</p>
+{fig("img/plots/fem-vs-planewave.png", "FEM against the network model.")}
+<h2 id="limits">Limits</h2>
+<ul>
+<li>Cone, spider and basket shapes are estimated from datasheet drawings; the shroud gap and bullet nose depend on them.</li>
+<li>Cones are rigid in the models. Mid cone breakup above about 1.5 to 3 kHz is not modelled.</li>
+<li>The felt is a loss factor, not a measured material.</li>
+<li>Free-space results use a baffle-step shelf for the box front; the FEM is in half space.</li>
+<li>The HF unit uses its datasheet curve, read by eye (about 2 dB), measured by the maker on their own horn.</li>
+<li>Array results are power sums of one box's polar; the low-frequency cluster uses a mutual-load approximation.</li>
+<li>Nothing has been built or measured.</li>
+</ul>
 """
-    return page("simulation.html", "Sunflower simulation", body, "Sunflower v0.2: each horn with all its plots, and the full range.")
+    return page("simulation.html", "Sunflower simulation", body, "Sunflower responses, crossover, FEM checks and limits.")
 
 
 def build(d):
-    cut, parts, stack = d["cut"], d["parts"], d["stack"]
-    ex = cut["external_mm"]
-    P = {p["name"]: p for p in parts}
-    sm = d["summary"]
-    tw, m, lo = D.TW, D.MID, D.LOW
-    w = cut["walls"]
-    ply = [
-        ["Sides", "2", f"{ex['depth']:.0f} long, {ex['height_back']:.0f} tall at the back, {ex['height_front']:.0f} at the front", "18", "side.dxf"],
-        ["Top and bottom (shell)", "2", f"{lo.mouth_width*1000:.0f} wide, angled {cut['shell_angle_deg']:.1f} deg", "18", "Fit between the sides"],
-        ["Back", "1", f"{lo.mouth_width*1000:.0f} x {2*lo.back_half_height*1000:.0f}", "18", "Terminal cup"],
-        ["Baffle", "1", f"{lo.mouth_width*1000:.0f} x {2*lo.shell_half_height(0)*1000:.0f}", "25", "baffle.dxf: cutout and four 40 mm chamber ports"],
-        ["Horn side walls", "2", f"Trapezoid {w['side_wall']['throat_edge_mm']:.0f} to {w['side_wall']['mouth_edge_mm']:.0f}, {w['side_wall']['slope_length_mm']:.0f} long", "18", f"flare {w['side_wall']['flare_deg']:.1f} deg"],
-        ["Horn top and bottom walls", "2", f"Trapezoid {w['top_wall']['throat_edge_mm']:.0f} to {w['top_wall']['mouth_edge_mm']:.0f}, {w['top_wall']['slope_length_mm']:.0f} long", "18", f"flare {w['top_wall']['flare_deg']:.1f} deg"],
-        ["Corner filler faces", "4", f"Triangle, base {cut['corner_filler']['face_base_mm']:.0f}", "12", "Three ribs each"],
-    ]
-    printed = []
-    for n, label, fill in (("centre_body", "One-piece centre body", 0.25), ("mid_horn", "Mid horn", 0.45),
-                           ("mid_sleeve", "Mid driver sleeve", 1.0), ("phase_plug", "Phase plug and HF horn", 1.0)):
-        p = P[n]
-        files = ", ".join(f"<code>{f}</code>" for f in p.get("print_files", []))
-        printed.append([label, files, f"{p['volume_cm3']*1.27*fill/1000:.2f}"])
-    hf_price = f"${tw.price_usd:.0f} each" if tw.price_usd else ""
+    cut = d["cut"]
+    w, bf, bk, fl = cut["walls"], cut["baffle"], cut["back"], cut["corner_filler"]
+    sp = cut["array_spacers"]
+    prints = sorted({p.split("-")[0] for p in cut.get("print_files", [])}) if isinstance(cut.get("print_files"), list) else []
+    rows = [["Walls", f"{w['qty']}", f"18 mm birch trapezoids, outer face {w['outer_face']['back_edge']:.0f} to "
+             f"{w['outer_face']['mouth_edge']:.0f} mm, {w['slant_length_mm']:.0f} mm long. Blade bevel "
+             f"{w['blade_bevel_deg']:.1f} deg on both long edges, ends bevelled {w['end_bevel_deg']:.0f} deg."],
+            ["Baffle", "1", f"{bf['thickness_mm']:.0f} mm, {bf['front_square_mm']:.0f} mm square at the front, "
+             f"{bf['cutout_diameter_mm']:.0f} mm cutout, edges bevelled {bf['edge_bevel_deg']:.0f} deg. {bf['note']}."],
+            ["Back", "1", f"{bk['thickness_mm']:.0f} mm, removable: {bk['screws']}; {bk['gasket']}."],
+            ["Corner fillers", f"{fl['qty']}", f"{fl['leg_at_baffle_mm']:.0f} mm legs at the baffle, tapering to nothing at "
+             f"the mouth, {fl['length_mm']:.0f} mm long. {fl['note']}"],
+            ["Array spacers", f"{sp['qty']}", f"Tapered, {sp['min_thickness_mm']:.0f} to {sp['max_thickness_mm']:.0f} mm, "
+             "for the 3 x 3 cluster's corner joints."]]
     body = f"""
 <h1>Build</h1>
-<p class="lede">Flat birch-ply panels and printed round parts. Everything here is generated from the same design file as the
-simulations.</p>
-{fig("img/plots/low-drawing.png", "Cabinet section, mm.")}
-{fig("img/plots/mid-drawing.png", "Mid horn, phase plug and HF horn, mm.")}
-{fig("img/plots/tweeter-drawing.png", "HF unit and its printed horn, mm.")}
-{fig("img/renders/exploded.jpg", "Exploded view.", "render")}
-
-<h2>Bill of materials</h2>
-{table(["Item", "Qty", "Notes"], [
-    [f"{sm['low']['driver']}", "1", "Kick, rear-mounted, motor forward"],
-    [f"{sm['mid']['driver']}", "1", f"Mid, {inch(m.nominal)}"],
-    [f"{tw.model}", "1", f"HF, {hf_price}"],
-    ["Birch ply 18 mm", "About 3 m²", ""],
-    ["Birch ply 25 mm", "1 baffle", ""],
-    ["Birch ply 12 mm", "About 0.3 m²", "Corner filler faces and ribs"],
-    ["Aluminium tube, 12 mm OD", "4", "Centre body supports; the top one carries the mid and HF cables"],
-    ["PETG or ASA filament", "About 3 to 4 kg", "Printed parts below"],
-    ["M6 inserts and bolts", "8", "15 inch, from the chamber side"],
-    ["M4 heat-set inserts and screws", "12", "Mid driver, HF unit, part joints"],
-    ["Speaker cable 2 x 1.0 mm²", "About 3 m", ""],
-    ["Terminal cup", "1", "One pair per amplifier channel"],
-    ["Polyester wadding", "0.5 m²", "Chamber"],
-    ["Closed-cell foam blocks", f"{cut['chamber']['fill_litres']:.0f} litres", f"Fill the chamber down from {cut['chamber']['available_litres']:.0f} to {cut['chamber']['target_litres']:.0f} litres"],
-    ["3-way DSP and 3 amplifier channels", "per box", "LR4, delay, gain, shelf, limiter"],
-])}
-
-<h2>Cut list</h2>
-{table(["Part", "Qty", "Size (mm)", "Ply (mm)", "Notes"], ply, num=(1, 3))}
-<p>DXF: <a href="cad/dxf/side.dxf">side</a>, <a href="cad/dxf/baffle.dxf">baffle</a>,
-<a href="cad/dxf/horn_side_wall.dxf">horn side wall</a>, <a href="cad/dxf/horn_top_wall.dxf">horn top wall</a>.</p>
-
+<p class="lede">A single-ply birch frustum, four tapering corner fillers, a printed centre body in sections, and three
+drivers. Files are on the <a href="downloads.html">downloads</a> page.</p>
+{video("assemble", "Assembly order.")}
+<h2>Drivers</h2>
+{drivers_table(d)}
+<h2>Wood</h2>
+{table(["Part", "Qty", "Notes"], rows)}
 <h2>Printed parts</h2>
-<p>Each part is already cut into sections and quarters that fit a 250 mm bed, in <code>cad/print/</code>.</p>
-{table(["Part", "Print files", "Est. mass (kg)"], printed, num=(2,))}
-<p>Before printing, measure: the 15 inch cone profile and motor (the centre body's rear face follows the cone at Xmax plus
-3 mm and clears the motor by 3 mm), the mid cone profile (lead-in at 1.5 mm), and the HF unit's body cylinder (the plug is bored
-to {tw.body_diameter*1000 + 1:.0f} mm).</p>
-
+<p>The centre body, mid horn and bullet are split into {len(cut.get('print_files', []))} pieces that each fit a
+250 mm bed, with spigots and through bolts. Print the parts near the kick motor in ASA, PC or nylon (the motor runs hot);
+the rest can be PETG. Add the 3 mm felt layer to the recess under the bullet nose.</p>
 <h2>Assembly</h2>
 <ol class="steps">
-<li><b>Shell.</b> Glue the sides to the angled top and bottom and the back. Fit the baffle {lo.back_box*1000:.0f} mm in front of the back.
-Seal every joint.</li>
-<li><b>Kick driver.</b> Pass it motor-first through the baffle from behind; flange on the back face, on gasket, eight M6 bolts.</li>
-<li><b>Horn walls.</b> Glue in the four internal horn walls and the corner fillers. The space outside them is the sealed chamber,
-joined to the box behind the baffle through the four baffle ports. Add foam blocks to bring it to {cut['chamber']['target_litres']:.0f} litres.</li>
-<li><b>Centre body.</b> Glue the printed sections into one piece. Its rear face sits {(lo.body.xmax + lo.gap)*1000:.0f} mm in front
-of the 15 inch cone and does not touch the motor; it hangs on the rods, with a foam ring at the motor.</li>
-<li><b>Mid and HF.</b> Fit the HF unit into the phase plug, the plug's vanes into the mid horn throat, the mid driver to the back of
-the mid horn, then the sleeve and the centre body.</li>
-<li><b>Supports.</b> Four 12 mm tubes through the horn walls into the can; cables out through the top tube, through the chamber,
-to the terminal cup.</li>
-<li><b>DSP.</b> Start from the settings on the <a href="simulation.html#full-range">simulation page</a>, then measure each section.</li>
-<li><b>Stacking.</b> Boxes sit splayed at {stack['splay_deg']:.1f} degrees, angled panel on angled panel; fly or strap them as a column.</li>
+<li><b>Measure the drivers first.</b> Check the kick cone profile and basket against the shroud, and the mid cone
+against the bullet nose, before printing those parts.</li>
+<li>Glue the four walls with the fillers in the corners, then the baffle inside the frustum.</li>
+<li>Screw the kick driver to the front of the baffle, reversed, with its cone facing the chamber.</li>
+<li>Fit the four standoffs (one is the cable duct) and the shroud, then the motor fairing, mid pod with its driver, the
+mid horn sections and the bullet with the HF unit.</li>
+<li>Fit the four vanes from the body to the wall corners, then the back with its gasket.</li>
+<li>DSP: start from the settings on the <a href="simulation.html#full-range">simulation page</a>, then measure each section.</li>
 </ol>
+{fig("img/renders/exploded.jpg", "Exploded.", "render")}
+{fig("img/renders/section.jpg", "Cutaway.", "render")}
 {fig("img/renders/rear-open.jpg", "Back removed.", "render")}
 """
-    return page("build.html", "Sunflower build", body, "Sunflower v0.2 bill of materials, cut list, printed parts and assembly.")
+    return page("build.html", "Sunflower build", body, "Sunflower cut list, printed parts and assembly.")
 
 
 def downloads(d):
     parts = d["parts"]
-    rows = [[f"<code>{p['name']}</code>", p["material"].replace("_", " "), p.get("note", ""),
+    rows = [[f"<code>{p['name']}</code>", p.get("category", ""), p.get("note", ""),
              f'<a href="cad/step/{p["name"]}.step">STEP</a> · <a href="cad/stl/{p["name"]}.stl">STL</a>'] for p in parts]
-    res = [["Section responses", '<a href="results/planewave/low.csv">low</a> · <a href="results/planewave/mid.csv">mid</a> · <a href="results/planewave/tweeter.csv">HF</a>'],
-           ["System, 0/15/30 deg and no-sub shelf", '<a href="results/planewave/system.csv">system.csv</a>'],
+    res = [["Section responses", '<a href="results/planewave/low.csv">kick</a> · <a href="results/planewave/mid.csv">mid</a> · <a href="results/planewave/tweeter.csv">HF</a>'],
+           ["System and no-sub shelf", '<a href="results/planewave/system.csv">system.csv</a> · <a href="results/planewave/array.csv">array.csv</a>'],
            ["DSP settings", '<a href="results/planewave/dsp.json">dsp.json</a>'],
-           ["Cutoffs", '<a href="results/planewave/cutoffs.json">cutoffs.json</a>'],
-           ["FEM", '<a href="results/fem/summary.json">summary.json</a> · <a href="results/fem/low.csv">low</a> · <a href="results/fem/mid.csv">mid</a> · <a href="results/fem/hf-in-mid.csv">HF in mid</a>'],
-           ["Optimiser", '<a href="results/optimise/mid-search.csv.gz">mid search</a> · <a href="results/optimise/mid-shortlist.csv">shortlist</a> · <a href="results/optimise/low-search.csv.gz">low search</a> · <a href="results/optimise/system-search.csv">finalists</a> · <a href="results/optimise/selected.json">selected</a>']]
+           ["FEM", '<a href="results/fem/summary.json">summary</a> · <a href="results/fem/kick-vs-network.csv">kick</a> · <a href="results/fem/mid-vs-network.csv">mid</a> · <a href="results/fem/hf-in-mid.csv">HF in mid</a>'],
+           ["CAD area check", '<a href="results/cad/area-check.csv">area-check.csv</a>'],
+           ["Optimiser", '<a href="results/optimise/mid-search.csv">mid</a> · <a href="results/optimise/kick-search.csv">kick</a> · <a href="results/optimise/system-search.csv">finalists</a> · <a href="results/optimise/selected.json">selected</a>']]
     body = f"""
 <h1>Downloads</h1>
-<p class="lede">All generated by the scripts in the repository. Millimetres.</p>
+<p class="lede">Everything here is generated by the scripts in the repository. Millimetres.</p>
 <p><a href="cad/sunflower-assembly.step">sunflower-assembly.step</a> · <a href="cad/cutlist.json">cutlist.json</a> ·
-<a href="cad/stack.json">stack.json</a> · <a href="cad/parts.json">parts.json</a></p>
+<a href="cad/array.json">array.json</a> · <a href="cad/parts.json">parts.json</a> ·
+<a href="cad/dxf/wall.dxf">wall.dxf</a> · <a href="cad/dxf/baffle.dxf">baffle.dxf</a> · <a href="cad/dxf/back.dxf">back.dxf</a></p>
 <h2>Parts</h2>
-<p>Printable sections are in <code>cad/print/</code>. Parts named <code>drv_</code> are dimensioned stand-ins for the drivers.</p>
-{table(["Part", "Material", "Notes", "Files"], rows)}
+<p>Printable pieces are in <code>cad/print/</code>. Parts named <code>drv_</code> are stand-ins for the drivers.</p>
+{table(["Part", "Kind", "Notes", "Files"], rows)}
 <h2>Data</h2>
 {table(["Data", "Files"], res)}
 <h2>Reproduce</h2>
@@ -476,12 +389,12 @@ def downloads(d):
 cd sunflower
 just all</pre>
 """
-    return page("downloads.html", "Sunflower downloads", body, "Sunflower v0.2 CAD and data.")
+    return page("downloads.html", "Sunflower downloads", body, "Sunflower CAD and data.")
 
 
 def main():
     d = load()
-    for name, fn in (("index.html", index), ("review.html", review), ("design.html", design),
+    for name, fn in (("index.html", index), ("design.html", design),
                      ("simulation.html", simulation), ("build.html", build), ("downloads.html", downloads)):
         (DOCS / name).write_text(fn(d))
     (DOCS / ".nojekyll").write_text("")

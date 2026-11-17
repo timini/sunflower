@@ -1,588 +1,810 @@
 [
  {
-  "name": "side_right",
+  "name": "wall_right",
   "material": "ply",
+  "category": "cabinet",
   "qty": 1,
   "explode_mm": [
-   300,
-   0,
-   0
+   350.0,
+   0.0,
+   0.0
   ],
-  "group": "shell",
-  "volume_cm3": 5904.2,
+  "group": "cabinet",
+  "volume_cm3": 6679.4,
   "bbox_mm": [
-   280.0,
-   -318.2,
-   -63.0,
-   298.0,
-   318.2,
-   525.0
+   221.0,
+   -395.4,
+   -71.0,
+   395.4,
+   395.4,
+   510.5
   ],
-  "note": "vertical side, 588 long, 479 tall at the back, 636 at the front"
+  "note": "18 mm birch, trapezoid, compound mitres both long edges, ends bevelled 15.0 deg"
  },
  {
-  "name": "side_left",
+  "name": "wall_left",
   "material": "ply",
+  "category": "cabinet",
   "qty": 1,
   "explode_mm": [
-   -300,
-   0,
-   0
+   -350.0,
+   0.0,
+   0.0
   ],
-  "group": "shell",
-  "volume_cm3": 5904.2,
+  "group": "cabinet",
+  "volume_cm3": 6679.4,
   "bbox_mm": [
-   -298.0,
-   -318.2,
-   -63.0,
-   -280.0,
-   318.2,
-   525.0
+   -395.4,
+   -395.4,
+   -71.0,
+   -221.0,
+   395.4,
+   510.5
   ],
-  "note": "vertical side, 588 long, 479 tall at the back, 636 at the front"
+  "note": "18 mm birch, trapezoid, compound mitres both long edges, ends bevelled 15.0 deg"
  },
  {
-  "name": "top",
+  "name": "wall_top",
   "material": "ply",
+  "category": "cabinet",
   "qty": 1,
   "explode_mm": [
-   0,
-   300,
-   0
+   0.0,
+   350.0,
+   0.0
   ],
-  "group": "shell",
-  "volume_cm3": 5979.6,
+  "group": "cabinet",
+  "volume_cm3": 6679.4,
   "bbox_mm": [
-   -280.0,
-   221.5,
-   -65.5,
-   280.0,
-   317.8,
-   525.0
+   -395.4,
+   221.0,
+   -71.0,
+   395.4,
+   395.4,
+   510.5
   ],
-  "note": "angled 7.8 deg, 560 wide, 594 long"
+  "note": "18 mm birch, trapezoid, compound mitres both long edges, ends bevelled 15.0 deg"
  },
  {
-  "name": "bottom",
+  "name": "wall_bottom",
   "material": "ply",
+  "category": "cabinet",
   "qty": 1,
   "explode_mm": [
-   0,
-   -300,
-   0
+   0.0,
+   -350.0,
+   0.0
   ],
-  "group": "shell",
-  "volume_cm3": 5979.6,
+  "group": "cabinet",
+  "volume_cm3": 6679.4,
   "bbox_mm": [
-   -280.0,
-   -317.8,
-   -65.5,
-   280.0,
-   -221.5,
-   525.0
+   -395.4,
+   -395.4,
+   -71.0,
+   395.4,
+   -221.0,
+   510.5
   ],
-  "note": "angled 7.8 deg, 560 wide, 594 long"
- },
- {
-  "name": "back",
-  "material": "ply",
-  "qty": 1,
-  "explode_mm": [
-   0,
-   0,
-   -400
-  ],
-  "group": "shell",
-  "volume_cm3": 4465.4,
-  "bbox_mm": [
-   -280.0,
-   -221.5,
-   -63.0,
-   280.0,
-   221.5,
-   -45.0
-  ],
-  "note": "terminal cup"
+  "note": "18 mm birch, trapezoid, compound mitres both long edges, ends bevelled 15.0 deg"
  },
  {
   "name": "baffle",
   "material": "ply",
+  "category": "cabinet",
   "qty": 1,
   "explode_mm": [
-   0,
-   0,
-   -250
-  ],
-  "group": "shell",
-  "volume_cm3": 3803.2,
-  "bbox_mm": [
-   -280.0,
-   -227.7,
    0.0,
-   280.0,
-   227.7,
-   25.0
+   0.0,
+   -260.0
   ],
-  "note": "560 x 455 x 25, 353 mm cutout, four 40 mm chamber ports"
+  "group": "cabinet",
+  "volume_cm3": 3139.3,
+  "bbox_mm": [
+   -240.0,
+   -240.0,
+   -25.0,
+   240.0,
+   240.0,
+   0.0
+  ],
+  "note": "25 mm birch, 480 square at the front face, edges bevelled 15.0 deg, 353 mm cutout, 8 flange holes on 369 PCD, 4 standoff bolts (one 12 mm duct hole)"
  },
  {
-  "name": "horn_wall_right",
+  "name": "back",
   "material": "ply",
+  "category": "cabinet",
   "qty": 1,
   "explode_mm": [
-   170,
-   0,
-   0
+   0.0,
+   0.0,
+   -480.0
   ],
-  "group": "horn",
-  "volume_cm3": 4405.6,
+  "group": "cabinet",
+  "volume_cm3": 3963.2,
   "bbox_mm": [
-   180.0,
-   -300.0,
-   21.5,
-   297.7,
-   300.0,
-   525.0
+   -239.6,
+   -239.6,
+   -89.0,
+   239.6,
+   239.6,
+   -71.0
   ],
-  "note": "internal side wall"
+  "note": "18 mm birch, removable, 479 square at the front face, edges bevelled 15.0 deg to continue the walls; 2 mm deep gasket groove; 12 M5 screws into inserts in the wall ends; 64 mm terminal cup"
  },
  {
-  "name": "horn_wall_left",
+  "name": "filler_tr",
   "material": "ply",
+  "category": "filler",
   "qty": 1,
   "explode_mm": [
-   -170,
-   0,
-   0
+   230.0,
+   230.0,
+   0.0
   ],
-  "group": "horn",
-  "volume_cm3": 4405.6,
+  "group": "cabinet",
+  "volume_cm3": 1675.4,
   "bbox_mm": [
-   -297.7,
-   -300.0,
-   21.5,
-   -180.0,
-   300.0,
-   525.0
+   99.4,
+   99.4,
+   0.0,
+   376.8,
+   376.8,
+   510.5
   ],
-  "note": "internal side wall"
+  "note": "corner filler: right-angle triangle, 141 mm legs at the baffle to nothing at the mouth; hardwood or 18 mm ply laminations; slot for the vane"
  },
  {
-  "name": "horn_wall_top",
+  "name": "filler_tl",
   "material": "ply",
+  "category": "filler",
   "qty": 1,
   "explode_mm": [
-   0,
-   170,
-   0
+   -230.0,
+   230.0,
+   0.0
   ],
-  "group": "horn",
-  "volume_cm3": 4590.8,
+  "group": "cabinet",
+  "volume_cm3": 1675.4,
   "bbox_mm": [
-   -298.0,
-   180.0,
-   20.8,
-   298.0,
-   317.5,
-   525.0
+   -376.8,
+   99.4,
+   0.0,
+   -99.4,
+   376.8,
+   510.5
   ],
-  "note": "internal top or bottom wall"
+  "note": "corner filler: right-angle triangle, 141 mm legs at the baffle to nothing at the mouth; hardwood or 18 mm ply laminations; slot for the vane"
  },
  {
-  "name": "horn_wall_bottom",
+  "name": "filler_bl",
   "material": "ply",
+  "category": "filler",
   "qty": 1,
   "explode_mm": [
-   0,
-   -170,
-   0
+   -230.0,
+   -230.0,
+   0.0
   ],
-  "group": "horn",
-  "volume_cm3": 4590.8,
+  "group": "cabinet",
+  "volume_cm3": 1675.4,
   "bbox_mm": [
-   -298.0,
-   -317.5,
-   20.8,
-   298.0,
-   -180.0,
-   525.0
+   -376.8,
+   -376.8,
+   0.0,
+   -99.4,
+   -99.4,
+   510.5
   ],
-  "note": "internal top or bottom wall"
+  "note": "corner filler: right-angle triangle, 141 mm legs at the baffle to nothing at the mouth; hardwood or 18 mm ply laminations; slot for the vane"
  },
  {
-  "name": "corner_tr",
-  "material": "print_orange",
+  "name": "filler_br",
+  "material": "ply",
+  "category": "filler",
   "qty": 1,
   "explode_mm": [
-   110,
-   110,
-   0
+   230.0,
+   -230.0,
+   0.0
   ],
-  "group": "horn",
-  "volume_cm3": 926.5,
+  "group": "cabinet",
+  "volume_cm3": 1675.4,
   "bbox_mm": [
-   74.6,
-   74.6,
-   25.0,
-   280.0,
-   300.0,
-   525.0
+   99.4,
+   -376.8,
+   0.0,
+   376.8,
+   -99.4,
+   510.5
   ],
-  "note": "corner filler: 12 mm ply face on three ribs, painted"
+  "note": "corner filler: right-angle triangle, 141 mm legs at the baffle to nothing at the mouth; hardwood or 18 mm ply laminations; slot for the vane"
  },
  {
-  "name": "corner_tl",
-  "material": "print_orange",
+  "name": "standoff_duct",
+  "material": "aluminium",
+  "category": "support",
   "qty": 1,
   "explode_mm": [
-   -110,
-   110,
-   0
+   113.13708498984761,
+   113.1370849898476,
+   -60.0
   ],
-  "group": "horn",
-  "volume_cm3": 926.5,
+  "group": "supports",
+  "volume_cm3": 18.0,
   "bbox_mm": [
-   -280.0,
-   74.6,
-   25.0,
-   -74.6,
-   300.0,
-   525.0
+   135.3,
+   135.3,
+   0.0,
+   155.3,
+   155.3,
+   89.7
   ],
-  "note": "corner filler: 12 mm ply face on three ribs, painted"
+  "note": "20 mm aluminium round, 90 long, M8 into the baffle, 25 mm into the shroud; 12 mm bore: cable duct from the chamber to the centre body"
  },
  {
-  "name": "corner_bl",
-  "material": "print_orange",
+  "name": "standoff_2",
+  "material": "aluminium",
+  "category": "support",
   "qty": 1,
   "explode_mm": [
-   -110,
-   -110,
-   0
+   -113.1370849898476,
+   113.13708498984761,
+   -60.0
   ],
-  "group": "horn",
-  "volume_cm3": 926.5,
+  "group": "supports",
+  "volume_cm3": 28.2,
   "bbox_mm": [
-   -280.0,
-   -300.0,
-   25.0,
-   -74.6,
-   -74.6,
-   525.0
+   -155.3,
+   135.3,
+   0.0,
+   -135.3,
+   155.3,
+   89.7
   ],
-  "note": "corner filler: 12 mm ply face on three ribs, painted"
+  "note": "20 mm aluminium round, 90 long, M8 into the baffle, 25 mm into the shroud"
  },
  {
-  "name": "corner_br",
-  "material": "print_orange",
+  "name": "standoff_3",
+  "material": "aluminium",
+  "category": "support",
   "qty": 1,
   "explode_mm": [
-   110,
-   -110,
-   0
+   -113.13708498984764,
+   -113.1370849898476,
+   -60.0
   ],
-  "group": "horn",
-  "volume_cm3": 926.5,
+  "group": "supports",
+  "volume_cm3": 28.2,
   "bbox_mm": [
-   74.6,
-   -300.0,
-   25.0,
-   280.0,
-   -74.6,
-   525.0
+   -155.3,
+   -155.3,
+   0.0,
+   -135.3,
+   -135.3,
+   89.7
   ],
-  "note": "corner filler: 12 mm ply face on three ribs, painted"
+  "note": "20 mm aluminium round, 90 long, M8 into the baffle, 25 mm into the shroud"
  },
  {
-  "name": "centre_body",
+  "name": "standoff_4",
+  "material": "aluminium",
+  "category": "support",
+  "qty": 1,
+  "explode_mm": [
+   113.13708498984758,
+   -113.13708498984764,
+   -60.0
+  ],
+  "group": "supports",
+  "volume_cm3": 28.2,
+  "bbox_mm": [
+   135.3,
+   -155.3,
+   0.0,
+   155.3,
+   -135.3,
+   89.7
+  ],
+  "note": "20 mm aluminium round, 90 long, M8 into the baffle, 25 mm into the shroud"
+ },
+ {
+  "name": "vane_tr",
+  "material": "aluminium",
+  "category": "support",
+  "qty": 1,
+  "explode_mm": [
+   260.0,
+   260.0,
+   60.0
+  ],
+  "group": "supports",
+  "volume_cm3": 96.1,
+  "bbox_mm": [
+   153.9,
+   153.9,
+   380.5,
+   357.5,
+   357.5,
+   440.5
+  ],
+  "note": "6 mm plate, 60 mm chord with round edges, body to corner filler, centred 100 mm behind the kick mouth"
+ },
+ {
+  "name": "vane_tl",
+  "material": "aluminium",
+  "category": "support",
+  "qty": 1,
+  "explode_mm": [
+   -260.0,
+   260.0,
+   60.0
+  ],
+  "group": "supports",
+  "volume_cm3": 96.1,
+  "bbox_mm": [
+   -357.5,
+   153.9,
+   380.5,
+   -153.9,
+   357.5,
+   440.5
+  ],
+  "note": "6 mm plate, 60 mm chord with round edges, body to corner filler, centred 100 mm behind the kick mouth"
+ },
+ {
+  "name": "vane_bl",
+  "material": "aluminium",
+  "category": "support",
+  "qty": 1,
+  "explode_mm": [
+   -260.0,
+   -260.0,
+   60.0
+  ],
+  "group": "supports",
+  "volume_cm3": 96.1,
+  "bbox_mm": [
+   -357.5,
+   -357.5,
+   380.5,
+   -153.9,
+   -153.9,
+   440.5
+  ],
+  "note": "6 mm plate, 60 mm chord with round edges, body to corner filler, centred 100 mm behind the kick mouth"
+ },
+ {
+  "name": "vane_br",
+  "material": "aluminium",
+  "category": "support",
+  "qty": 1,
+  "explode_mm": [
+   260.0,
+   -260.0,
+   60.0
+  ],
+  "group": "supports",
+  "volume_cm3": 96.1,
+  "bbox_mm": [
+   153.9,
+   -357.5,
+   380.5,
+   357.5,
+   -153.9,
+   440.5
+  ],
+  "note": "6 mm plate, 60 mm chord with round edges, body to corner filler, centred 100 mm behind the kick mouth"
+ },
+ {
+  "name": "kick_shroud",
   "material": "print_black",
+  "category": "print",
   "qty": 1,
   "explode_mm": [
-   0,
-   0,
-   150
+   0.0,
+   0.0,
+   120.0
   ],
-  "group": "low",
-  "volume_cm3": 15191.0,
+  "group": "centre body",
+  "volume_cm3": 9316.6,
   "bbox_mm": [
-   -159.0,
-   -159.0,
-   19.0,
-   159.0,
-   159.0,
+   -263.0,
+   -263.0,
+   64.7,
+   263.0,
+   263.0,
+   131.5
+  ],
+  "note": "underside follows the kick cone; lip; standoff sockets",
+  "print_files": [
+   "kick_shroud-1-s1.stl",
+   "kick_shroud-1-s2.stl",
+   "kick_shroud-1-s3.stl",
+   "kick_shroud-1-s4.stl",
+   "kick_shroud-1-s5.stl",
+   "kick_shroud-1-s6.stl",
+   "kick_shroud-1-s7.stl",
+   "kick_shroud-1-s8.stl"
+  ]
+ },
+ {
+  "name": "motor_fairing",
+  "material": "print_black",
+  "category": "print",
+  "qty": 1,
+  "explode_mm": [
+   0.0,
+   0.0,
+   210.0
+  ],
+  "group": "centre body",
+  "volume_cm3": 10810.3,
+  "bbox_mm": [
+   -275.7,
+   -275.8,
+   125.5,
+   275.8,
+   275.8,
+   187.5
+  ],
+  "note": "covers the kick motor with 10 mm clearance",
+  "print_files": [
+   "motor_fairing-1-s1.stl",
+   "motor_fairing-1-s2.stl",
+   "motor_fairing-1-s3.stl",
+   "motor_fairing-1-s4.stl",
+   "motor_fairing-1-s5.stl",
+   "motor_fairing-1-s6.stl",
+   "motor_fairing-1-s7.stl",
+   "motor_fairing-1-s8.stl"
+  ]
+ },
+ {
+  "name": "mid_pod",
+  "material": "print_black",
+  "category": "print",
+  "qty": 1,
+  "explode_mm": [
+   0.0,
+   0.0,
    300.0
   ],
-  "note": "one piece: cone-following phase plug, motor cover, fairing, mid rear cap. Clears the motor by 3 mm",
+  "group": "centre body",
+  "volume_cm3": 24605.4,
+  "bbox_mm": [
+   -286.1,
+   -286.2,
+   181.5,
+   286.2,
+   286.2,
+   301.5
+  ],
+  "note": "sealed rear volume of the mid, 3.3 L",
   "print_files": [
-   "centre_body-1-q1.stl",
-   "centre_body-1-q2.stl",
-   "centre_body-1-q3.stl",
-   "centre_body-1-q4.stl",
-   "centre_body-2-q1.stl",
-   "centre_body-2-q2.stl",
-   "centre_body-2-q3.stl",
-   "centre_body-2-q4.stl"
+   "mid_pod-1-s1.stl",
+   "mid_pod-1-s2.stl",
+   "mid_pod-1-s3.stl",
+   "mid_pod-1-s4.stl",
+   "mid_pod-1-s5.stl",
+   "mid_pod-1-s6.stl",
+   "mid_pod-1-s7.stl",
+   "mid_pod-1-s8.stl"
   ]
  },
  {
-  "name": "mid_horn",
+  "name": "mid_horn_rear",
   "material": "print_black",
+  "category": "print",
   "qty": 1,
   "explode_mm": [
-   0,
-   0,
-   330
-  ],
-  "group": "mid",
-  "volume_cm3": 3367.6,
-  "bbox_mm": [
-   -116.0,
-   -116.0,
-   375.0,
-   116.0,
-   116.0,
-   525.0
-  ],
-  "note": "os open-area law round the phase plug, 220 mm mouth, 150 mm long",
-  "print_files": [
-   "mid_horn-1.stl"
-  ]
- },
- {
-  "name": "mid_sleeve",
-  "material": "print_black",
-  "qty": 1,
-  "explode_mm": [
-   0,
-   0,
-   240
-  ],
-  "group": "mid",
-  "volume_cm3": 1304.2,
-  "bbox_mm": [
-   -116.0,
-   -116.0,
-   300.0,
-   116.0,
-   116.0,
-   375.0
-  ],
-  "note": "holds the 174 mm driver frame",
-  "print_files": [
-   "mid_sleeve-1.stl"
-  ]
- },
- {
-  "name": "phase_plug",
-  "material": "print_grey",
-  "qty": 1,
-  "explode_mm": [
-   0,
-   0,
-   520
-  ],
-  "group": "mid",
-  "volume_cm3": 252.6,
-  "bbox_mm": [
-   -54.1,
-   -34.5,
-   355.0,
-   54.1,
-   61.7,
-   515.0
-  ],
-  "note": "69 mm plug round the 18 Sound ND1030, tapering to its printed HF horn (25 to 41 mm over 89 mm)",
-  "print_files": [
-   "phase_plug-1.stl"
-  ]
- },
- {
-  "name": "rod_right",
-  "material": "aluminium",
-  "qty": 1,
-  "explode_mm": [
-   200,
-   0,
-   0
-  ],
-  "group": "mid",
-  "volume_cm3": 19.4,
-  "bbox_mm": [
-   108.0,
-   -6.0,
-   444.0,
-   279.4,
-   6.0,
-   456.0
-  ],
-  "note": "12 mm aluminium tube, 171 mm"
- },
- {
-  "name": "rod_left",
-  "material": "aluminium",
-  "qty": 1,
-  "explode_mm": [
-   -200,
-   0,
-   0
-  ],
-  "group": "mid",
-  "volume_cm3": 19.4,
-  "bbox_mm": [
-   -279.4,
-   -6.0,
-   444.0,
-   -108.0,
-   6.0,
-   456.0
-  ],
-  "note": "12 mm aluminium tube, 171 mm"
- },
- {
-  "name": "rod_top",
-  "material": "aluminium",
-  "qty": 1,
-  "explode_mm": [
-   0,
-   200,
-   0
-  ],
-  "group": "mid",
-  "volume_cm3": 21.3,
-  "bbox_mm": [
-   -6.0,
-   108.0,
-   444.0,
-   6.0,
-   296.4,
-   456.0
-  ],
-  "note": "12 mm aluminium tube, 188 mm"
- },
- {
-  "name": "rod_bottom",
-  "material": "aluminium",
-  "qty": 1,
-  "explode_mm": [
-   0,
-   -200,
-   0
-  ],
-  "group": "mid",
-  "volume_cm3": 21.3,
-  "bbox_mm": [
-   -6.0,
-   -296.4,
-   444.0,
-   6.0,
-   -108.0,
-   456.0
-  ],
-  "note": "12 mm aluminium tube, 188 mm"
- },
- {
-  "name": "drv_low_frame",
-  "material": "driver_metal",
-  "qty": 1,
-  "explode_mm": [
-   0,
-   0,
-   -150
-  ],
-  "group": "low",
-  "volume_cm3": 1752.1,
-  "bbox_mm": [
-   -192.4,
-   -192.4,
-   -10.0,
-   192.4,
-   192.4,
-   160.0
-  ],
-  "note": "proxy of the Eminence DELTA-15LFA"
- },
- {
-  "name": "drv_low_cone",
-  "material": "driver_cone",
-  "qty": 1,
-  "explode_mm": [
-   0,
-   0,
-   -150
-  ],
-  "group": "low",
-  "volume_cm3": 216.8,
-  "bbox_mm": [
-   -166.7,
-   -166.7,
    0.0,
-   166.7,
-   166.7,
-   100.0
+   0.0,
+   390.0
   ],
-  "note": "proxy cone"
+  "group": "centre body",
+  "volume_cm3": 34513.1,
+  "bbox_mm": [
+   -286.0,
+   -285.9,
+   295.5,
+   286.0,
+   285.9,
+   479.5
+  ],
+  "note": "lead-in ring over the mid cone, mid horn bore, vane slots; mid driver screws to its back face",
+  "print_files": [
+   "mid_horn_rear-1-s1.stl",
+   "mid_horn_rear-1-s2.stl",
+   "mid_horn_rear-1-s3.stl",
+   "mid_horn_rear-1-s4.stl",
+   "mid_horn_rear-1-s5.stl",
+   "mid_horn_rear-1-s6.stl",
+   "mid_horn_rear-1-s7.stl",
+   "mid_horn_rear-1-s8.stl"
+  ]
  },
  {
-  "name": "drv_mid",
-  "material": "driver_metal",
+  "name": "mid_horn_front",
+  "material": "print_black",
+  "category": "print",
   "qty": 1,
   "explode_mm": [
-   0,
-   0,
-   240
+   0.0,
+   0.0,
+   480.0
   ],
-  "group": "mid",
-  "volume_cm3": 733.3,
+  "group": "centre body",
+  "volume_cm3": 10053.0,
   "bbox_mm": [
-   -87.0,
-   -87.0,
-   300.0,
-   87.0,
-   87.0,
-   375.0
+   -259.5,
+   -259.5,
+   473.5,
+   259.5,
+   259.5,
+   694.6
   ],
-  "note": "proxy of the Beyma 6MCF200Nd"
+  "note": "mid horn to the mouth, rolled lip of 40 mm radius",
+  "print_files": [
+   "mid_horn_front-1-s1.stl",
+   "mid_horn_front-1-s2.stl",
+   "mid_horn_front-1-s3.stl",
+   "mid_horn_front-1-s4.stl",
+   "mid_horn_front-1-s5.stl",
+   "mid_horn_front-1-s6.stl",
+   "mid_horn_front-1-s7.stl",
+   "mid_horn_front-1-s8.stl"
+  ]
+ },
+ {
+  "name": "bullet_nose",
+  "material": "print_orange",
+  "category": "print",
+  "qty": 1,
+  "explode_mm": [
+   0.0,
+   0.0,
+   640.0
+  ],
+  "group": "bullet",
+  "volume_cm3": 164.3,
+  "bbox_mm": [
+   -35.6,
+   -35.6,
+   260.6,
+   35.6,
+   35.6,
+   650.5
+  ],
+  "note": "bullet nose: follows the mid cone at the gap; closes the HF cavity; 3 mm spigot; 3 mm recess for the felt",
+  "print_files": [
+   "bullet_nose-1.stl"
+  ]
+ },
+ {
+  "name": "felt",
+  "material": "driver_cone",
+  "category": "felt",
+  "qty": 1,
+  "explode_mm": [
+   0.0,
+   0.0,
+   600.0
+  ],
+  "group": "bullet",
+  "volume_cm3": 10.6,
+  "bbox_mm": [
+   -33.6,
+   -33.6,
+   260.8,
+   33.6,
+   33.6,
+   270.6
+  ],
+  "note": "3 mm wool felt on the bullet nose underside, set into a recess so its face is at the designed gap from the mid cone (MidHorn.felt_loss models its damping)"
+ },
+ {
+  "name": "bullet",
+  "material": "print_orange",
+  "category": "print",
+  "qty": 1,
+  "explode_mm": [
+   0.0,
+   0.0,
+   700.0
+  ],
+  "group": "bullet",
+  "volume_cm3": 744.0,
+  "bbox_mm": [
+   -35.6,
+   -35.6,
+   260.6,
+   35.6,
+   35.6,
+   650.5
+  ],
+  "note": "smooth bullet round the 18 Sound ND1030 body cylinder, printed HF horn 25.4 to 61 mm over 299 mm",
+  "print_files": [
+   "bullet-1.stl",
+   "bullet-2.stl"
+  ]
+ },
+ {
+  "name": "bullet_vanes",
+  "material": "print_orange",
+  "category": "print",
+  "qty": 1,
+  "explode_mm": [
+   0.0,
+   0.0,
+   560.0
+  ],
+  "group": "bullet",
+  "volume_cm3": 14.2,
+  "bbox_mm": [
+   -70.4,
+   -70.4,
+   308.5,
+   52.6,
+   52.6,
+   340.5
+  ],
+  "note": "three 4 mm vanes hold the bullet in the mid throat; one carries the HF cable in a 3 mm bore",
+  "print_files": [
+   "bullet_vanes-1.stl"
+  ]
+ },
+ {
+  "name": "drv_kick_frame",
+  "material": "driver_metal",
+  "category": "driver",
+  "qty": 1,
+  "explode_mm": [
+   0.0,
+   0.0,
+   -120.0
+  ],
+  "group": "kick driver",
+  "volume_cm3": 440.8,
+  "bbox_mm": [
+   -193.5,
+   -193.5,
+   0.0,
+   193.5,
+   193.5,
+   125.5
+  ],
+  "note": "proxy of the 18 Sound 15MB700 frame, reversed: flange on the baffle front, basket into the horn"
+ },
+ {
+  "name": "drv_kick_cone",
+  "material": "driver_cone",
+  "category": "driver",
+  "qty": 1,
+  "explode_mm": [
+   0.0,
+   0.0,
+   -120.0
+  ],
+  "group": "kick driver",
+  "volume_cm3": 173.9,
+  "bbox_mm": [
+   -173.5,
+   -173.5,
+   -2.0,
+   173.5,
+   173.5,
+   107.0
+  ],
+  "note": "proxy cone (estimated profile), dust cap and surround"
+ },
+ {
+  "name": "drv_kick_motor",
+  "material": "driver_metal",
+  "category": "driver",
+  "qty": 1,
+  "explode_mm": [
+   0.0,
+   0.0,
+   -120.0
+  ],
+  "group": "kick driver",
+  "volume_cm3": 1273.1,
+  "bbox_mm": [
+   -100.0,
+   -100.0,
+   125.5,
+   100.0,
+   100.0,
+   167.5
+  ],
+  "note": "kick motor proxy, 200 x 42 mm"
+ },
+ {
+  "name": "drv_mid_frame",
+  "material": "driver_metal",
+  "category": "driver",
+  "qty": 1,
+  "explode_mm": [
+   0.0,
+   0.0,
+   330.0
+  ],
+  "group": "mid driver",
+  "volume_cm3": 109.8,
+  "bbox_mm": [
+   -106.0,
+   -106.0,
+   241.5,
+   106.0,
+   106.0,
+   295.5
+  ],
+  "note": "proxy of the Beyma 8MI100 frame"
  },
  {
   "name": "drv_mid_cone",
   "material": "driver_cone",
+  "category": "driver",
   "qty": 1,
   "explode_mm": [
-   0,
-   0,
-   240
+   0.0,
+   0.0,
+   330.0
   ],
-  "group": "mid",
-  "volume_cm3": 20.2,
+  "group": "mid driver",
+  "volume_cm3": 38.8,
   "bbox_mm": [
-   -66.8,
-   -66.8,
-   348.3,
-   66.8,
-   66.8,
-   375.0
+   -93.0,
+   -93.0,
+   252.5,
+   93.0,
+   93.0,
+   295.5
   ],
-  "note": "proxy cone"
+  "note": "proxy cone (estimated profile); surround assumed flush with the flange face"
+ },
+ {
+  "name": "drv_mid_motor",
+  "material": "driver_metal",
+  "category": "driver",
+  "qty": 1,
+  "explode_mm": [
+   0.0,
+   0.0,
+   330.0
+  ],
+  "group": "mid driver",
+  "volume_cm3": 285.9,
+  "bbox_mm": [
+   -47.7,
+   -47.7,
+   201.5,
+   47.7,
+   47.7,
+   241.5
+  ],
+  "note": "mid motor proxy"
  },
  {
   "name": "drv_hf",
   "material": "driver_metal",
+  "category": "driver",
   "qty": 1,
   "explode_mm": [
-   0,
-   0,
-   620
+   0.0,
+   0.0,
+   760.0
   ],
-  "group": "mid",
-  "volume_cm3": 131.4,
+  "group": "bullet",
+  "volume_cm3": 130.1,
   "bbox_mm": [
    -32.5,
    -32.5,
-   385.5,
+   305.5,
    32.5,
    32.5,
-   426.0
+   351.5
   ],
-  "note": "18 Sound ND1030: 65 mm body cylinder, 40.5 mm deep"
+  "note": "18 Sound ND1030: 65 mm body cylinder, 40.5 mm deep, flange removed"
  }
 ]

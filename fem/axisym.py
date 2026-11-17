@@ -1,25 +1,50 @@
-"""Axisymmetric FEM of one horn section, run inside dolfinx/dolfinx:v0.8.0.
+"""Axisymmetric Helmholtz FEM of one Sunflower case, run inside dolfinx/dolfinx:v0.8.0.
 
 Usage (inside the container, complex PETSc):
     source /usr/local/bin/dolfinx-complex-mode
-    python3 axisym.py case.json out.csv
+    python3 fem/axisym.py case.json out.csv [chunk nchunks]
 
-case.json:
-    z, r_outer, r_inner : horn profile samples (m), throat at z[0], mouth at z[-1]
-    freqs               : frequencies (Hz)
-    radius              : exterior half-space radius (m)
-    h_horn, h_far       : element sizes (m) for P2 elements
-    angles              : far-field angles (deg)
+With ``chunk`` and ``nchunks`` the process solves every nchunks-th frequency
+starting at ``chunk``, so several processes can share one case.
 
-The horn mouth sits in an infinite rigid baffle at z = z[-1]. Unit normal
-velocity drives the annular throat. The outer boundary of the half-space
-carries a first-order Bayliss-Turkel absorbing condition. The far field at
-1 m is the Rayleigh integral of the normal velocity across the mouth.
+case.json (written by sunflower.fem):
+    points   : [[r, z, h], ...] closed outline of the air domain in the (r, z)
+               half plane, with the target element size h at each point
+    tags     : tag of the edge from point i to point i + 1 (the last edge
+               closes the loop). 1 axis, 2 rigid wall, 3 rigid baffle,
+               4 far boundary (a circular arc about far.centre), >= 10 driven
+    drive    : {tag: weight}. A driven edge moves along +z with velocity
+               weight x v, v = 1 m/s. The normal velocity into the air is
+               -weight n_z, with n the outward normal of the air domain, so a
+               curved cone is driven correctly.
+    far      : {"zb": z of the baffle plane, "R": radius of the arc}
+    kh       : {"R": radius of the Kirchhoff-Helmholtz arc, "n": Gauss points}
+    flux     : [r0, r1, z]: volume velocity through this line (mouth plane)
+    felt     : optional {"eta", "r_max", "z_max"}: a lossy layer (wavenumber
+               k (1 - j eta), rho c unchanged) where r < r_max and z < z_max
+    freqs, angles, scale (multiplies every h), h_max
 
-Output CSV: f, z_in (acoustic, Pa s/m^3), and p(theta)/U_in for each angle.
+Physics: (grad p . grad q - k^2 p q) r dx over the half plane, with
+dp/dn = -(ik + 1/R) p on the arc (first-order Bayliss-Turkel), dp/dn = 0 on
+rigid walls and the baffle, and dp/dn = -i w rho (v . n) on driven edges.
+Time convention exp(+i w t).
+
+Outputs per frequency:
+    zrad  : mechanical radiation impedance on the driven surface,
+            Z = -(1/v) sum_tags weight * integral(p n_z dS)  (N s/m). This is
+            the force the air puts on the moving parts, as in the network.
+    umouth: volume velocity through the flux line (m^3/s per m/s).
+    power_arc: active power through the Kirchhoff-Helmholtz arc for unit
+            velocity (W). Without losses it equals Re(zrad) / 2.
+    h<deg>: far-field pressure at 1 m, exp(-ikr) removed, phase referenced to
+            the point (0, zb), per unit velocity. It comes from the
+            Kirchhoff-Helmholtz integral over a hemispherical arc of radius
+            kh.R with the half-space (rigid baffle) Green's function, so a
+            body that protrudes past the baffle is allowed.
 """
 import json
 import sys
+import time
 
 import numpy as np
 import gmsh
@@ -27,130 +52,176 @@ import ufl
 from mpi4py import MPI
 from petsc4py import PETSc
 from dolfinx import fem, geometry
-from dolfinx.fem.petsc import LinearProblem
+from dolfinx.fem.petsc import assemble_matrix, assemble_vector
 from dolfinx.io import gmshio
-from scipy.special import j0
+from scipy.special import j0, j1
 
 RHO, C = 1.225, 343.0
-INLET, FAR = 1, 2
+AXIS, WALL, BAFFLE, FAR = 1, 2, 3, 4
 
 
 def build_mesh(case):
-    z = np.asarray(case["z"])
-    ro = np.asarray(case["r_outer"])
-    ri = np.asarray(case["r_inner"])
-    zm, R = z[-1], case["radius"]
+    pts, tags = case["points"], case["tags"]
+    zb = case["far"]["zb"]
+    sc = case.get("scale", 1.0)
     gmsh.initialize()
     gmsh.option.setNumber("General.Terminal", 0)
-    occ = gmsh.model.occ
-    if case.get("polygon"):
-        # explicit (r, z) outline of the air inside the horn, ending on the mouth plane
-        pts = [tuple(p) for p in case["polygon"]]
-    else:
-        # horn interior polygon: inner profile up, outer profile down
-        pts = [(ri[0], z[0])] + [(ro[i], z[i]) for i in range(len(z))] + \
-              [(ri[i], z[i]) for i in range(len(z) - 1, 0, -1)]
-    clean = []
-    for p in pts:
-        if not clean or np.hypot(p[0] - clean[-1][0], p[1] - clean[-1][1]) > 1e-6:
-            clean.append(p)
-    tags = [occ.addPoint(x, y, 0) for x, y in clean]
-    lines = [occ.addLine(tags[i], tags[(i + 1) % len(tags)]) for i in range(len(tags))]
-    horn = occ.addPlaneSurface([occ.addCurveLoop(lines)])
-    disk = occ.addDisk(0, zm, 0, R, R)
-    box = occ.addRectangle(0, zm, 0, R, R)
-    outer, _ = occ.intersect([(2, disk)], [(2, box)])
-    occ.fragment([(2, horn)], outer)
-    occ.synchronize()
-    surfaces = [s[1] for s in gmsh.model.getEntities(2)]
-    gmsh.model.addPhysicalGroup(2, surfaces, 1)
-    inlet, far = [], []
-    in_r0, in_r1, in_z = case.get("inlet", (ri[0], ro[0], z[0]))
-    for _, c in gmsh.model.getEntities(1):
-        x0, y0, _, x1, y1, _ = gmsh.model.getBoundingBox(1, c)
-        cx, cy, _ = gmsh.model.occ.getCenterOfMass(1, c)
-        if abs(cy - in_z) < 1e-6 and (y1 - y0) < 1e-5 and in_r0 - 1e-6 < cx < in_r1 + 1e-6:
-            inlet.append(c)
-        if abs(np.hypot(cx, cy - zm) - R) < 0.2 * R and y1 > zm + 0.5 * R and x1 > 0.5 * R:
-            far.append(c)
-    gmsh.model.addPhysicalGroup(1, inlet, INLET)
-    gmsh.model.addPhysicalGroup(1, far, FAR)
-    gmsh.model.mesh.field.add("Distance", 1)
-    gmsh.model.mesh.field.setNumbers(1, "PointsList", tags)
-    gmsh.model.mesh.field.add("Threshold", 2)
-    gmsh.model.mesh.field.setNumber(2, "InField", 1)
-    gmsh.model.mesh.field.setNumber(2, "SizeMin", case["h_horn"])
-    gmsh.model.mesh.field.setNumber(2, "SizeMax", case["h_far"])
-    gmsh.model.mesh.field.setNumber(2, "DistMin", 0.05 * R)
-    gmsh.model.mesh.field.setNumber(2, "DistMax", 0.6 * R)
-    gmsh.model.mesh.field.setAsBackgroundMesh(2)
-    gmsh.option.setNumber("Mesh.MeshSizeExtendFromBoundary", 0)
+    geo = gmsh.model.geo
+    ids = [geo.addPoint(r, z, 0, h * sc) for r, z, h in pts]
+    cen = geo.addPoint(0, zb, 0, case["h_max"] * sc)
+    by_tag = {}
+    lines = []
+    n = len(ids)
+    for i in range(n):
+        a, b = ids[i], ids[(i + 1) % n]
+        ln = geo.addCircleArc(a, cen, b) if tags[i] == FAR else geo.addLine(a, b)
+        lines.append(ln)
+        by_tag.setdefault(int(tags[i]), []).append(ln)
+    surf = geo.addPlaneSurface([geo.addCurveLoop(lines)])
+    geo.synchronize()
+    gmsh.model.addPhysicalGroup(2, [surf], 1)
+    for t, ls in by_tag.items():
+        gmsh.model.addPhysicalGroup(1, ls, t)
+    gmsh.option.setNumber("Mesh.MeshSizeMax", case["h_max"] * sc)
+    gmsh.option.setNumber("Mesh.MeshSizeFromCurvature", 0)
+    gmsh.option.setNumber("Mesh.Algorithm", 6)
     gmsh.model.mesh.generate(2)
-    mesh, _, facets = gmshio.model_to_mesh(gmsh.model, MPI.COMM_WORLD, 0, gdim=2)
+    mesh, _, facets = gmshio.model_to_mesh(gmsh.model, MPI.COMM_SELF, 0, gdim=2)
     gmsh.finalize()
     return mesh, facets
 
 
-def main(case_path, out_path):
+class Probe:
+    """Evaluate p and grad p at fixed points."""
+
+    def __init__(self, mesh, pts2):
+        self.pts = np.zeros((len(pts2), 3))
+        self.pts[:, :2] = pts2
+        tree = geometry.bb_tree(mesh, mesh.topology.dim)
+        coll = geometry.compute_colliding_cells(mesh, geometry.compute_collisions_points(tree, self.pts), self.pts)
+        cells = []
+        for i in range(len(self.pts)):
+            c = coll.links(i)
+            if len(c) == 0:
+                raise RuntimeError(f"probe point {self.pts[i, :2]} is outside the mesh")
+            cells.append(c[0])
+        self.cells = np.array(cells, dtype=np.int32)
+
+    def __call__(self, fn):
+        return fn.eval(self.pts, self.cells)
+
+
+def main(case_path, out_path, chunk=0, nchunks=1):
+    t0 = time.time()
     case = json.load(open(case_path))
     mesh, facets = build_mesh(case)
-    z = np.asarray(case["z"]); ro = np.asarray(case["r_outer"]); ri = np.asarray(case["r_inner"])
-    zm, R = z[-1], case["radius"]
+    t_mesh = time.time() - t0
+    zb, R = case["far"]["zb"], case["far"]["R"]
     V = fem.functionspace(mesh, ("Lagrange", 2))
-    W = fem.functionspace(mesh, ("DG", 1))
+    G = fem.functionspace(mesh, ("DG", 1, (2,)))
     p, q = ufl.TrialFunction(V), ufl.TestFunction(V)
     x = ufl.SpatialCoordinate(mesh)
     r = x[0]
+    nrm = ufl.FacetNormal(mesh)
     ds = ufl.Measure("ds", domain=mesh, subdomain_data=facets)
-    k_c = fem.Constant(mesh, PETSc.ScalarType(1.0))
-    w_c = fem.Constant(mesh, PETSc.ScalarType(1.0))
-    a = (ufl.inner(ufl.grad(p), ufl.grad(q)) - k_c**2 * ufl.inner(p, q)) * r * ufl.dx \
-        + (1j * k_c + 1.0 / R) * ufl.inner(p, q) * r * ds(FAR)
-    L = 1j * w_c * RHO * ufl.conj(q) * r * ds(INLET)   # unit inflow velocity
+    felt = case.get("felt")
+    if felt and felt["eta"] > 0:
+        # lossy layer: rho_e = rho (1 - j eta), K_e = K / (1 - j eta), so k_e = k (1 - j eta) and rho c is kept,
+        # as in the network's lossy ducts. Multiplied through by rho: stiffness / (1 - j eta), mass x (1 - j eta).
+        inside = ufl.And(ufl.lt(x[0], felt["r_max"]), ufl.lt(x[1], felt["z_max"]))
+        e = PETSc.ScalarType(1 - 1j * felt["eta"])
+        alpha = ufl.conditional(inside, 1 / e, 1.0)
+        beta = ufl.conditional(inside, e, 1.0)
+    else:
+        alpha = beta = 1.0
+    K = assemble_matrix(fem.form(alpha * ufl.inner(ufl.grad(p), ufl.grad(q)) * r * ufl.dx))
+    M = assemble_matrix(fem.form(beta * ufl.inner(p, q) * r * ufl.dx))
+    B = assemble_matrix(fem.form(ufl.inner(p, q) * r * ds(FAR)))
+    for A_ in (K, M, B):
+        A_.assemble()
+    drive = {int(k): float(w) for k, w in case["drive"].items()}
+    L0 = sum(-w * nrm[1] * ufl.conj(q) * r * ds(t) for t, w in drive.items())
+    b0 = assemble_vector(fem.form(L0))
+    b0.ghostUpdate(addv=PETSc.InsertMode.ADD, mode=PETSc.ScatterMode.REVERSE)
+    b0arr = b0.array.copy()
 
-    in_r0, in_r1, _ = case.get("inlet", (ri[0], ro[0], z[0]))
-    s_in = np.pi * (in_r1 ** 2 - in_r0 ** 2)
-    ones = fem.form(r * ds(INLET))
-    r_in = MPI.COMM_WORLD.allreduce(fem.assemble_scalar(ones), op=MPI.SUM)
-    # Gauss points across the mouth aperture, a hair outside the mouth plane
-    gx, gw = np.polynomial.legendre.leggauss(80)
-    a0, a1 = ri[-1], ro[-1]
-    rr = a0 + (a1 - a0) * (gx + 1) / 2
-    ww = gw * (a1 - a0) / 2
-    pts = np.zeros((len(rr), 3)); pts[:, 0] = rr; pts[:, 1] = zm + 1e-4
-    tree = geometry.bb_tree(mesh, mesh.topology.dim)
-    coll = geometry.compute_colliding_cells(mesh, geometry.compute_collisions_points(tree, pts), pts)
-    cells = np.array([coll.links(i)[0] for i in range(len(pts))], dtype=np.int32)
+    ph = fem.Function(V)
+    gh = fem.Function(G)
+    gexpr = fem.Expression(ufl.grad(ph), G.element.interpolation_points())
 
+    # Kirchhoff-Helmholtz arc about (0, zb)
+    Rk, nk = case["kh"]["R"], case["kh"]["n"]
+    gx, gw = np.polynomial.legendre.leggauss(nk)
+    psi = (gx + 1) * np.pi / 4
+    wpsi = gw * np.pi / 4
+    arc_r, arc_z = Rk * np.sin(psi), Rk * np.cos(psi)
+    arc = Probe(mesh, np.column_stack([arc_r, zb + arc_z]))
+    # flux line
+    r0, r1, zf = case["flux"]
+    fx, fw = np.polynomial.legendre.leggauss(80)
+    fr = r0 + (r1 - r0) * (fx + 1) / 2
+    fwt = fw * (r1 - r0) / 2 * 2 * np.pi * fr
+    flux = Probe(mesh, np.column_stack([fr, np.full_like(fr, zf)]))
+
+    freqs = case["freqs"][chunk::nchunks]
     rows = []
-    for f in case["freqs"]:
-        k = 2 * np.pi * f / C
-        k_c.value = k
-        w_c.value = 2 * np.pi * f
-        prob = LinearProblem(a, L, petsc_options={"ksp_type": "preonly", "pc_type": "lu",
-                                                  "pc_factor_mat_solver_type": "mumps"})
-        ph = prob.solve()
-        p_in = fem.assemble_scalar(fem.form(ph * r * ds(INLET))) / r_in
-        u_in = 1.0 * s_in
-        dpdz = fem.Function(W)
-        dpdz.interpolate(fem.Expression(ph.dx(1), W.element.interpolation_points()))
-        vz = -dpdz.eval(pts, cells).ravel() / (1j * 2 * np.pi * f * RHO)
-        u_ratio = np.sum(vz * 2 * np.pi * rr * ww) / u_in
-        row = dict(f=f, z_in_re=(p_in / u_in).real, z_in_im=(p_in / u_in).imag,
-                   u_ratio_re=u_ratio.real, u_ratio_im=u_ratio.imag)
+    ksp = PETSc.KSP().create(MPI.COMM_SELF)
+    ksp.setType("preonly")
+    ksp.getPC().setType("lu")
+    ksp.getPC().setFactorSolverType("mumps")
+    b = b0.duplicate()
+    for f in freqs:
+        w = 2 * np.pi * f
+        k = w / C
+        A = K.copy()
+        A.axpy(-k * k, M, structure=PETSc.Mat.Structure.SUBSET_NONZERO_PATTERN)
+        A.axpy(1j * k + 1.0 / R, B, structure=PETSc.Mat.Structure.SUBSET_NONZERO_PATTERN)
+        b.array[:] = 1j * w * RHO * b0arr
+        ksp.setOperators(A)
+        ksp.solve(b, ph.x.petsc_vec)
+        ph.x.scatter_forward()
+        A.destroy()
+        zrad = 2 * np.pi * np.dot(b0arr, ph.x.array)
+        gh.interpolate(gexpr)
+        # mouth flux
+        dpdz = flux(gh)[:, 1]
+        umouth = np.sum(-dpdz / (1j * w * RHO) * fwt)
+        # far field
+        pv = arc(ph).ravel()
+        g = arc(gh)
+        nr, nz = np.sin(psi), np.cos(psi)
+        dpdn = g[:, 0] * nr + g[:, 1] * nz
+        dl = Rk * wpsi
+        # active power through the arc, for unit velocity (compare with Re(zrad) / 2)
+        vn = -dpdn / (1j * w * RHO)
+        parc = 0.5 * np.real(np.sum(pv * np.conj(vn) * 2 * np.pi * arc_r * dl))
+        row = dict(f=f, zrad_re=zrad.real, zrad_im=zrad.imag, umouth_re=umouth.real, umouth_im=umouth.imag,
+                   power_arc=parc)
         for th in case["angles"]:
-            integ = np.sum(vz * j0(k * rr * np.sin(np.radians(th))) * 2 * np.pi * rr * ww)
-            pf = 1j * 2 * np.pi * f * RHO / (2 * np.pi * 1.0) * integ / u_in
-            row[f"h{int(th)}_re"], row[f"h{int(th)}_im"] = pf.real, pf.imag
+            st, ct = np.sin(np.radians(th)), np.cos(np.radians(th))
+            a = k * arc_r * st
+            J0, J1 = j0(a), j1(a)
+            ep, em = np.exp(1j * k * arc_z * ct), np.exp(-1j * k * arc_z * ct)
+            term = pv * 1j * k * (ep * (1j * nr * st * J1 + nz * ct * J0) + em * (1j * nr * st * J1 - nz * ct * J0)) \
+                - dpdn * J0 * (ep + em)
+            P = 0.5 * np.sum(term * arc_r * dl)
+            row[f"h{int(th)}_re"], row[f"h{int(th)}_im"] = P.real, P.imag
         rows.append(row)
-        print(f"{f:8.1f} Hz  |Zin|={abs(p_in/u_in):.4g}", flush=True)
-    keys = list(rows[0])
+        print(f"{f:8.1f} Hz  |Z|={abs(zrad):.4g}", flush=True)
+    keys = list(rows[0]) if rows else ["f"]
     with open(out_path, "w") as fh:
         fh.write(",".join(keys) + "\n")
         for row in rows:
-            fh.write(",".join(f"{row[k]:.9g}" for k in keys) + "\n")
-    print(f"cells {mesh.topology.index_map(2).size_local}, dofs {V.dofmap.index_map.size_global}")
+            fh.write(",".join(f"{row[k]:.10g}" for k in keys) + "\n")
+    hmin = mesh.h(2, np.arange(mesh.topology.index_map(2).size_local, dtype=np.int32))
+    meta = dict(cells=int(mesh.topology.index_map(2).size_local), dofs=int(V.dofmap.index_map.size_global),
+                h_min_m=float(hmin.min()), h_max_m=float(hmin.max()), mesh_s=t_mesh, total_s=time.time() - t0,
+                n_freqs=len(freqs))
+    with open(out_path + ".meta.json", "w") as fh:
+        json.dump(meta, fh)
+    print(json.dumps(meta))
 
 
 if __name__ == "__main__":
-    main(sys.argv[1], sys.argv[2])
+    a = sys.argv[1:]
+    main(a[0], a[1], *(int(v) for v in a[2:4]))

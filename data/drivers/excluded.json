@@ -6,6 +6,8 @@
   "jbl-2402h": "No current price or listing found (probably discontinued). Checked 2026-11-17.",
   "selenium-st400-trio": "No datasheet response curve or body dimensions found. Checked 2026-11-17.",
   "bc-de250": "120 mm body and 2.15 kg: too large for a mid phase plug. Checked 2026-11-17.",
-  "fostex-ft96h": "Discontinued (Fostex). Checked 2026-11-17."
+  "fostex-ft96h": "Discontinued (Fostex). Checked 2026-11-17.",
+  "18sound-15nmb420": "Superseded by the 15MB700; 18 Sound points buyers to it (checked 2026-11-17)",
+  "rcf-mr8n301": "fs 310 Hz, too high for a 250 Hz crossover"
  }
 }

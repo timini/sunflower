@@ -1,38 +1,59 @@
 {
   "gain_db": {
-    "low": 0.0,
-    "mid": -1.71,
-    "tweeter": -2.02
+    "low": -2.32,
+    "mid": -5.05,
+    "tweeter": 0.0
+  },
+  "eq": {
+    "mid_high_shelf_hz": 2200.0,
+    "mid_high_shelf_db": 12.0
   },
   "polarity": {
-    "low": -1,
+    "low": 1,
     "mid": 1,
     "tweeter": 1
   },
   "delay_ms": {
     "low": 0.0,
-    "mid": 0.64,
-    "tweeter": 0.88
+    "mid": 1.26,
+    "tweeter": 0.26
   },
   "crossover": {
     "type": "Linkwitz-Riley 24 dB/oct",
-    "low_mid_hz": 500.0,
-    "mid_high_hz": 3500.0
+    "low_mid_hz": 250.0,
+    "mid_high_hz": 4000.0
   },
   "section_levels_db": {
-    "low": 103.45058586828266,
-    "mid": 105.16217014198011,
-    "tweeter": 105.47211516331802
+    "low": 106.00353353423263,
+    "mid": 108.73206491613195,
+    "tweeter": 103.67864849455741
   },
-  "target_db": 103.45058586828266,
-  "rms_deviation_100_16k_db": 1.6704221036665061,
+  "target_db": 103.67864849455741,
+  "rms_deviation_100_16k_db": 2.0018195617035315,
   "no_sub_shelf": {
     "type": "2nd-order low shelf +6 dB at the low section's -3 dB point, LR4 high-pass 30 Hz",
-    "shelf_hz": 83.85583477291212,
-    "f_minus6_hz": 61.43796578537556,
-    "max_excursion_mm": 15.413557009110395,
-    "xmax_mm": 4.8,
-    "rated_power_w": 500,
-    "safe_power_w": 48.48939137080505
+    "shelf_hz": 123.89851405190133,
+    "f_minus6_hz": 92.45203806374418,
+    "max_excursion_mm": 8.616449490782484,
+    "xmax_mm": 5.5,
+    "rated_power_w": 400,
+    "safe_power_w": 162.9778848730372
+  },
+  "kick_low_end": {
+    "single_free_db": {
+      "f_minus3_hz": 123.9947475611544,
+      "f_minus6_hz": 108.98774057203987,
+      "level_150_250_db": 106.87220299215399
+    },
+    "single_half_space_db": {
+      "f_minus3_hz": 116.93299920520208,
+      "f_minus6_hz": 103.99313949225049,
+      "level_150_250_db": 108.26400959454034
+    },
+    "cluster9_free_db": {
+      "f_minus3_hz": 134.6033809009352,
+      "f_minus6_hz": 112.8904928755611,
+      "level_150_250_db": 125.54209413952873
+    }
   }
 }

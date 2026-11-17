@@ -7,9 +7,9 @@ default:
 test:
     uv run pytest -q
 
-# Joint optimisation of tweeter, mid and low (about 20 minutes)
-optimise:
-    uv run python -m sunflower.optimise
+# Inside-out optimisation of HF unit, mid and kick (about 15 minutes); add --from-low to redo only stages 2 and 3
+optimise *ARGS:
+    uv run python -m sunflower.optimise {{ARGS}}
 
 # Plane-wave simulation of all sections, crossover and sum
 sim:
@@ -38,7 +38,9 @@ site:
     uv run python -m sunflower.site
 
 # Everything, in order
-all: optimise sim cad fem plots render site test
+all: optimise sim cad fem
+    uv run python -m sunflower.simulate
+    just plots render site test
 
 # Preview the site with the CAD and results folders in place, as Pages serves it
 serve:

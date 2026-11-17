@@ -1,37 +1,67 @@
 {
- "panels": {
-  "flare_half_angle_deg": 8.035710710534794,
-  "long_edge_bevel_deg": 44.44014673362691,
-  "end_bevel_deg": 8.035710710534794,
-  "slope_length_mm": 858.4287972802404
+ "walls": {
+  "side_wall": {
+   "throat_edge_mm": 360.0,
+   "mouth_edge_mm": 600.0,
+   "slope_length_mm": 509.9019513592785,
+   "flare_deg": 11.309932474020215
+  },
+  "top_wall": {
+   "throat_edge_mm": 396.0,
+   "mouth_edge_mm": 596.0,
+   "slope_length_mm": 514.1984052872976,
+   "flare_deg": 13.495733280795811
+  }
  },
  "corner_filler": {
   "throat_leg_mm": 105.4415587728429,
-  "face_base_mm": 149.11688245431424,
-  "face_height_mm": 884.4008905828316
+  "face_base_mm": 149.11688245431424
  },
- "rear_chamber": {
-  "box_litres": 32.16666666666667,
-  "cone_concave_litres": 2.833333333333334,
-  "flange_displacement_litres": 0.217366795701878,
-  "net_litres": 34.78263320429813,
-  "target_litres": 35.0
+ "shell_angle_deg": 7.841407862331483,
+ "chamber": {
+  "available_litres": 35.53494914493099,
+  "target_litres": 35.0,
+  "fill_litres": 0.5349491449309909
  },
  "external_mm": {
-  "width": 636.0,
-  "height": 636.0,
-  "depth": 982.3518518518518
+  "width": 596.0,
+  "height_front": 636.0,
+  "height_back": 478.99999999999994,
+  "depth": 588.0
  },
  "stations_mm": {
+  "back": -63.0,
   "baffle_back": 0,
   "baffle_front": 25.0,
-  "mid_tail_tip": 378.0,
-  "mid_can_back": 498.0,
-  "mid_driver_back": 516.0,
-  "mid_cone_rim": 603.0,
-  "mid_throat": 615.0,
-  "tweeter_face": 745.0,
-  "mouth": 875.0,
-  "support_rods": 686.5
+  "throat": 25.0,
+  "motor_end": 160.0,
+  "can_back": 282.0,
+  "mid_driver_back": 300.0,
+  "mid_throat": 375.0,
+  "hf_exit": 426.0,
+  "hf_mouth": 515.0,
+  "mouth": 525.0,
+  "support_rods": 450.0
+ },
+ "print_files": {
+  "centre_body": [
+   "centre_body-1-q1.stl",
+   "centre_body-1-q2.stl",
+   "centre_body-1-q3.stl",
+   "centre_body-1-q4.stl",
+   "centre_body-2-q1.stl",
+   "centre_body-2-q2.stl",
+   "centre_body-2-q3.stl",
+   "centre_body-2-q4.stl"
+  ],
+  "mid_horn": [
+   "mid_horn-1.stl"
+  ],
+  "mid_sleeve": [
+   "mid_sleeve-1.stl"
+  ],
+  "phase_plug": [
+   "phase_plug-1.stl"
+  ]
  }
 }

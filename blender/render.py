@@ -16,7 +16,7 @@ import bpy
 from mathutils import Matrix, Vector
 
 ROOT = Path(__file__).resolve().parents[1]
-SHOTS = ("hero", "front", "section", "exploded", "detail", "rear", "turntable")
+SHOTS = ("hero", "front", "section", "exploded", "detail", "rear", "stack", "turntable")
 
 MATERIALS = {
     #             base colour (linear)        metallic roughness
@@ -219,6 +219,40 @@ def section(objs, on=True):
             ob.modifiers.remove(mod)
 
 
+def stack_shot(sc, objs, out, a, ym, Hf, k):
+    """Three boxes splayed vertically: each hinges on the front edge it shares with its neighbour."""
+    st = json.loads((ROOT / "cad/stack.json").read_text())
+    th = math.radians(st["splay_deg"])
+    half = Hf / 2
+    coll = bpy.data.collections.new("box")
+    bpy.context.scene.collection.children.link(coll)
+    for ob in objs.values():
+        for c in ob.users_collection:
+            c.objects.unlink(ob)
+        coll.objects.link(ob)
+    mats = []
+    for sign in (1, -1):             # 1: box above, -1: box below
+        own = Vector((0, ym, -sign * half))       # this box's own front edge that becomes the hinge
+        target = Vector((0, ym, sign * half))     # the middle box's front edge it sits on
+        m = Matrix.Translation(target) @ Matrix.Rotation(-sign * th, 4, "X") @ Matrix.Translation(-own)
+        inst = bpy.data.objects.new(f"stack{sign}", None)
+        inst.instance_type = "COLLECTION"
+        inst.instance_collection = coll
+        inst.matrix_world = m
+        bpy.context.scene.collection.objects.link(inst)
+        mats.append(inst)
+    floor = bpy.data.objects.get("Plane")
+    low = min((mt.matrix_world @ Vector((0, ym, -half)))[2] for mt in mats) - 0.5
+    if floor:
+        floor.location.z = low
+    camera((2.6 * k, ym - 3.2 * k, 0.9 * k), target=(0, ym + 0.35, 0.0), lens=34)
+    render(sc, out / "stack.jpg", a.samples, a.res)
+    camera((5.0, ym + 0.3, 0.0), target=(0, ym + 0.3, 0), lens=50, ortho=3.0 * Hf + 0.6)
+    render(sc, out / "stack-side.jpg", a.samples, "1600x1400")
+    for mt in mats:
+        bpy.data.objects.remove(mt)
+
+
 def main():
     a = args()
     out = Path(a.out)
@@ -231,20 +265,21 @@ def main():
     ext = cut["external_mm"]
     st = cut["stations_mm"]
     W, Dp = ext["width"] / 1000, ext["depth"] / 1000
-    z_back = (st["mouth"] - ext["depth"]) / 1000
+    Hf = ext["height_front"] / 1000
+    z_back = st["back"] / 1000
     yc = -(z_back + st["mouth"] / 1000) / 2          # blender y of the cabinet centre
     ym = -st["mouth"] / 1000                          # blender y of the mouth plane
     k = max(W, Dp) / 0.89                             # scale the cameras with the cabinet
     floor = bpy.data.objects.get("Plane")
     if floor:
-        floor.location.z = -W / 2
+        floor.location.z = -ext["height_front"] / 2000 - 0.002
     cams = {}
     hero_cam = (1.55 * k, yc - 1.95 * k, 0.75 * k)
     if "hero" in shots:
         camera(hero_cam, target=(0, yc, 0), lens=45)
         render(sc, out / "hero.jpg", a.samples, a.res)
     if "front" in shots:
-        s_front = 1.35 * W
+        s_front = 1.35 * max(W, Hf)
         camera((0, ym - 4.0, 0), target=(0, ym, 0), lens=50, ortho=s_front)
         render(sc, out / "front.jpg", a.samples, "1400x1400")
         cams["front"] = dict(res=[1400, 1400], ortho=s_front, centre_h=0.0, centre_v=0.0, axes="x,y")
@@ -266,11 +301,13 @@ def main():
         section(objs, True)
         camera((2.3 * k, yc - 0.8 * k, 0.85 * k), target=(0, yc, 0), lens=42)
         render(sc, out / "section.jpg", a.samples, a.res)
-        s_side = 1.3 * max(Dp, W * 1.8)
+        s_side = 1.3 * max(Dp, Hf * 1.8)
         camera((4.0, yc, 0.0), target=(0, yc, 0), lens=50, ortho=s_side)
         render(sc, out / "section-side.jpg", a.samples, "1800x1000")
         cams["section-side"] = dict(res=[1800, 1000], ortho=s_side, centre_h=yc * 1000, centre_v=0.0, axes="-z,y")
         section(objs, False)
+    if "stack" in shots:
+        stack_shot(sc, objs, out, a, ym, Hf, k)
     if cams:
         old = json.loads((out / "cameras.json").read_text()) if (out / "cameras.json").exists() else {}
         old.update(cams)

@@ -1,6 +1,6 @@
 {
  "model": "Fostex T925A",
- "kind": "horn super tweeter, ring diaphragm, alnico, bullet phase plug",
+ "kind": "bullet",
  "body_diameter_mm": 82,
  "body_depth_mm": 91,
  "depth_with_terminals_mm": 108,
@@ -85,5 +85,11 @@
    74
   ]
  },
- "id": "fostex-t925a"
+ "id": "fostex-t925a",
+ "cylinder_diameter_mm": 82,
+ "flange_diameter_mm": 82,
+ "exit_diameter_mm": 50,
+ "price_usd": 452.8,
+ "price_source": "https://www.madisoundspeakerstore.com/bullet-tweeters/fostex-t925a-top-mount-horn-super-tweeter/",
+ "price_date": "2026-11-17"
 }

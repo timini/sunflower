@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sunflower v0.2 review</title>
+<meta name="description" content="Gap analysis of Sunflower v0.1 and what v0.2 changed.">
+<link rel="stylesheet" href="assets/style.css">
+<link rel="icon" href="data:image/svg+xml,<svg viewBox='0 0 32 32' aria-hidden='true'><g fill='none' stroke-width='2.4'><rect x='3' y='3' width='26' height='26' rx='4' stroke='%23d38a0c'/><circle cx='16' cy='16' r='8' stroke='%23eb6834'/><circle cx='16' cy='16' r='3.2' fill='%231baf7a' stroke='none'/></g></svg>">
+</head>
+<body>
+<header class="site"><div class="wrap">
+<a class="brand" href="index.html"><svg viewBox="0 0 32 32" aria-hidden="true"><g fill="none" stroke-width="2.4">
+<rect x="3" y="3" width="26" height="26" rx="4" stroke="#d38a0c"/><circle cx="16" cy="16" r="8" stroke="#eb6834"/>
+<circle cx="16" cy="16" r="3.2" fill="#1baf7a" stroke="none"/></g></svg>Sunflower</a>
+<nav><a href="index.html">Product</a><a href="review.html" aria-current=page>v0.2 review</a><a href="design.html">Design</a><a href="simulation.html">Simulation</a><a href="build.html">Build</a><a href="downloads.html">Downloads</a></nav>
+</div></header>
+<main><div class="wrap">
+
+<h1>v0.2 review</h1>
+<p class="lede">v0.1 was reviewed against the design brief. v0.2 closes these gaps. The v0.1 site and files are kept at
+the <a href="https://github.com/timini/sunflower/tree/v0.1">v0.1 tag</a>.</p>
+<h2>Gaps and what v0.2 does about them</h2>
+<div class="table-wrap"><table><thead><tr><th class="">Area</th><th class="">v0.1</th><th class="">v0.2</th></tr></thead><tbody><tr><td class="">Design order</td><td class="">Tweeter, mid and low searched on separate grids. The PRV cone was barely wider than the 86 mm plug</td><td class="">Inside out: HF body cylinder, then plug, then mid cones at least 1.6 times the plug, then throat, mouth, can, centre body, kick horn</td></tr><tr><td class="">Mid phase plug</td><td class="">A cylinder that stopped dead at the tweeter face: a step in open area</td><td class="">The plug tapers to the HF horn mouth and the wall follows the area law, so open area has no step</td></tr><tr><td class="">HF unit</td><td class="">Fostex T925A super tweeter, $453, read by its outside envelope</td><td class="">Five HF units compared, including 1 inch compression drivers on our own printed horn (Funktion-One style), sized by body cylinder only, with prices</td></tr><tr><td class="">HF in the mid horn</td><td class="">Not modelled</td><td class="">Axisymmetric FEM of the HF mouth inside the mid horn. It showed a deep notch when the mouth was deep inside, so the HF horn now runs to 10 mm inside the mid mouth</td></tr><tr><td class="">Low centre body</td><td class="">15 inch nose and mid-can tail separate, with a gap between</td><td class="">One piece from the cone to the mid can</td></tr><tr><td class="">Low throat</td><td class="">No compression (throat bigger than the cone)</td><td class="">The centre body's rear face follows the cone, giving a narrow compressed annulus</td></tr><tr><td class="">Low front chamber</td><td class="">8.4 litres, roll-off near 660 Hz</td><td class="">Cone area times (Xmax + 3 mm), well under a litre</td></tr><tr><td class="">Depth</td><td class="">982 mm</td><td class="">At most 600 mm</td></tr><tr><td class="">Cabinet</td><td class="">Square box with dead voids</td><td class="">Angled top and bottom, voids are the sealed chamber, splayed stacking</td></tr><tr><td class="">Band split</td><td class="">Kick to 400 Hz, mid to 6 kHz</td><td class="">Crossovers chosen by the optimiser from 250 to 500 Hz and the HF unit's range, rewarding a wide mid band</td></tr><tr><td class="">Print sizes</td><td class="">302 mm can, larger than common beds</td><td class="">Every printed part cut into sections and quarters within 250 mm</td></tr><tr><td class="">Cost</td><td class="">None</td><td class="">HF price is the tie-breaker among near-equal designs; prices listed</td></tr></tbody></table></div>
+<h2>References</h2>
+<div class="table-wrap"><table><thead><tr><th class="">Reference</th><th class="">Layout</th><th class="">Use here</th></tr></thead><tbody><tr><td class="">Funktion-One Res 2</td><td class="">15 inch kick horn to 250 Hz, 8 inch mid with Axhead from 250 Hz up, 1 inch HF. 102 dB bass, 106 dB mid/HF, 60 Hz to 18 kHz</td><td class="">Overall band split</td></tr><tr><td class="">Funktion-One Res 4T</td><td class="">12 inch 114 to 445 Hz, 8 inch 445 Hz to 5.77 kHz, 1 inch compression driver 5.55 to 18 kHz</td><td class="">HF type and crossover region</td></tr><tr><td class="">HD-15 kick bin</td><td class="">Front-loaded 15 inch straight horn, about 578 x 578 x 472 mm outside, useful from about 90 Hz</td><td class="">Depth target and kick-horn character</td></tr></tbody></table></div>
+<p>Funktion-One figures are from <a href="https://funktion-one.com/product/res-2">funktion-one.com</a>. HD-15 figures
+are from a <a href="https://www.diyaudio.com/community/posts/7749785">diyAudio thread</a>; the plans themselves are on
+Speakerplans and are not reproduced here.</p>
+<h2>Still open</h2>
+<ul><li>Nothing is built or measured.</li><li>HF responses are datasheet curves on the maker's horn, read by eye; the printed HF horn changes them. Only its coverage is modelled (FEM).</li><li>Low and mid FEM are axisymmetric: the rectangular kick horn becomes a circle of equal area.</li><li>Thiele/Small data for most catalogue drivers are unverified; the chosen ones are checked by hand.</li><li>The 15 inch cone profile and motor size, and the mid cone profile, are estimated. Measure before printing the centre body and plug.</li><li>Mid and low driver prices are not in the cost score; only the HF unit's.</li><li>Cone breakup is not modelled; cone sizes are only trusted to fixed crossover limits.</li></ul>
+
+</div></main>
+<footer><div class="wrap">
+Sunflower is an open design. Source, CAD and results: <a href="https://github.com/timini/sunflower">github.com/timini/sunflower</a>.
+Simulated, not yet built or measured. MIT licence.
+</div></footer>
+</body>
+</html>

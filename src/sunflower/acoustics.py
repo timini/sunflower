@@ -121,6 +121,9 @@ def horn_transfer(f, area_fn, length, segments=300, breaks=(), mouth_area=None) 
     return HornTransfer(np.asarray(f), pin / uin, 1 / uin, load, area_fn(0.0), s_mouth)
 
 
+_GAUSS = np.polynomial.legendre.leggauss(96)
+
+
 def far_field(f, u_mouth, mouth_radius, theta_deg=0.0, r=1.0, inner_radius=0.0, wavefront_radius=None):
     """Far-field pressure of a baffled circular or annular aperture.
 
@@ -137,7 +140,7 @@ def far_field(f, u_mouth, mouth_radius, theta_deg=0.0, r=1.0, inner_radius=0.0, 
     s = np.sin(np.radians(theta_deg))
     if wavefront_radius is not None:
         from scipy.special import j0
-        x, w = np.polynomial.legendre.leggauss(96)
+        x, w = _GAUSS
         ri = inner_radius + (mouth_radius - inner_radius) * (x + 1) / 2
         wr = w * (mouth_radius - inner_radius) / 2 * 2 * np.pi * ri
         sag = wavefront_radius - np.sqrt(wavefront_radius**2 - ri**2)

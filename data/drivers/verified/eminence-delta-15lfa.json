@@ -1,0 +1,45 @@
+{
+ "driver_id": "eminence-delta-15lfa",
+ "manufacturer": "Eminence",
+ "model_name": "DELTA-15LFA",
+ "driver_type": "cone",
+ "parameters": {
+  "fs_hz": 39.0,
+  "re_ohm": 6.11,
+  "bl_tm": 14.6,
+  "sd_m2": 0.0873,
+  "mms_kg": 0.075,
+  "le_h": 0.0013700000000000001,
+  "qts": 0.48,
+  "nominal_impedance_ohm": 8.0,
+  "xmax_m": 0.0048,
+  "qms": 6.3,
+  "qes": 0.52,
+  "power_w": 500,
+  "vas_l": 241,
+  "sensitivity_db_2p83v": 96.0
+ },
+ "nominal_diameter": "15in",
+ "catalogue_status": "manufacturer_verified",
+ "nominal_diameter_verified": true,
+ "parameter_source": "https://en.toutlehautparleur.com/media/catalog/product/datasheet/eminence/DELTA-15LFA-8.pdf",
+ "physical_envelope_mm": {
+  "overall_diameter": 384.8,
+  "bolt_circle": 369.8,
+  "baffle_cutout": 352.3,
+  "depth": 160,
+  "flange_thickness": 10
+ },
+ "body_mm": {
+  "cone_depth": 100,
+  "motor_diameter": 170,
+  "motor_length": 60,
+  "note": "cone depth and ferrite motor size estimated from the datasheet photo and 160 mm depth; measure before printing the centre body"
+ },
+ "weight_kg": 5.81,
+ "availability": "Mixed: archived by one distributor (Adam Hall), listed in stock by Beach Audio in January 2026. Check before buying.",
+ "provenance": {
+  "retrieved_on": "2026-11-17",
+  "capture_method": "Checked by hand against the Eminence datasheet; all Thiele/Small values match"
+ }
+}

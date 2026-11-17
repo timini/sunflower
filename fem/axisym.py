@@ -43,9 +43,13 @@ def build_mesh(case):
     gmsh.initialize()
     gmsh.option.setNumber("General.Terminal", 0)
     occ = gmsh.model.occ
-    # horn interior polygon: inner profile up, outer profile down
-    pts = [(ri[0], z[0])] + [(ro[i], z[i]) for i in range(len(z))] + \
-          [(ri[i], z[i]) for i in range(len(z) - 1, 0, -1)]
+    if case.get("polygon"):
+        # explicit (r, z) outline of the air inside the horn, ending on the mouth plane
+        pts = [tuple(p) for p in case["polygon"]]
+    else:
+        # horn interior polygon: inner profile up, outer profile down
+        pts = [(ri[0], z[0])] + [(ro[i], z[i]) for i in range(len(z))] + \
+              [(ri[i], z[i]) for i in range(len(z) - 1, 0, -1)]
     clean = []
     for p in pts:
         if not clean or np.hypot(p[0] - clean[-1][0], p[1] - clean[-1][1]) > 1e-6:
@@ -61,10 +65,11 @@ def build_mesh(case):
     surfaces = [s[1] for s in gmsh.model.getEntities(2)]
     gmsh.model.addPhysicalGroup(2, surfaces, 1)
     inlet, far = [], []
+    in_r0, in_r1, in_z = case.get("inlet", (ri[0], ro[0], z[0]))
     for _, c in gmsh.model.getEntities(1):
         x0, y0, _, x1, y1, _ = gmsh.model.getBoundingBox(1, c)
         cx, cy, _ = gmsh.model.occ.getCenterOfMass(1, c)
-        if abs(cy - z[0]) < 1e-6 and (y1 - y0) < 1e-5 and ri[0] - 1e-6 < cx < ro[0] + 1e-6:
+        if abs(cy - in_z) < 1e-6 and (y1 - y0) < 1e-5 and in_r0 - 1e-6 < cx < in_r1 + 1e-6:
             inlet.append(c)
         if abs(np.hypot(cx, cy - zm) - R) < 0.2 * R and y1 > zm + 0.5 * R and x1 > 0.5 * R:
             far.append(c)
@@ -103,7 +108,8 @@ def main(case_path, out_path):
         + (1j * k_c + 1.0 / R) * ufl.inner(p, q) * r * ds(FAR)
     L = 1j * w_c * RHO * ufl.conj(q) * r * ds(INLET)   # unit inflow velocity
 
-    s_in = np.pi * (ro[0] ** 2 - ri[0] ** 2)
+    in_r0, in_r1, _ = case.get("inlet", (ri[0], ro[0], z[0]))
+    s_in = np.pi * (in_r1 ** 2 - in_r0 ** 2)
     ones = fem.form(r * ds(INLET))
     r_in = MPI.COMM_WORLD.allreduce(fem.assemble_scalar(ones), op=MPI.SUM)
     # Gauss points across the mouth aperture, a hair outside the mouth plane

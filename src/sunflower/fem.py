@@ -37,22 +37,36 @@ def case_tube():
 def case_mid():
     m = D.MID
     fmax = min(1.6 * D.CROSSOVER_MID_HIGH_HZ, 12000)
-    n1 = max(int(60 * m.tweeter_face / m.length), 8)
-    zs = np.r_[np.linspace(0, m.tweeter_face, n1), m.tweeter_face,
-               np.linspace(m.tweeter_face, m.length, 70 - n1)[1:]]
+    zs = np.unique(np.r_[np.linspace(0, m.length, 120), m.s_exit, m.s_tip, m.s_tip + 1e-5])
     ro = [m.radius(z) for z in zs]
-    ri = [m.plug_radius] * n1 + [0.0] * (len(zs) - n1)
+    ri = [m.plug(z) if z <= m.s_tip else 0.0 for z in zs]
     h = min(343 / fmax / 10, 0.006)
     return dict(z=zs.tolist(), r_outer=ro, r_inner=ri,
                 freqs=np.geomspace(0.6 * D.CROSSOVER_LOW_MID_HZ, fmax, 70).tolist(),
-                radius=max(0.6, 1.5 * m.mouth_diameter),
-                h_horn=h, h_far=2 * h, angles=list(ANGLES))
+                radius=max(0.6, 1.5 * m.mouth_diameter), h_horn=h, h_far=2 * h, angles=list(ANGLES))
+
+
+def case_hf():
+    """HF unit radiating from its printed horn mouth inside the mid horn (mid annulus behind it, rigid)."""
+    m = D.MID
+    st = m.s_tip
+    back = np.linspace(st, 0, 40)
+    poly = [(0.0, st), (m.hf_mouth_radius, st), (m.tip_radius, st)]
+    poly += [(m.plug(s), s) for s in back[1:]]
+    fwd = np.linspace(0, m.length, 120)
+    poly += [(m.radius(s), s) for s in fwd]
+    poly += [(0.0, m.length)]
+    fmax = 16000
+    h = 343 / fmax / 8
+    return dict(z=[0.0, m.length], r_outer=[m.radius(0), m.radius(m.length)], r_inner=[0.0, 0.0],
+                polygon=poly, inlet=(0.0, m.hf_mouth_radius, st),
+                freqs=np.geomspace(0.5 * D.CROSSOVER_MID_HIGH_HZ, fmax, 40).tolist(),
+                radius=0.4, h_horn=h, h_far=2.5 * h, angles=list(ANGLES))
 
 
 def case_low():
     h = D.LOW
-    zs = np.linspace(h.throat_z, h.mouth_z, 240)
-    zs = np.unique(np.r_[zs, [h.throat_z + b for b in h.breaks]])
+    zs = np.unique(np.r_[np.linspace(h.throat_z, h.mouth_z, 240), h.can_start, h.can_start + 1e-5])
     ro = [float(np.sqrt(h.outer_area(z) / np.pi)) for z in zs]
     ri = [h.inner_radius(z) for z in zs]
     return dict(z=zs.tolist(), r_outer=ro, r_inner=ri,
@@ -120,21 +134,45 @@ def couple(name, raw):
     return pd.DataFrame(cols)
 
 
+def hf_compare(raw, out):
+    """FEM polar of the HF mouth inside the mid horn, relative to on axis, against the piston model."""
+    from sunflower.acoustics import far_field
+    m = D.MID
+    f = raw.f.values
+    cols = dict(frequency_hz=f)
+    ref = np.abs(h(raw, 0))
+    piston0 = np.abs(far_field(f, np.ones_like(f), m.hf_mouth_radius, 0.0))
+    cols["onaxis_vs_piston_db"] = 20 * np.log10(ref / piston0)
+    for th in ANGLES:
+        cols[f"fem_rel_{th}deg_db"] = 20 * np.log10(np.abs(h(raw, th)) / ref)
+        cols[f"piston_rel_{th}deg_db"] = 20 * np.log10(np.abs(far_field(f, np.ones_like(f), m.hf_mouth_radius, th))
+                                                      / piston0)
+    df = pd.DataFrame(cols)
+    df.to_csv(out / "hf-in-mid.csv", index=False, float_format="%.6g")
+    b = (f >= D.CROSSOVER_MID_HIGH_HZ) & (f <= 16000)
+    return dict(band_hz=[D.CROSSOVER_MID_HIGH_HZ, 16000],
+                onaxis_change_db_mean=float(df.onaxis_vs_piston_db[b].mean()),
+                rel_30deg_fem_mean_db=float(df.fem_rel_30deg_db[b].mean()),
+                rel_30deg_piston_mean_db=float(df.piston_rel_30deg_db[b].mean()))
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("--only", choices=("tube", "mid", "low"))
+    ap.add_argument("--only", choices=("tube", "mid", "low", "hf"))
     ap.add_argument("--reuse", action="store_true", help="reuse raw FEM CSVs")
     args = ap.parse_args()
     out = ROOT / "results/fem"
     out.mkdir(parents=True, exist_ok=True)
     summary = json.loads((out / "summary.json").read_text()) if (out / "summary.json").exists() else {}
-    for name, case in (("tube", case_tube()), ("mid", case_mid()), ("low", case_low())):
+    for name, case in (("tube", case_tube()), ("mid", case_mid()), ("low", case_low()), ("hf", case_hf())):
         if args.only and name != args.only:
             continue
         raw_path = out / "work" / f"{name}-raw.csv"
         raw = pd.read_csv(raw_path) if args.reuse and raw_path.exists() else run_case(name, case, out)
         if name == "tube":
             summary["tube"] = compare_tube(raw, out)
+        elif name == "hf":
+            summary["hf"] = hf_compare(raw, out)
         else:
             df = couple(name, raw)
             df.to_csv(out / f"{name}.csv", index=False, float_format="%.6g")

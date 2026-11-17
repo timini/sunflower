@@ -22,11 +22,18 @@ ROOT = Path(__file__).resolve().parents[2]
 
 @dataclass(frozen=True)
 class Tweeter:
+    """An HF unit: a bullet super tweeter or a 1 inch compression driver.
+
+    ``body_diameter`` is the main body cylinder. Mounting flanges are cut off
+    or ignored, so they never set the size of the mid phase plug.
+    """
     id: str
     model: str
+    kind: str
     body_diameter: float
     body_depth: float
     depth_with_terminals: float
+    exit_diameter: float          # bullet: its own horn mouth; compression: the 1 inch exit
     mouth_diameter: float
     bullet_base: float
     horn_depth: float
@@ -34,6 +41,7 @@ class Tweeter:
     crossover_min_hz: float
     cutoff_hz: float
     source: str
+    price_usd: float | None = None
     off_axis: str = "table"
 
     @property
@@ -43,16 +51,22 @@ class Tweeter:
 
 def load(tid: str) -> Tweeter:
     r = json.loads((ROOT / f"data/tweeters/{tid}.json").read_text())
-    return Tweeter(id=r["id"], model=r["model"], body_diameter=r["body_diameter_mm"] / 1000,
+    kind = r.get("kind", "bullet")
+    exit_d = r.get("exit_diameter_mm", r.get("mouth_diameter_mm", 25.4)) / 1000
+    return Tweeter(id=r["id"], model=r["model"], kind=kind,
+                   body_diameter=r.get("cylinder_diameter_mm", r.get("body_diameter_mm")) / 1000,
                    body_depth=r["body_depth_mm"] / 1000, depth_with_terminals=r["depth_with_terminals_mm"] / 1000,
-                   mouth_diameter=r["mouth_diameter_mm"] / 1000, bullet_base=r["bullet_base_mm"] / 1000,
-                   horn_depth=r["horn_depth_mm"] / 1000, sensitivity_db=r["sensitivity_db_1w"],
-                   crossover_min_hz=r["crossover_min_hz"], cutoff_hz=r["cutoff_hz"], source=r["source"],
+                   exit_diameter=exit_d, mouth_diameter=r.get("mouth_diameter_mm", exit_d * 1000) / 1000,
+                   bullet_base=r.get("bullet_base_mm", 0) / 1000, horn_depth=r.get("horn_depth_mm", 0) / 1000,
+                   sensitivity_db=r["sensitivity_db_1w"], crossover_min_hz=r["crossover_min_hz"],
+                   cutoff_hz=r["cutoff_hz"], source=r["source"], price_usd=r.get("price_usd"),
                    off_axis=r.get("off_axis", "table"))
 
 
-def all_ids():
-    return sorted(p.stem for p in (ROOT / "data/tweeters").glob("*.json"))
+def all_ids(include_excluded=False):
+    excluded = json.loads((ROOT / "data/drivers/excluded.json").read_text())["drivers"]
+    ids = sorted(p.stem for p in (ROOT / "data/tweeters").glob("*.json"))
+    return ids if include_excluded else [i for i in ids if i not in excluded]
 
 
 def _table(tid):
@@ -98,8 +112,13 @@ def _minphase(tid, column):
     return f, np.unwrap(np.angle(h))
 
 
-def response(tid: str, f, theta=0.0):
-    """Complex pressure at 1 m for 2.83 V (1 W into 8 ohm), phase referenced to the diaphragm."""
+def response(tid: str, f, theta=0.0, mouth_radius=None):
+    """Complex pressure at 1 m for 2.83 V (1 W into 8 ohm), phase referenced to the diaphragm.
+
+    Off axis: the datasheet's own angles for bullets that publish them;
+    otherwise a piston of ``mouth_radius`` (the horn mouth the unit radiates
+    from in Sunflower), or of the unit's own mouth.
+    """
     f = np.asarray(f, float)
     t = _table(tid)
     tw = load(tid)
@@ -109,7 +128,8 @@ def response(tid: str, f, theta=0.0):
         if th > 0:
             from scipy.special import j1
             k = 2 * np.pi * f / C
-            x = k * tw.mouth_diameter / 2 * np.sin(np.radians(th))
+            a = mouth_radius if mouth_radius is not None else tw.mouth_diameter / 2
+            x = k * a * np.sin(np.radians(th))
             with np.errstate(invalid="ignore", divide="ignore"):
                 d = np.where(np.abs(x) < 1e-9, 1.0, np.abs(2 * j1(x) / x))
             db = db + 20 * np.log10(np.maximum(d, 1e-4))

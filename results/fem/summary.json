@@ -5,22 +5,31 @@
   },
   "mid": {
     "band_hz": [
-      400.0,
-      6000.0
+      500.0,
+      3500.0
     ],
-    "max_abs_difference_db": 3.189351141573667,
-    "mean_difference_db": 0.21495495783183904,
-    "fem_ripple_db": 4.6808077418687475,
-    "planewave_ripple_db": 5.396208258217584
+    "max_abs_difference_db": 0.7015088320116547,
+    "mean_difference_db": 0.05871659188050273,
+    "fem_ripple_db": 3.3390632686376023,
+    "planewave_ripple_db": 3.1118994432525824
   },
   "low": {
     "band_hz": [
       100,
-      400.0
+      500.0
     ],
-    "max_abs_difference_db": 0.6815261650100837,
-    "mean_difference_db": -0.20219025199712348,
-    "fem_ripple_db": 2.921991219022928,
-    "planewave_ripple_db": 2.3020793041065275
+    "max_abs_difference_db": 1.1982771794586,
+    "mean_difference_db": -0.15394076714677218,
+    "fem_ripple_db": 5.044985839207868,
+    "planewave_ripple_db": 4.704793343097592
+  },
+  "hf": {
+    "band_hz": [
+      3500.0,
+      16000
+    ],
+    "onaxis_change_db_mean": 1.4554059112590816,
+    "rel_30deg_fem_mean_db": -4.64046908403003,
+    "rel_30deg_piston_mean_db": -3.6283114201321127
   }
 }

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Sunflower</title>
-<meta name="description" content="A three-way nested coaxial horn loudspeaker with a reversed 15 inch, a mid horn and a bullet tweeter.">
+<meta name="description" content="A three-way nested coaxial horn: kick, wide-band mid and HF on one axis.">
 <link rel="stylesheet" href="assets/style.css">
 <link rel="icon" href="data:image/svg+xml,<svg viewBox='0 0 32 32' aria-hidden='true'><g fill='none' stroke-width='2.4'><rect x='3' y='3' width='26' height='26' rx='4' stroke='%23d38a0c'/><circle cx='16' cy='16' r='8' stroke='%23eb6834'/><circle cx='16' cy='16' r='3.2' fill='%231baf7a' stroke='none'/></g></svg>">
 </head>
@@ -13,53 +13,56 @@
 <a class="brand" href="index.html"><svg viewBox="0 0 32 32" aria-hidden="true"><g fill="none" stroke-width="2.4">
 <rect x="3" y="3" width="26" height="26" rx="4" stroke="#d38a0c"/><circle cx="16" cy="16" r="8" stroke="#eb6834"/>
 <circle cx="16" cy="16" r="3.2" fill="#1baf7a" stroke="none"/></g></svg>Sunflower</a>
-<nav><a href="index.html" aria-current=page>Product</a><a href="design.html">Design</a><a href="simulation.html">Simulation</a><a href="build.html">Build</a><a href="downloads.html">Downloads</a></nav>
+<nav><a href="index.html" aria-current=page>Product</a><a href="review.html">v0.2 review</a><a href="design.html">Design</a><a href="simulation.html">Simulation</a><a href="build.html">Build</a><a href="downloads.html">Downloads</a></nav>
 </div></header>
 <main><div class="wrap">
 
 <h1>Sunflower</h1>
-<p class="lede">A three-way coaxial horn loudspeaker where each horn's phase plug is the next horn.
-A reversed 15 inch driver drives a flat-panel horn. A 6 inch midrange horn sits in its mouth and
-forms the low horn's centre body. A Fostex T925A bullet tweeter sits in the throat of the mid horn as its phase plug.
-All three sections radiate from one axis and one mouth plane.</p>
-<figure class="hero"><img src="img/renders/hero.jpg" alt="Rendered Sunflower cabinet, three-quarter front view"></figure>
+<p class="lede">A three-way coaxial horn where each horn's phase plug is the next horn. A 18 Sound ND1030 on a small
+printed horn sits in the middle of an oblate spheroidal (OS) mid horn and is its phase plug. The mid horn and its
+6.5 inch driver sit in a can that is the end of a one-piece centre body, which is the phase plug of a reversed
+15 inch kick horn. It follows the Funktion-One Res layout (kick, wide-band mid, small HF) on one axis.</p>
+<figure class="hero"><img src="img/renders/hero.jpg" alt="Rendered Sunflower cabinet"></figure>
 <div class="stat">
-<div><b>104 dB</b><span>2.83 V, 1 m</span></div>
-<div><b>69 Hz</b><span>low-frequency -3 dB, on axis</span></div>
-<div><b>4.9 dB</b><span>peak to peak, 100 Hz to 16 kHz, on axis, no EQ</span></div>
-<div><b>636 x 636 x 982</b><span>mm, width x height x depth</span></div>
+<div><b>103 dB</b><span>2.83 V, 1 m</span></div>
+<div><b>81 Hz</b><span>low -3 dB; pair with a sub</span></div>
+<div><b>500 Hz / 3.5 kHz</b><span>crossovers: kick, wide-band mid, HF</span></div>
+<div><b>596 x 636 x 588</b><span>mm, width x height x depth</span></div>
 </div>
-<div class="note"><p><b>Status.</b> Every number here is from simulation: plane-wave horn models coupled to
-Thiele/Small driver models, checked with axisymmetric FEM, and the tweeter's published response. Every horn size
-came out of an optimisation with explicit size limits (see <a href="design.html">Design</a>). Nothing has been
-built or measured yet.</p></div>
-<figure class="figure"><img class="render" src="img/renders/front-dims.jpg" alt="Straight into the mouth, with the main dimensions in millimetres. The corner fillers turn the square into an octagon at the throat, which gives the project its name." loading="lazy"><figcaption>Straight into the mouth, with the main dimensions in millimetres. The corner fillers turn the square into an octagon at the throat, which gives the project its name.</figcaption></figure>
-
-<h2>Three horns on one axis</h2>
-<div class="grid3">
-<div class="card"><h3><span class="swatch" style="background:var(--low)"></span>Low, up to 400 Hz</h3>
-<p>18Sound 15W500, mounted backwards so its motor points into the horn. The motor and a printed nose
-are the throat's phase plug. Its cone works into a 35 litre sealed chamber. The horn is four flat
-birch-ply panels and four corner fillers: 360 mm octagon to 600 mm square over
-850 mm.</p></div>
-<div class="card"><h3><span class="swatch" style="background:var(--mid)"></span>Mid, 400 Hz to 6.0 kHz</h3>
-<p>PRV 6MR600X-NDY (6 inch) into an exponential horn, 290 mm mouth,
-260 mm long, through an annular throat around the tweeter. It sits in a 302 mm printed can on four
-aluminium rods. To the low horn, the can is the centre body.</p></div>
-<div class="card"><h3><span class="swatch" style="background:var(--tw)"></span>Tweeter, 6.0 kHz up</h3>
-<p>Fostex T925A: a ring-diaphragm horn tweeter with a bullet phase plug in its own mouth,
-82 mm across. Its body, in a 2 mm printed sleeve, fills the middle of the mid horn throat, so
-the mid's sound leaves through the annulus around it.</p></div>
-</div>
-<figure class="figure"><img class="render" src="img/renders/section-side-dims.jpg" alt="Cutaway on the axis, mouth on the left, dimensions in millimetres." loading="lazy"><figcaption>Cutaway on the axis, mouth on the left, dimensions in millimetres.</figcaption></figure>
+<div class="note"><p><b>Status.</b> Version 0.2, simulated only. What changed from v0.1 and what is still missing is on the
+<a href="review.html">v0.2 review</a> page.</p></div>
+<h2>Stacks</h2>
+<p>The top and bottom of the cabinet are angled, so boxes stack into a splayed column: 15.7 degrees
+between neighbours.</p>
+<figure class="figure"><img class="render" src="img/renders/stack.jpg" alt="Three cabinets splayed in a vertical stack." loading="lazy"><figcaption>Three cabinets splayed in a vertical stack.</figcaption></figure>
 <div class="grid2">
-<figure class="figure"><img class="render" src="img/renders/section.jpg" alt="Cutaway: sealed chamber, reversed 15 inch and nose, low horn, the mid can with its tail, mid horn and tweeter." loading="lazy"><figcaption>Cutaway: sealed chamber, reversed 15 inch and nose, low horn, the mid can with its tail, mid horn and tweeter.</figcaption></figure>
-<figure class="figure"><img class="render" src="img/renders/detail.jpg" alt="The mid horn mouth with the bullet tweeter in its throat." loading="lazy"><figcaption>The mid horn mouth with the bullet tweeter in its throat.</figcaption></figure>
+<figure class="figure"><img class="render" src="img/renders/front-dims.jpg" alt="Into the mouth, mm. The corner fillers turn the rectangle into an octagon at the throat." loading="lazy"><figcaption>Into the mouth, mm. The corner fillers turn the rectangle into an octagon at the throat.</figcaption></figure>
+<figure class="figure"><img class="render" src="img/renders/stack-side-dims.jpg" alt="The stack from the side." loading="lazy"><figcaption>The stack from the side.</figcaption></figure>
+</div>
+
+<h2>Three horns, one axis, designed from the inside out</h2>
+<div class="grid3">
+<div class="card"><h3><span class="swatch" style="background:var(--tw)"></span>HF, 3.5 kHz up</h3>
+<p>18 Sound ND1030 (compression), 65 mm body cylinder. A printed horn, 41 mm at
+the mouth, runs to just inside the mid mouth. Its outside is the tapering tip of the mid phase plug.</p></div>
+<div class="card"><h3><span class="swatch" style="background:var(--mid)"></span>Mid, 500 Hz to 3.5 kHz</h3>
+<p>Beyma 6MCF200Nd (6.5 inch). Its cone is at least 1.6 times the 69 mm plug.
+Oblate spheroidal (os) open-area law from a 2.2:1 annular throat to a 220 mm mouth over
+150 mm, with the plug always subtracted.</p></div>
+<div class="card"><h3><span class="swatch" style="background:var(--low)"></span>Kick, up to 500 Hz</h3>
+<p>Eminence DELTA-15LFA, mounted backwards. The one-piece centre body's rear face follows the cone, so the throat is a
+narrow 2.3:1 annulus. A tube-like kick horn, 500 mm long, 560 x
+600 mm mouth.</p></div>
+</div>
+<figure class="figure"><img class="render" src="img/renders/section-side-dims.jpg" alt="Cutaway on the axis, mouth on the left, mm." loading="lazy"><figcaption>Cutaway on the axis, mouth on the left, mm.</figcaption></figure>
+<div class="grid2">
+<figure class="figure"><img class="render" src="img/renders/section.jpg" alt="Cutaway: chamber, reversed 15 inch, centre body, mid can, phase plug and HF horn." loading="lazy"><figcaption>Cutaway: chamber, reversed 15 inch, centre body, mid can, phase plug and HF horn.</figcaption></figure>
+<figure class="figure"><img class="render" src="img/renders/detail.jpg" alt="The mid mouth with the HF horn at its centre." loading="lazy"><figcaption>The mid mouth with the HF horn at its centre.</figcaption></figure>
 </div>
 
 <h2>Specification</h2>
-<div class="table-wrap"><table><thead><tr><th class=""></th><th class="">Value</th><th class="">Notes</th></tr></thead><tbody><tr><td class="">Type</td><td class="">Three-way coaxial horn, active</td><td class="">3-way DSP crossover and three amplifier channels</td></tr><tr><td class="">Sensitivity</td><td class="">104.4 dB</td><td class="">2.83 V, 1 m, set by the quietest section</td></tr><tr><td class="">Frequency response</td><td class="">69 Hz to 16 kHz</td><td class="">-3 dB on axis after DSP; -6 dB at 65 Hz</td></tr><tr><td class="">Crossovers</td><td class="">400 Hz and 6.0 kHz</td><td class="">Linkwitz-Riley 24 dB/oct</td></tr><tr><td class="">Drivers</td><td class="">18Sound 15W500, PRV 6MR600X-NDY, Fostex T925A</td><td class="">All 8 ohm</td></tr><tr><td class="">Cabinet</td><td class="">636 x 636 x 982 mm</td><td class="">18 mm birch ply, 25 mm baffle</td></tr><tr><td class="">Low horn</td><td class="">360 mm octagon to 600 mm square, 850 mm</td><td class="">Flat panels, 8.0 degree flare</td></tr><tr><td class="">Mid horn</td><td class="">Exponential, 124 to 290 mm, 260 mm</td><td class="">Annular throat, 2.2:1 compression</td></tr></tbody></table></div>
-<figure class="figure"><img class="render" src="img/renders/turntable.gif" alt="Turntable animation of the cabinet"><figcaption>Turntable, rendered from the CAD in Blender.</figcaption></figure>
+<div class="table-wrap"><table><thead><tr><th class=""></th><th class="">Value</th><th class="">Notes</th></tr></thead><tbody><tr><td class="">Type</td><td class="">Three-way coaxial horn, active</td><td class="">Kick bin with wide-band mid and HF; use with a sub</td></tr><tr><td class="">Sensitivity</td><td class="">103.5 dB</td><td class="">2.83 V, 1 m</td></tr><tr><td class="">Response</td><td class="">81 Hz to 16 kHz, -3 dB</td><td class="">On axis after DSP. No-sub shelf: -6 dB at 61 Hz, up to about 48 W</td></tr><tr><td class="">Crossovers</td><td class="">500 Hz and 3.5 kHz</td><td class="">Linkwitz-Riley 24 dB/oct</td></tr><tr><td class="">Drivers</td><td class="">Eminence DELTA-15LFA, Beyma 6MCF200Nd, 18 Sound ND1030</td><td class=""></td></tr><tr><td class="">Cabinet</td><td class="">596 wide, 636 high at the front, 479 at the back, 588 deep</td><td class="">18 mm birch ply; 15.7 degree splay</td></tr><tr><td class="">HF unit price</td><td class="">$150</td><td class="">Retail, see the Design page</td></tr></tbody></table></div>
+<figure class="figure"><img class="render" src="img/renders/turntable.gif" alt="Turntable animation"><figcaption>Turntable, rendered in Blender from the CAD.</figcaption></figure>
 
 </div></main>
 <footer><div class="wrap">

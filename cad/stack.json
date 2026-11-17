@@ -1,0 +1,9 @@
+{
+ "splay_deg": 15.682815724662966,
+ "boxes": 3,
+ "note": "Each box sits on the one below with its bottom panel on the neighbour's top panel; the angle between neighbours is the splay.",
+ "pivot_mm": {
+  "y": 318.0,
+  "z": 525.0
+ }
+}

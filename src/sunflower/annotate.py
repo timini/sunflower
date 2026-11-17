@@ -46,19 +46,18 @@ def front():
     cut = json.loads((ROOT / "cad/cutlist.json").read_text())
     lo, m, tw = D.LOW, D.MID, D.TW
     fig, ax, px = _setup("front")
-    we = cut["external_mm"]["width"] / 2
-    wm = lo.mouth_width * 500
-    wt = lo.throat_width * 500
-    _dim(ax, px(-we, we + 40), px(we, we + 40), f"{2*we:.0f} outside")
-    _dim(ax, px(-wm, -we - 40), px(wm, -we - 40), f"mouth {2*wm:.0f}")
-    _dim(ax, px(-wt, -wt - 14), px(wt, -wt - 14), f"throat {2*wt:.0f} across flats")
+    ex = cut["external_mm"]
+    we, he = ex["width"] / 2, ex["height_front"] / 2
+    wm, hm = lo.mouth_width * 500, lo.mouth_height * 500
+    _dim(ax, px(-we, he + 40), px(we, he + 40), f"{2*we:.0f} outside")
+    _dim(ax, px(we + 40, -he), px(we + 40, he), f"{2*he:.0f}\noutside", off=(46, 0))
+    _dim(ax, px(-wm, -hm - 30), px(wm, -hm - 30), f"mouth {2*wm:.0f} x {2*hm:.0f}")
     rm = m.mouth_diameter * 500
-    _dim(ax, px(-rm, rm + 30), px(rm, rm + 30), f"mid mouth {2*rm:.0f}")
+    _dim(ax, px(-rm, rm + 25), px(rm, rm + 25), f"mid mouth {2*rm:.0f}")
     rc = m.can_diameter * 500
-    _dim(ax, px(rc + 25, -rc), px(rc + 25, rc), f"can\n{2*rc:.0f}", off=(42, 0))
-    rp = m.plug_radius * 1000
-    _dim(ax, px(-rp, -rp - 18), px(rp, -rp - 18), f"{tw.model} {tw.body_diameter*1000:.0f}", off=(0, 26))
-    ax.set_xlim(0, fig.get_figwidth() * 150)
+    _dim(ax, px(-rc - 25, -rc), px(-rc - 25, rc), f"can\n{2*rc:.0f}", off=(-42, 0))
+    rh = m.hf_mouth_radius * 1000
+    _dim(ax, px(-rh, -rh - 22), px(rh, -rh - 22), f"HF mouth {2*rh:.0f}", off=(0, 24))
     fig.savefig(REN / "front-dims.jpg", dpi=150, pil_kwargs=dict(quality=88))
     plt.close(fig)
 
@@ -68,26 +67,42 @@ def section_side():
     st = cut["stations_mm"]
     lo, m = D.LOW, D.MID
     fig, ax, px = _setup("section-side")
-    # horizontal coordinate on this view is the CAD z axis (mouth on the left)
     P = lambda z, y: px(-z, y)  # noqa: E731
-    we = cut["external_mm"]["width"] / 2
-    zback = st["mouth"] - cut["external_mm"]["depth"]
-    _dim(ax, P(zback, -we - 45), P(st["mouth"], -we - 45), f"cabinet depth {cut['external_mm']['depth']:.0f}")
-    _dim(ax, P(st["baffle_front"], we + 45), P(st["mouth"], we + 45), f"low horn {lo.length*1000:.0f}")
-    _dim(ax, P(st["mid_tail_tip"], -m.can_diameter * 500 - 40), P(st["mouth"], -m.can_diameter * 500 - 40),
-         f"mid can {st['mouth'] - st['mid_tail_tip']:.0f}")
-    _dim(ax, P(st["mid_throat"], m.can_diameter * 500 + 30), P(st["mouth"], m.can_diameter * 500 + 30),
+    he = cut["external_mm"]["height_front"] / 2
+    hb = cut["external_mm"]["height_back"] / 2
+    _dim(ax, P(st["back"], -he - 50), P(st["mouth"], -he - 50), f"cabinet depth {cut['external_mm']['depth']:.0f}")
+    _dim(ax, P(st["baffle_front"], he + 45), P(st["mouth"], he + 45), f"kick horn {lo.length*1000:.0f}")
+    _dim(ax, P(st["mid_throat"], m.can_diameter * 500 + 25), P(st["mouth"], m.can_diameter * 500 + 25),
          f"mid horn {m.length*1000:.0f}")
-    _dim(ax, P(st["mouth"] + 30, -we), P(st["mouth"] + 30, we), f"{2*we:.0f}", off=(-36, 0))
-    _dim(ax, P(0, lo.body.cone_radius * 1000 + 30), P(lo.nose_end * 1000, lo.body.cone_radius * 1000 + 30),
-         f"15 in with nose {lo.nose_end*1000:.0f}")
+    _dim(ax, P(st["throat"], -m.can_diameter * 500 - 30), P(st["mid_driver_back"], -m.can_diameter * 500 - 30),
+         "one-piece centre body")
+    _dim(ax, P(st["mouth"] + 30, -he), P(st["mouth"] + 30, he), f"{2*he:.0f}", off=(-36, 0))
+    _dim(ax, P(st["back"] - 30, -hb), P(st["back"] - 30, hb), f"{2*hb:.0f}", off=(36, 0))
     fig.savefig(REN / "section-side-dims.jpg", dpi=150, pil_kwargs=dict(quality=88))
+    plt.close(fig)
+
+
+def stack_side():
+    p = REN / "stack-side.jpg"
+    if not p.exists():
+        return
+    st = json.loads((ROOT / "cad/stack.json").read_text())
+    img = plt.imread(p)
+    fig = plt.figure(figsize=(img.shape[1] / 150, img.shape[0] / 150), dpi=150)
+    ax = fig.add_axes([0, 0, 1, 1])
+    ax.imshow(img)
+    ax.set_axis_off()
+    ax.text(img.shape[1] * 0.04, img.shape[0] * 0.06,
+            f"Three boxes, {st['splay_deg']:.1f} degrees between neighbours, {2*st['splay_deg']:.0f} degrees top to bottom",
+            fontsize=12, color=INK, bbox=dict(boxstyle="round,pad=0.3", fc="white", ec="#bbbbbb"))
+    fig.savefig(REN / "stack-side-dims.jpg", dpi=150, pil_kwargs=dict(quality=88))
     plt.close(fig)
 
 
 def main():
     front()
     section_side()
+    stack_side()
     print("dimensioned renders written")
 
 

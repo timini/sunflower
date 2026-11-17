@@ -40,15 +40,7 @@ class Config:
     tweeter: str
     f1: float
     f2: float
-
-    @classmethod
-    def from_rows(cls, m, c, cat_by_id):
-        from sunflower.optimise import mid_from_row, low_catalogue
-        mid = mid_from_row(m, cat_by_id)
-        lowd = {d.driver_id: d for d in low_catalogue()}[c.low_driver]
-        body = LowDriverBody(cone_radius=math.sqrt(lowd.sd / math.pi))
-        low = LowHorn(throat_width=c.throat_width, mouth_width=c.mouth_width, length=c.length, body=body, mid=mid)
-        return cls(low, lowd, c.rear_litres, mid, cat_by_id[m.driver_id]["drv"], m.tweeter, m.f1, m.f2)
+    use_hf_fem: bool = False
 
     @property
     def tw(self):
@@ -68,24 +60,55 @@ def low_section(cfg: Config, f=F, theta=0.0):
 
 def mid_transfer(cfg: Config, f=F):
     m = cfg.mid
-    return horn_transfer(f, m.area, m.length, 400, breaks=(m.tweeter_face,))
+    return horn_transfer(f, m.area, m.length, 400, breaks=(m.s_exit, m.s_tip))
 
 
 def mid_section(cfg: Config, f=F, theta=0.0):
     m = cfg.mid
     rear = None if cfg.mid_driver.factory_sealed else m.rear_volume_litres
-    s = solve(cfg.mid_driver, mid_transfer(cfg, f), front_m3=m.front_chamber_cc * 1e-6, rear_litres=rear)
+    s = solve(cfg.mid_driver, mid_transfer(cfg, f), front_m3=m.front_chamber_m3, rear_litres=rear)
     return far_field(f, s["u_mouth"], m.mouth_diameter / 2, theta, wavefront_radius=m.wavefront_radius), s
 
 
-def tweeter_section(cfg: Config, f=F, theta=0.0):
-    return TW.response(cfg.tweeter, f, theta), None
+HF_FEM = ROOT / "results/fem/hf-in-mid.csv"
+
+
+def _smooth_log(f, y, octave=1 / 6):
+    lf = np.log2(f)
+    out = np.empty_like(y)
+    for i, x in enumerate(lf):
+        m = np.abs(lf - x) <= octave / 2
+        out[i] = y[m].mean()
+    return out
+
+
+def tweeter_section(cfg: Config, f=F, theta=0.0, use_fem=True):
+    """HF unit: datasheet on-axis response, corrected by the FEM of its printed horn mouth inside the mid
+    horn (relative to a free piston of the same mouth, smoothed to 1/6 octave) when that FEM exists for this
+    design. Without it: a piston of the HF horn mouth, or the datasheet's own angles for bullets."""
+    mr = cfg.mid.hf_mouth_radius if cfg.tw.kind == "compression" else None
+    if not (use_fem and HF_FEM.exists() and getattr(cfg, "use_hf_fem", False)):
+        return TW.response(cfg.tweeter, f, theta, mouth_radius=mr), None
+    d = pd.read_csv(HF_FEM)
+    col = f"fem_rel_{int(theta)}deg_db"
+    if col not in d:
+        return TW.response(cfg.tweeter, f, theta, mouth_radius=mr), None
+    fd = d.frequency_hz.values
+    corr = _smooth_log(fd, d[col].values + d.onaxis_vs_piston_db.values)
+    p0 = TW.response(cfg.tweeter, f, 0.0, mouth_radius=mr)
+    c = np.interp(np.log10(f), np.log10(fd), corr)
+    below = f < fd.min()
+    piston = 20 * np.log10(np.abs(TW.response(cfg.tweeter, f, theta, mouth_radius=mr)) / np.abs(p0))
+    c0 = np.interp(np.log10(fd.min()), np.log10(fd), corr) - np.interp(np.log10(fd.min()), np.log10(f), piston)
+    c = np.where(below, piston + c0 * (f / fd.min()) ** 2, c)
+    return p0 * 10 ** (c / 20), None
 
 
 def source_offset(cfg: Config):
     """Axial distance (m) of each acoustic reference behind the common mouth plane."""
     m, tw = cfg.mid, cfg.tw
-    return dict(low=0.0, mid=0.0, tweeter=m.length - m.tweeter_face + tw.horn_depth)
+    behind = 0.020 if tw.kind == "compression" else tw.horn_depth   # diaphragm behind the exit
+    return dict(low=0.0, mid=0.0, tweeter=m.length - m.s_exit + behind)
 
 
 def place(f, p, offset, theta):
@@ -217,7 +240,30 @@ def run(out: Path):
         for k, v in res.items():
             cols[f"{k}_{int(th)}deg_spl_db"] = spl(v)
             cols[f"{k}_{int(th)}deg_phase_deg"] = np.degrees(np.angle(v))
+    # No-sub option: +6 dB second-order low shelf on the low channel at its -3 dB point, 30 Hz protection high-pass
+    lowp, lows = low_section(cfg, f)
+    ref = spl(lowp)[(f >= 150) & (f <= cfg.f1)].mean()
+    f3 = float(f[np.argmax(spl(lowp) > ref - 3)])
+    s = 2j * np.pi * f
+    w = 2 * np.pi * f3
+    shelf = (s * s + s * w * math.sqrt(2) * 2 ** 0.25 + 2 * w * w) / (s * s + s * w * math.sqrt(2) + w * w)
+    hp = lr4(f, 30.0, "hp")
+    res = apply(cfg, f, raw0, dsp)
+    shelved = res["sum"] + res["low"] * (shelf * hp - 1)
+    cols["sum_shelf_0deg_spl_db"] = spl(shelved)
     pd.DataFrame(cols).to_csv(out / "system.csv", index=False, float_format="%.6g")
+    z_nom = 8.0
+    x_shelf = np.abs(lows["x_peak_m"] * shelf * hp * lr4(f, cfg.f1, "lp")) * np.sqrt(cfg.low_driver.power_w * z_nom
+                                                                                   if cfg.low_driver.power_w else 800) / 2.83
+    sref = spl(shelved)[(f >= 200) & (f <= 2000)].mean()
+    dsp["no_sub_shelf"] = dict(type="2nd-order low shelf +6 dB at the low section's -3 dB point, LR4 high-pass 30 Hz",
+                               shelf_hz=f3, f_minus6_hz=float(f[np.argmax(spl(shelved) > sref - 6)]),
+                               max_excursion_mm=float(x_shelf[(f >= 30) & (f <= 200)].max() * 1000),
+                               xmax_mm=(cfg.low_driver.xmax or float("nan")) * 1000,
+                               rated_power_w=cfg.low_driver.power_w)
+    xs = dsp["no_sub_shelf"]
+    if cfg.low_driver.power_w and cfg.low_driver.xmax:
+        xs["safe_power_w"] = float(cfg.low_driver.power_w * min(1.0, (xs["xmax_mm"] / xs["max_excursion_mm"]) ** 2))
     (out / "dsp.json").write_text(json.dumps(dsp, indent=2) + "\n")
     (out / "design.json").write_text(json.dumps(D.summary(), indent=2) + "\n")
     print(json.dumps(dsp, indent=2))

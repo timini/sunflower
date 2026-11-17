@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Sunflower design</title>
-<meta name="description" content="How Sunflower's nested horns were sized: the optimisation, the tweeter choice and the size trade-off.">
+<meta name="description" content="How Sunflower v0.2 was sized from the inside out.">
 <link rel="stylesheet" href="assets/style.css">
 <link rel="icon" href="data:image/svg+xml,<svg viewBox='0 0 32 32' aria-hidden='true'><g fill='none' stroke-width='2.4'><rect x='3' y='3' width='26' height='26' rx='4' stroke='%23d38a0c'/><circle cx='16' cy='16' r='8' stroke='%23eb6834'/><circle cx='16' cy='16' r='3.2' fill='%231baf7a' stroke='none'/></g></svg>">
 </head>
@@ -13,64 +13,49 @@
 <a class="brand" href="index.html"><svg viewBox="0 0 32 32" aria-hidden="true"><g fill="none" stroke-width="2.4">
 <rect x="3" y="3" width="26" height="26" rx="4" stroke="#d38a0c"/><circle cx="16" cy="16" r="8" stroke="#eb6834"/>
 <circle cx="16" cy="16" r="3.2" fill="#1baf7a" stroke="none"/></g></svg>Sunflower</a>
-<nav><a href="index.html">Product</a><a href="design.html" aria-current=page>Design</a><a href="simulation.html">Simulation</a><a href="build.html">Build</a><a href="downloads.html">Downloads</a></nav>
+<nav><a href="index.html">Product</a><a href="review.html">v0.2 review</a><a href="design.html" aria-current=page>Design</a><a href="simulation.html">Simulation</a><a href="build.html">Build</a><a href="downloads.html">Downloads</a></nav>
 </div></header>
 <main><div class="wrap">
 
 <h1>Design</h1>
-<p class="lede">Every horn size, both crossover points, all three drivers and the tweeter were chosen by
-simulation. This page covers the nesting, how the optimiser searched, and the trade-off between size and
-performance.</p>
-<figure class="figure"><img class="plot" src="img/plots/low-drawing.png" alt="Cabinet section, mm. Wood: cabinet and low horn walls. Black: the low horn centre body (15 inch motor and nose, then the mid can). Yellow: the tweeter sleeve, which is the mid phase plug." loading="lazy"><figcaption>Cabinet section, mm. Wood: cabinet and low horn walls. Black: the low horn centre body (15 inch motor and nose, then the mid can). Yellow: the tweeter sleeve, which is the mid phase plug.</figcaption></figure>
+<p class="lede">Every size comes from the one inside it. The optimiser searched that chain for every HF unit, mid
+driver and kick driver in the catalogue, within a 600 mm depth limit.</p>
+<figure class="figure"><img class="plot" src="img/plots/chain.png" alt="The design chain, from the HF body cylinder out to the kick horn mouth." loading="lazy"><figcaption>The design chain, from the HF body cylinder out to the kick horn mouth.</figcaption></figure>
+<div class="table-wrap"><table><thead><tr><th class="">Step</th><th class="num">mm (cm² for areas)</th><th class="">Set by</th></tr></thead><tbody><tr><td class="">HF unit body cylinder</td><td class="num">65</td><td class="">18 Sound ND1030, flange ignored</td></tr><tr><td class="">Mid phase plug</td><td class="num">69</td><td class="">body cylinder plus a 2 mm sleeve</td></tr><tr><td class="">Smallest mid cone allowed</td><td class="num">110</td><td class="">1.6 times the plug</td></tr><tr><td class="">Mid cone used</td><td class="num">134</td><td class="">Beyma 6MCF200Nd</td></tr><tr><td class="">Mid throat, outer</td><td class="num">113</td><td class="">Sd / 2.2 as an annulus round the plug</td></tr><tr><td class="">Mid mouth</td><td class="num">220</td><td class="">os law, 150 mm long</td></tr><tr><td class="">Mid can</td><td class="num">232</td><td class="">mouth or driver frame plus the wall</td></tr><tr><td class="">Low centre body at the throat</td><td class="num">296</td><td class="">covers the 15 inch cone in front of it</td></tr><tr><td class="">Low throat area</td><td class="num">385</td><td class="">2.3:1 compression</td></tr><tr><td class="">Low mouth</td><td class="num">560</td><td class="">x 600 mm, exponential law to the can</td></tr></tbody></table></div>
+<figure class="figure"><img class="plot" src="img/plots/low-drawing.png" alt="Cabinet section, mm. Shaded: sealed chamber. Black: the one-piece centre body. Yellow: the mid phase plug." loading="lazy"><figcaption>Cabinet section, mm. Shaded: sealed chamber. Black: the one-piece centre body. Yellow: the mid phase plug.</figcaption></figure>
 
-<h2>Nesting</h2>
-<ul>
-<li><b>Low.</b> The 15 inch is mounted backwards from behind the baffle. Its convex cone and motor face the horn,
-and the motor plus a printed nose is the start of the centre body. The low horn's area is the space between the
-walls and that centre body, slice by slice.</li>
-<li><b>Mid.</b> The mid can is the rest of the centre body. Its elliptical tail starts 87 mm in front of the
-15 inch nose, so the open area narrows smoothly onto the can.</li>
-<li><b>Tweeter.</b> The Fostex T925A body is the mid horn's phase plug. The mid throat is the annulus between the
-86 mm sleeve and a 124 mm bore, 64 cm² open, 2.2:1
-compression for the mid cone.</li>
-</ul>
+<h2>Phase plugs shape the expansion</h2>
+<p>Each horn is designed as an open-area law. The inner body is always subtracted. In the mid, the plug is fixed by the
+HF unit (its body plus a 2 mm sleeve) and tapers to the HF horn mouth; the outer wall is solved so that wall minus plug
+follows the law. In the kick horn the walls are flat panels, so the centre body is solved instead: its radius is whatever
+leaves the open area on the law, from the throat to the mid can.</p>
+<div class="grid2">
+<figure class="figure"><img class="plot" src="img/plots/mid-area.png" alt="Mid: wall, plug and open area." loading="lazy"><figcaption>Mid: wall, plug and open area.</figcaption></figure>
+<figure class="figure"><img class="plot" src="img/plots/low-area.png" alt="Kick: walls, centre body and open area." loading="lazy"><figcaption>Kick: walls, centre body and open area.</figcaption></figure>
+</div>
 
-<h2>How the sizes were chosen</h2>
-<p>The optimiser in <code>src/sunflower/optimise.py</code> works in three stages. Each candidate is a full
-plane-wave solve of the horn with its centre body, coupled to the driver's Thiele/Small model.</p>
+<h2>HF units</h2>
+<p>Bullet super tweeters and 1 inch compression drivers, sized by their body cylinder only (flanges are cut off or
+ignored). A compression driver gets a small printed horn whose outside is the plug's tapering tip, the way Funktion-One
+puts the HF at the centre of the mid.</p>
+<div class="table-wrap"><table><thead><tr><th class="">Unit</th><th class="">Type</th><th class="num">Body (mm)</th><th class="num">Lowest crossover (kHz)</th><th class="">Price each</th><th class="">Best system score</th></tr></thead><tbody><tr><td class="">18 Sound ND1030</td><td class="">compression</td><td class="num">65</td><td class="num">1.8</td><td class="">$150</td><td class="">2.34</td></tr><tr><td class="">Celestion CDX1-1731</td><td class="">compression</td><td class="num">82</td><td class="num">2.2</td><td class="">$120</td><td class="">3.40</td></tr><tr><td class="">Faital HF108R</td><td class="">compression</td><td class="num">87</td><td class="num">1.3</td><td class="">$247</td><td class="">3.38</td></tr><tr><td class="">Fostex T90A</td><td class="">bullet</td><td class="num">60</td><td class="num">7.0</td><td class="">$252</td><td class="">3.82</td></tr><tr><td class="">Fostex T925A</td><td class="">bullet</td><td class="num">82</td><td class="num">6.0</td><td class="">$453</td><td class="">5.28</td></tr><tr><td class="">JBL 2402H</td><td class="">bullet</td><td class="num">119</td><td class="num">3.0</td><td class="">none found</td><td class="">excluded: No current price or listing found (probably discontinued). Checked 2026-11-17.</td></tr></tbody></table></div>
+<figure class="figure"><img class="plot" src="img/plots/tradeoff.png" alt="Every finalist, by HF unit: depth against score." loading="lazy"><figcaption>Every finalist, by HF unit: depth against score.</figcaption></figure>
+<p>Rule: among designs within 0.25 of the best score (2.34) and at most 600 mm deep: the cheapest HF unit, then the shallowest cabinet. Chosen: 18 Sound ND1030 with the Beyma 6MCF200Nd and the Eminence DELTA-15LFA.</p>
+
+<h2>The search</h2>
 <ol>
-<li><b>Mid and tweeter.</b> Three bullet tweeters, each with the lowest crossover its maker allows. Mid horns in four
-profiles (conical, exponential, hyperbolic-exponential, oblate spheroidal), five throats, six mouths from 190 to
-460 mm, seven lengths from 120 to 500 mm, and two tweeter depths. Every horn was coupled to every 6, 6.5, 8 and 10 inch
-cone in the catalogue that is trusted to the upper crossover; the best four drivers per horn were kept,
-121,440 rows. Two rules apply before scoring. The mid mouth must be at least c / (pi f) across at the lower
-crossover f, so the horn still loads its driver there: 218 mm at 500 Hz, 273 mm at 400 Hz. Horns flaring wider than
-35 degrees were excluded because the plane-wave model is not reliable there. Score: in-band variation, coverage
-mismatch with the tweeter at the upper crossover, and an output floor.</li>
-<li><b>Low.</b> The best mid of each can size was placed in 128 flat-panel low horns (two throats, four mouths,
-four lengths, four sealed volumes), each coupled to every 15 inch driver with at least 4 mm Xmax that is not an
-instrument speaker (bass and guitar cabinet drivers are designed to break up): 415,810 combinations passed the
-output and excursion limits. Score: variation up to 1.4 times the lower crossover, coverage match with the mid
-there, and bass extension.</li>
-<li><b>System.</b> The best 20 combinations for each tweeter, 60 in all, went through the full crossover with
-gains, delays and polarity tuned for each. Score: on-axis RMS deviation from 100 Hz to 16 kHz; plus half the roughness
-of the 30 degree response relative to on axis, measured after removing a straight-line trend so that steady narrowing is
-allowed but steps at the crossovers are not; plus a penalty for a -3 dB point above 70 Hz.</li>
+<li><b>HF and mid.</b> Four area laws, three throat compressions, five mouths (220 to 380 mm), five lengths (120 to 260 mm),
+crossovers f1 of 250, 315, 400 and 500 Hz, and each HF unit's upper crossovers. Only cones at least 1.6 times the plug, and
+the 60 most efficient per pool plus every verified driver. 123,344 rows kept. Score: in-band variation, coverage
+mismatch with the HF unit, a loading penalty when the mouth is smaller than c / (pi f1), an output floor, and a reward for a
+wider mid band.</li>
+<li><b>Kick.</b> The best mids became the end of the centre body in kick horns of three laws, three mouth widths, three
+heights and three lengths, at most 600 mm deep. Every 15 inch with at least 4 mm Xmax that is not an instrument or coaxial
+driver: 1,441 rows passing -3 dB at or below 80 Hz and at least 96 dB. Score: variation from 80 Hz to 1.4 f1,
+coverage match with the mid, low Qes for horn loading, and an output penalty below 100 dB.</li>
+<li><b>System.</b> The best combinations for each HF unit through the full crossover, scored on on-axis flatness, off-axis
+smoothness and bass extension.</li>
 </ol>
-
-<h3>Best design with each tweeter</h3>
-<div class="table-wrap"><table><thead><tr><th class="">Tweeter</th><th class="">Crossovers (Hz)</th><th class="">Mid</th><th class="">Cabinet W x D (mm)</th><th class="num">On-axis RMS (dB)</th><th class="num">30 deg roughness (dB)</th><th class="num">-3 dB (Hz)</th><th class="num">Score</th></tr></thead><tbody><tr><td class="">Fostex T90A</td><td class="">400 / 7000</td><td class="">PRV 6MR600X-NDY, 340 mm mouth</td><td class="">836 x 1243</td><td class="num">1.16</td><td class="num">4.67</td><td class="num">61</td><td class="num">3.49</td></tr><tr><td class="">Fostex T925A</td><td class="">400 / 6000</td><td class="">PRV 6MR600X-NDY, 290 mm mouth</td><td class="">936 x 1232</td><td class="num">0.98</td><td class="num">2.82</td><td class="num">65</td><td class="num">2.39</td></tr><tr><td class="">JBL 2402H</td><td class="">500 / 3500</td><td class="">Beyma 6MCF200Nd, 240 mm mouth</td><td class="">936 x 1214</td><td class="num">1.02</td><td class="num">5.66</td><td class="num">68</td><td class="num">3.85</td></tr></tbody></table></div>
-<p>Smallest cabinet within 0.25 of the best score (2.42) that fits 850 mm wide and 1200 mm deep, excluding drivers in data/drivers/excluded.json. That picked the Fostex T925A, crossing at 400 Hz and
-6000 Hz.</p>
-
-<h3>Size against performance</h3>
-<figure class="figure"><img class="plot" src="img/plots/tradeoff.png" alt="Every finalist. Dotted line: the largest cabinet inside the 850 mm wide by 1200 mm deep limit." loading="lazy"><figcaption>Every finalist. Dotted line: the largest cabinet inside the 850 mm wide by 1200 mm deep limit.</figcaption></figure>
-<div class="table-wrap"><table><thead><tr><th class=""></th><th class="">W x D (mm)</th><th class="num">Volume (L)</th><th class="num">Score</th><th class="num">-3 dB (Hz)</th><th class="num">On-axis RMS (dB)</th></tr></thead><tbody><tr><td class="">Smallest</td><td class="">636 x 926</td><td class="num">375</td><td class="num">2.77</td><td class="num">77</td><td class="num">1.00</td></tr><tr><td class="">Chosen</td><td class="">636 x 982</td><td class="num">397</td><td class="num">2.48</td><td class="num">70</td><td class="num">1.05</td></tr><tr><td class="">Best score</td><td class="">836 x 1077</td><td class="num">753</td><td class="num">2.42</td><td class="num">70</td><td class="num">1.01</td></tr></tbody></table></div>
-
-<h2>The chosen parts</h2>
-<div class="table-wrap"><table><thead><tr><th class=""></th><th class="">Choice</th><th class="">Why</th></tr></thead><tbody><tr><td class="">Tweeter</td><td class="">Fostex T925A</td><td class="">Body 82 x 91 mm, 108 dB/W/m, crossover from 6.0 kHz. <a href="https://www.Lautsprechershop.de/pdf/fostex/t925a.pdf">Datasheet</a></td></tr><tr><td class="">Mid driver</td><td class="">PRV 6MR600X-NDY</td><td class="">6 inch, best score for this tweeter and can size</td></tr><tr><td class="">Mid horn</td><td class="">exponential, throat 124 mm, mouth 290 mm, 260 mm long</td><td class="">Tweeter face 130 mm in front of the throat</td></tr><tr><td class="">Low driver</td><td class="">18Sound 15W500</td><td class="">Best low score with this mid can</td></tr><tr><td class="">Low horn</td><td class="">360 to 600 mm, 850 mm long</td><td class="">35 litre sealed chamber</td></tr></tbody></table></div>
-<p>Catalogue values for drivers other than the 6.5 inch set are legacy and unverified. The chosen drivers were
-checked by hand against their datasheets; the records in <code>data/drivers/verified/</code> say what was checked.</p>
 
 </div></main>
 <footer><div class="wrap">

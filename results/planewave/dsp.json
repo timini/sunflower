@@ -1,29 +1,38 @@
 {
   "gain_db": {
-    "low": -1.29,
-    "mid": 0.0,
-    "tweeter": -3.4
+    "low": 0.0,
+    "mid": -1.71,
+    "tweeter": -2.02
   },
   "polarity": {
-    "low": 1,
+    "low": -1,
     "mid": 1,
-    "tweeter": -1
+    "tweeter": 1
   },
   "delay_ms": {
     "low": 0.0,
-    "mid": 2.04,
-    "tweeter": 2.32
+    "mid": 0.64,
+    "tweeter": 0.88
   },
   "crossover": {
     "type": "Linkwitz-Riley 24 dB/oct",
-    "low_mid_hz": 400.0,
-    "mid_high_hz": 6000.0
+    "low_mid_hz": 500.0,
+    "mid_high_hz": 3500.0
   },
   "section_levels_db": {
-    "low": 105.64195154499446,
-    "mid": 104.35672824637014,
-    "tweeter": 107.75947892057107
+    "low": 103.45058586828266,
+    "mid": 105.16217014198011,
+    "tweeter": 105.47211516331802
   },
-  "target_db": 104.35672824637014,
-  "rms_deviation_100_16k_db": 1.019171257535104
+  "target_db": 103.45058586828266,
+  "rms_deviation_100_16k_db": 1.6704221036665061,
+  "no_sub_shelf": {
+    "type": "2nd-order low shelf +6 dB at the low section's -3 dB point, LR4 high-pass 30 Hz",
+    "shelf_hz": 83.85583477291212,
+    "f_minus6_hz": 61.43796578537556,
+    "max_excursion_mm": 15.413557009110395,
+    "xmax_mm": 4.8,
+    "rated_power_w": 500,
+    "safe_power_w": 48.48939137080505
+  }
 }

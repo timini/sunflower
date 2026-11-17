@@ -1,6 +1,6 @@
 {
  "model": "JBL 2402H",
- "kind": "ring radiator with bullet phase plug, exponential horn",
+ "kind": "bullet",
  "body_diameter_mm": 119,
  "body_depth_mm": 94,
  "depth_with_terminals_mm": 104,
@@ -56,5 +56,10 @@
  },
  "off_axis": "piston",
  "note": "40 degree conical coverage at 10 kHz (JBL)",
- "id": "jbl-2402h"
+ "id": "jbl-2402h",
+ "cylinder_diameter_mm": 119,
+ "flange_diameter_mm": 119,
+ "exit_diameter_mm": 79,
+ "price_usd": null,
+ "price_note": "No current listing found; probably discontinued"
 }

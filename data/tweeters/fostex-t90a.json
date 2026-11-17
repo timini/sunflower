@@ -1,6 +1,6 @@
 {
  "model": "Fostex T90A",
- "kind": "horn super tweeter, ring diaphragm, alnico, bullet phase plug",
+ "kind": "bullet",
  "body_diameter_mm": 60,
  "body_depth_mm": 74.1,
  "depth_with_terminals_mm": 87.8,
@@ -89,5 +89,11 @@
    74
   ]
  },
- "id": "fostex-t90a"
+ "id": "fostex-t90a",
+ "cylinder_diameter_mm": 60,
+ "flange_diameter_mm": 60,
+ "exit_diameter_mm": 33,
+ "price_usd": 251.5,
+ "price_source": "https://www.madisoundspeakerstore.com/bullet-tweeters/fostex-t90a-top-mount-horn-super-tweeter/",
+ "price_date": "2026-11-17"
 }

@@ -1,45 +1,45 @@
 [
  {
-  "name": "side_left",
-  "material": "ply",
-  "qty": 1,
-  "explode_mm": [
-   -260,
-   0,
-   0
-  ],
-  "group": "cabinet",
-  "volume_cm3": 11246.0,
-  "bbox_mm": [
-   -318.0,
-   -318.0,
-   -107.4,
-   -300.0,
-   318.0,
-   875.0
-  ],
-  "note": "636 x 982 x 18 mm"
- },
- {
   "name": "side_right",
   "material": "ply",
   "qty": 1,
   "explode_mm": [
-   260,
+   300,
    0,
    0
   ],
-  "group": "cabinet",
-  "volume_cm3": 11246.0,
+  "group": "shell",
+  "volume_cm3": 5904.2,
   "bbox_mm": [
-   300.0,
-   -318.0,
-   -107.4,
-   318.0,
-   318.0,
-   875.0
+   280.0,
+   -318.2,
+   -63.0,
+   298.0,
+   318.2,
+   525.0
   ],
-  "note": "636 x 982 x 18 mm"
+  "note": "vertical side, 588 long, 479 tall at the back, 636 at the front"
+ },
+ {
+  "name": "side_left",
+  "material": "ply",
+  "qty": 1,
+  "explode_mm": [
+   -300,
+   0,
+   0
+  ],
+  "group": "shell",
+  "volume_cm3": 5904.2,
+  "bbox_mm": [
+   -298.0,
+   -318.2,
+   -63.0,
+   -280.0,
+   318.2,
+   525.0
+  ],
+  "note": "vertical side, 588 long, 479 tall at the back, 636 at the front"
  },
  {
   "name": "top",
@@ -47,20 +47,20 @@
   "qty": 1,
   "explode_mm": [
    0,
-   260,
+   300,
    0
   ],
-  "group": "cabinet",
-  "volume_cm3": 10609.4,
+  "group": "shell",
+  "volume_cm3": 5979.6,
   "bbox_mm": [
-   -300.0,
-   300.0,
-   -107.4,
-   300.0,
-   318.0,
-   875.0
+   -280.0,
+   221.5,
+   -65.5,
+   280.0,
+   317.8,
+   525.0
   ],
-  "note": "600 x 982 x 18 mm"
+  "note": "angled 7.8 deg, 560 wide, 594 long"
  },
  {
   "name": "bottom",
@@ -68,20 +68,20 @@
   "qty": 1,
   "explode_mm": [
    0,
-   -260,
+   -300,
    0
   ],
-  "group": "cabinet",
-  "volume_cm3": 10609.4,
+  "group": "shell",
+  "volume_cm3": 5979.6,
   "bbox_mm": [
-   -300.0,
-   -318.0,
-   -107.4,
-   300.0,
-   -300.0,
-   875.0
+   -280.0,
+   -317.8,
+   -65.5,
+   280.0,
+   -221.5,
+   525.0
   ],
-  "note": "600 x 982 x 18 mm"
+  "note": "angled 7.8 deg, 560 wide, 594 long"
  },
  {
   "name": "back",
@@ -90,19 +90,19 @@
   "explode_mm": [
    0,
    0,
-   -420
+   -400
   ],
-  "group": "cabinet",
-  "volume_cm3": 6480.0,
+  "group": "shell",
+  "volume_cm3": 4465.4,
   "bbox_mm": [
-   -300.0,
-   -300.0,
-   -107.4,
-   300.0,
-   300.0,
-   -89.4
+   -280.0,
+   -221.5,
+   -63.0,
+   280.0,
+   221.5,
+   -45.0
   ],
-  "note": "600 x 600 x 18 mm, terminal cup"
+  "note": "terminal cup"
  },
  {
   "name": "baffle",
@@ -111,19 +111,19 @@
   "explode_mm": [
    0,
    0,
-   -260
+   -250
   ],
-  "group": "cabinet",
-  "volume_cm3": 6553.3,
+  "group": "shell",
+  "volume_cm3": 3803.2,
   "bbox_mm": [
-   -300.0,
-   -300.0,
+   -280.0,
+   -227.7,
    0.0,
-   300.0,
-   300.0,
+   280.0,
+   227.7,
    25.0
   ],
-  "note": "600 x 600 x 25 mm, 353 mm cutout"
+  "note": "560 x 455 x 25, 353 mm cutout, four 40 mm chamber ports"
  },
  {
   "name": "horn_wall_right",
@@ -135,16 +135,16 @@
    0
   ],
   "group": "horn",
-  "volume_cm3": 6981.3,
+  "volume_cm3": 4405.6,
   "bbox_mm": [
    180.0,
    -300.0,
-   25.0,
+   21.5,
+   297.7,
    300.0,
-   300.0,
-   875.0
+   525.0
   ],
-  "note": ""
+  "note": "internal side wall"
  },
  {
   "name": "horn_wall_left",
@@ -156,16 +156,16 @@
    0
   ],
   "group": "horn",
-  "volume_cm3": 6981.3,
+  "volume_cm3": 4405.6,
   "bbox_mm": [
+   -297.7,
    -300.0,
-   -300.0,
-   25.0,
+   21.5,
    -180.0,
    300.0,
-   875.0
+   525.0
   ],
-  "note": ""
+  "note": "internal side wall"
  },
  {
   "name": "horn_wall_top",
@@ -177,16 +177,16 @@
    0
   ],
   "group": "horn",
-  "volume_cm3": 6981.3,
+  "volume_cm3": 4590.8,
   "bbox_mm": [
-   -300.0,
+   -298.0,
    180.0,
-   25.0,
-   300.0,
-   300.0,
-   875.0
+   20.8,
+   298.0,
+   317.5,
+   525.0
   ],
-  "note": ""
+  "note": "internal top or bottom wall"
  },
  {
   "name": "horn_wall_bottom",
@@ -198,35 +198,35 @@
    0
   ],
   "group": "horn",
-  "volume_cm3": 6981.3,
+  "volume_cm3": 4590.8,
   "bbox_mm": [
-   -300.0,
-   -300.0,
-   25.0,
-   300.0,
+   -298.0,
+   -317.5,
+   20.8,
+   298.0,
    -180.0,
-   875.0
+   525.0
   ],
-  "note": ""
+  "note": "internal top or bottom wall"
  },
  {
   "name": "corner_tr",
   "material": "print_orange",
   "qty": 1,
   "explode_mm": [
-   120,
-   120,
+   110,
+   110,
    0
   ],
   "group": "horn",
-  "volume_cm3": 1575.0,
+  "volume_cm3": 926.5,
   "bbox_mm": [
    74.6,
    74.6,
    25.0,
+   280.0,
    300.0,
-   300.0,
-   875.0
+   525.0
   ],
   "note": "corner filler: 12 mm ply face on three ribs, painted"
  },
@@ -235,19 +235,19 @@
   "material": "print_orange",
   "qty": 1,
   "explode_mm": [
-   -120,
-   120,
+   -110,
+   110,
    0
   ],
   "group": "horn",
-  "volume_cm3": 1575.0,
+  "volume_cm3": 926.5,
   "bbox_mm": [
-   -300.0,
+   -280.0,
    74.6,
    25.0,
    -74.6,
    300.0,
-   875.0
+   525.0
   ],
   "note": "corner filler: 12 mm ply face on three ribs, painted"
  },
@@ -256,19 +256,19 @@
   "material": "print_orange",
   "qty": 1,
   "explode_mm": [
-   -120,
-   -120,
+   -110,
+   -110,
    0
   ],
   "group": "horn",
-  "volume_cm3": 1575.0,
+  "volume_cm3": 926.5,
   "bbox_mm": [
-   -300.0,
+   -280.0,
    -300.0,
    25.0,
    -74.6,
    -74.6,
-   875.0
+   525.0
   ],
   "note": "corner filler: 12 mm ply face on three ribs, painted"
  },
@@ -277,42 +277,52 @@
   "material": "print_orange",
   "qty": 1,
   "explode_mm": [
-   120,
-   -120,
+   110,
+   -110,
    0
   ],
   "group": "horn",
-  "volume_cm3": 1575.0,
+  "volume_cm3": 926.5,
   "bbox_mm": [
    74.6,
    -300.0,
    25.0,
-   300.0,
+   280.0,
    -74.6,
-   875.0
+   525.0
   ],
   "note": "corner filler: 12 mm ply face on three ribs, painted"
  },
  {
-  "name": "low_nose",
+  "name": "centre_body",
   "material": "print_black",
   "qty": 1,
   "explode_mm": [
    0,
    0,
-   160
+   150
   ],
   "group": "low",
-  "volume_cm3": 2525.4,
+  "volume_cm3": 15191.0,
   "bbox_mm": [
-   -90.0,
-   -90.0,
-   146.0,
-   90.0,
-   90.0,
-   291.0
+   -159.0,
+   -159.0,
+   19.0,
+   159.0,
+   159.0,
+   300.0
   ],
-  "note": "bonds to the 18Sound 15W500 back plate, 15 mm spigot, 20 mm bore keeps the pole vent open"
+  "note": "one piece: cone-following phase plug, motor cover, fairing, mid rear cap. Clears the motor by 3 mm",
+  "print_files": [
+   "centre_body-1-q1.stl",
+   "centre_body-1-q2.stl",
+   "centre_body-1-q3.stl",
+   "centre_body-1-q4.stl",
+   "centre_body-2-q1.stl",
+   "centre_body-2-q2.stl",
+   "centre_body-2-q3.stl",
+   "centre_body-2-q4.stl"
+  ]
  },
  {
   "name": "mid_horn",
@@ -324,16 +334,19 @@
    330
   ],
   "group": "mid",
-  "volume_cm3": 11038.6,
+  "volume_cm3": 3367.6,
   "bbox_mm": [
-   -151.0,
-   -151.0,
-   603.0,
-   151.0,
-   151.0,
-   875.0
+   -116.0,
+   -116.0,
+   375.0,
+   116.0,
+   116.0,
+   525.0
   ],
-  "note": "exponential bore, 290 mm mouth, 260 mm long, lead-in to the 135 mm cone at 1.5 mm clearance"
+  "note": "os open-area law round the phase plug, 220 mm mouth, 150 mm long",
+  "print_files": [
+   "mid_horn-1.stl"
+  ]
  },
  {
   "name": "mid_sleeve",
@@ -342,40 +355,22 @@
   "explode_mm": [
    0,
    0,
-   230
+   240
   ],
   "group": "mid",
-  "volume_cm3": 4291.9,
+  "volume_cm3": 1304.2,
   "bbox_mm": [
-   -151.0,
-   -151.0,
-   516.0,
-   151.0,
-   151.0,
-   603.0
+   -116.0,
+   -116.0,
+   300.0,
+   116.0,
+   116.0,
+   375.0
   ],
-  "note": "holds the 164 mm driver frame"
- },
- {
-  "name": "mid_tail",
-  "material": "print_black",
-  "qty": 1,
-  "explode_mm": [
-   0,
-   0,
-   130
-  ],
-  "group": "mid",
-  "volume_cm3": 7009.3,
-  "bbox_mm": [
-   -151.0,
-   -151.0,
-   378.0,
-   151.0,
-   151.0,
-   516.0
-  ],
-  "note": "18 mm rear cap with elliptical tail, print hollow"
+  "note": "holds the 174 mm driver frame",
+  "print_files": [
+   "mid_sleeve-1.stl"
+  ]
  },
  {
   "name": "phase_plug",
@@ -387,16 +382,19 @@
    520
   ],
   "group": "mid",
-  "volume_cm3": 241.1,
+  "volume_cm3": 252.6,
   "bbox_mm": [
-   -58.9,
-   -43.0,
-   594.8,
-   58.9,
-   67.2,
-   745.0
+   -54.1,
+   -34.5,
+   355.0,
+   54.1,
+   61.7,
+   515.0
   ],
-  "note": "86 mm sleeve for the Fostex T925A, nose towards the mid dust cap, three 2.5 mm vanes"
+  "note": "69 mm plug round the 18 Sound ND1030, tapering to its printed HF horn (25 to 41 mm over 89 mm)",
+  "print_files": [
+   "phase_plug-1.stl"
+  ]
  },
  {
   "name": "rod_right",
@@ -408,16 +406,16 @@
    0
   ],
   "group": "mid",
-  "volume_cm3": 16.4,
+  "volume_cm3": 19.4,
   "bbox_mm": [
-   143.0,
+   108.0,
    -6.0,
-   680.5,
-   287.8,
+   444.0,
+   279.4,
    6.0,
-   692.5
+   456.0
   ],
-  "note": "12 mm aluminium tube, 145 mm"
+  "note": "12 mm aluminium tube, 171 mm"
  },
  {
   "name": "rod_left",
@@ -429,16 +427,16 @@
    0
   ],
   "group": "mid",
-  "volume_cm3": 16.4,
+  "volume_cm3": 19.4,
   "bbox_mm": [
-   -287.8,
+   -279.4,
    -6.0,
-   680.5,
-   -143.0,
+   444.0,
+   -108.0,
    6.0,
-   692.5
+   456.0
   ],
-  "note": "12 mm aluminium tube, 145 mm"
+  "note": "12 mm aluminium tube, 171 mm"
  },
  {
   "name": "rod_top",
@@ -450,16 +448,16 @@
    0
   ],
   "group": "mid",
-  "volume_cm3": 16.4,
+  "volume_cm3": 21.3,
   "bbox_mm": [
    -6.0,
-   143.0,
-   680.5,
+   108.0,
+   444.0,
    6.0,
-   287.8,
-   692.5
+   296.4,
+   456.0
   ],
-  "note": "12 mm aluminium tube, 145 mm"
+  "note": "12 mm aluminium tube, 188 mm"
  },
  {
   "name": "rod_bottom",
@@ -471,16 +469,16 @@
    0
   ],
   "group": "mid",
-  "volume_cm3": 16.4,
+  "volume_cm3": 21.3,
   "bbox_mm": [
    -6.0,
-   -287.8,
-   680.5,
+   -296.4,
+   444.0,
    6.0,
-   -143.0,
-   692.5
+   -108.0,
+   456.0
   ],
-  "note": "12 mm aluminium tube, 145 mm"
+  "note": "12 mm aluminium tube, 188 mm"
  },
  {
   "name": "drv_low_frame",
@@ -492,16 +490,16 @@
    -150
   ],
   "group": "low",
-  "volume_cm3": 2005.4,
+  "volume_cm3": 1752.1,
   "bbox_mm": [
-   -193.5,
-   -193.5,
-   -11.0,
-   193.5,
-   193.5,
-   161.0
+   -192.4,
+   -192.4,
+   -10.0,
+   192.4,
+   192.4,
+   160.0
   ],
-  "note": "proxy of the 18Sound 15W500: flange, basket, motor"
+  "note": "proxy of the Eminence DELTA-15LFA"
  },
  {
   "name": "drv_low_cone",
@@ -513,13 +511,13 @@
    -150
   ],
   "group": "low",
-  "volume_cm3": 214.5,
+  "volume_cm3": 216.8,
   "bbox_mm": [
-   -164.4,
-   -164.5,
+   -166.7,
+   -166.7,
    0.0,
-   164.5,
-   164.5,
+   166.7,
+   166.7,
    100.0
   ],
   "note": "proxy cone"
@@ -531,19 +529,19 @@
   "explode_mm": [
    0,
    0,
-   230
+   240
   ],
   "group": "mid",
-  "volume_cm3": 971.1,
+  "volume_cm3": 733.3,
   "bbox_mm": [
-   -82.2,
-   -82.2,
-   516.0,
-   82.2,
-   82.2,
-   603.0
+   -87.0,
+   -87.0,
+   300.0,
+   87.0,
+   87.0,
+   375.0
   ],
-  "note": "proxy of the PRV 6MR600X-NDY"
+  "note": "proxy of the Beyma 6MCF200Nd"
  },
  {
   "name": "drv_mid_cone",
@@ -552,22 +550,22 @@
   "explode_mm": [
    0,
    0,
-   230
+   240
   ],
   "group": "mid",
-  "volume_cm3": 20.7,
+  "volume_cm3": 20.2,
   "bbox_mm": [
-   -67.5,
-   -67.5,
-   576.0,
-   67.5,
-   67.5,
-   603.0
+   -66.8,
+   -66.8,
+   348.3,
+   66.8,
+   66.8,
+   375.0
   ],
   "note": "proxy cone"
  },
  {
-  "name": "drv_tweeter_body",
+  "name": "drv_hf",
   "material": "driver_metal",
   "qty": 1,
   "explode_mm": [
@@ -576,36 +574,15 @@
    620
   ],
   "group": "mid",
-  "volume_cm3": 456.0,
+  "volume_cm3": 131.4,
   "bbox_mm": [
-   -41.0,
-   -41.0,
-   637.0,
-   41.0,
-   41.0,
-   745.0
+   -32.5,
+   -32.5,
+   385.5,
+   32.5,
+   32.5,
+   426.0
   ],
-  "note": "Fostex T925A: 82 x 91.0 mm body, 50 mm horn mouth"
- },
- {
-  "name": "drv_tweeter_bullet",
-  "material": "aluminium",
-  "qty": 1,
-  "explode_mm": [
-   0,
-   0,
-   620
-  ],
-  "group": "mid",
-  "volume_cm3": 1.9,
-  "bbox_mm": [
-   -9.0,
-   -9.0,
-   720.0,
-   9.0,
-   9.0,
-   742.5
-  ],
-  "note": "bullet phase plug"
+  "note": "18 Sound ND1030: 65 mm body cylinder, 40.5 mm deep"
  }
 ]

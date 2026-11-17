@@ -1,36 +1,40 @@
 {
-  "tweeter": "fostex-t925a",
+  "tweeter": "18sound-nd1030",
   "crossover_hz": [
-    400.0,
-    6000.0
+    500.0,
+    3500.0
   ],
   "mid": {
-    "driver_id": "prv-6mr600x-ndy",
-    "label": "PRV 6MR600X-NDY",
-    "nominal": "6in",
-    "profile": "exponential",
-    "equivalent_throat_diameter": 0.09,
-    "mouth_diameter": 0.29,
-    "length": 0.26,
-    "tweeter_face": 0.13
+    "driver_id": "beyma-6mcf200nd",
+    "label": "Beyma 6MCF200Nd",
+    "nominal": "6.5in",
+    "law": "os",
+    "compression": 2.2,
+    "mouth_diameter": 0.22,
+    "length": 0.15,
+    "hf_horn_length": 0.06
   },
   "low": {
-    "driver_id": "18sound-15w500",
-    "throat_width": 0.36,
-    "mouth_width": 0.6,
-    "length": 0.85,
+    "driver_id": "eminence-delta-15lfa",
+    "law": "exponential",
+    "mouth_width": 0.56,
+    "mouth_height": 0.6,
+    "length": 0.5,
     "rear_litres": 35.0
   },
   "scores": {
-    "score": 2.4777361658041563,
-    "rms_on_db": 1.0522953522548395,
-    "spread_30_db": 2.8508816270986337,
-    "f3_hz": 69.51004102024962
+    "score": 2.3408729129023746,
+    "rms_on_db": 1.2439382973894366,
+    "spread_30_db": 1.0268875663885682,
+    "f3_hz": 81.66981664637308
   },
   "cabinet": {
-    "width": 0.636,
-    "depth": 0.9815108475932055,
-    "volume_m3": 0.39701721180806127
+    "width": 0.5960000000000001,
+    "height": 0.636,
+    "depth": 0.588,
+    "volume_m3": 0.222884928,
+    "splay_deg": 15.682815724662966
   },
-  "rule": "smallest cabinet within 0.25 of the best score (2.42) that fits 850 mm wide and 1200 mm deep, excluding drivers in data/drivers/excluded.json"
+  "hf_price_usd": 150.0,
+  "rule": "among designs within 0.25 of the best score (2.34) and at most 600 mm deep: the cheapest HF unit, then the shallowest cabinet"
 }

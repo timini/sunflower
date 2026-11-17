@@ -1,0 +1,53 @@
+{
+ "model": "Celestion CDX1-1731",
+ "kind": "compression",
+ "cylinder_diameter_mm": 82,
+ "flange_diameter_mm": 88.5,
+ "body_depth_mm": 57,
+ "depth_with_terminals_mm": 62,
+ "exit_diameter_mm": 25.4,
+ "sensitivity_db_1w": 110,
+ "impedance_ohm": 8,
+ "power_w": 75,
+ "crossover_min_hz": 2200,
+ "cutoff_hz": 1200,
+ "price_usd": 120,
+ "price_source": "https://reach.dog/shop/hot-beat-electronics/products/celestion-cdx1-1731-1-inch-screw-on-neodymium-compression-driver-40-watt-rms-8-ohm",
+ "price_date": "2026-11-17",
+ "source": "https://en.toutlehautparleur.com/media/catalog/product/datasheet/celestion/CDX1-1731.pdf",
+ "response_note": "Measured by Celestion on an exponential 90 x 40 degree horn; read by eye from the datasheet graph, about 3 dB. Screw-on 35 mm thread, so the printed horn threads onto it.",
+ "response_db": {
+  "f": [
+   400,
+   600,
+   800,
+   1000,
+   1500,
+   2000,
+   3000,
+   5000,
+   7000,
+   10000,
+   15000,
+   18000,
+   20000
+  ],
+  "0": [
+   80,
+   95,
+   103,
+   106,
+   108,
+   108.5,
+   109.5,
+   110,
+   109.5,
+   108,
+   106,
+   103,
+   95
+  ]
+ },
+ "off_axis": "piston",
+ "id": "celestion-cdx1-1731"
+}

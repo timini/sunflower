@@ -2,6 +2,10 @@
  "note": "Drivers removed from selection after a manual check. The optimiser skips them.",
  "drivers": {
   "eminence-delta-pro-15a": "Listed as discontinued by several retailers (Eminence suggests the Kappa-15A); not safe to base a published design on. Checked 2026-11-17.",
-  "eminence-delta-15a": "Listed as discontinued by retailers. Checked 2026-11-17."
+  "eminence-delta-15a": "Listed as discontinued by retailers. Checked 2026-11-17.",
+  "jbl-2402h": "No current price or listing found (probably discontinued). Checked 2026-11-17.",
+  "selenium-st400-trio": "No datasheet response curve or body dimensions found. Checked 2026-11-17.",
+  "bc-de250": "120 mm body and 2.15 kg: too large for a mid phase plug. Checked 2026-11-17.",
+  "fostex-ft96h": "Discontinued (Fostex). Checked 2026-11-17."
  }
 }

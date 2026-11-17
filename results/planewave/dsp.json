@@ -1,29 +1,29 @@
 {
   "gain_db": {
-    "low": -2.11,
+    "low": -1.29,
     "mid": 0.0,
-    "tweeter": -0.93
+    "tweeter": -3.4
   },
   "polarity": {
-    "low": -1,
+    "low": 1,
     "mid": 1,
-    "tweeter": 1
+    "tweeter": -1
   },
   "delay_ms": {
     "low": 0.0,
-    "mid": 1.56,
-    "tweeter": 1.82
+    "mid": 2.04,
+    "tweeter": 2.32
   },
   "crossover": {
     "type": "Linkwitz-Riley 24 dB/oct",
-    "low_mid_hz": 500.0,
-    "mid_high_hz": 7000.0
+    "low_mid_hz": 400.0,
+    "mid_high_hz": 6000.0
   },
   "section_levels_db": {
-    "low": 106.36273881501378,
-    "mid": 104.2550295762158,
-    "tweeter": 105.18819708407767
+    "low": 105.64195154499446,
+    "mid": 104.35672824637014,
+    "tweeter": 107.75947892057107
   },
-  "target_db": 104.2550295762158,
-  "rms_deviation_100_20k_db": 0.9835638502825016
+  "target_db": 104.35672824637014,
+  "rms_deviation_100_16k_db": 1.019171257535104
 }

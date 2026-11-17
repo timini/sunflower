@@ -1,0 +1,22 @@
+{
+ "front": {
+  "res": [
+   1400,
+   1400
+  ],
+  "ortho": 0.8586,
+  "centre_h": 0.0,
+  "centre_v": 0.0,
+  "axes": "x,y"
+ },
+ "section-side": {
+  "res": [
+   1800,
+   1000
+  ],
+  "ortho": 1.48824,
+  "centre_h": -383.8240740740741,
+  "centre_v": 0.0,
+  "axes": "-z,y"
+ }
+}

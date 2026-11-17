@@ -20,7 +20,7 @@ import pandas as pd
 
 from sunflower import design as D
 from sunflower.acoustics import HornTransfer, far_field, group_delay, horn_transfer, solve, spl
-from sunflower.screen_15 import low_response
+from sunflower.simulate import low_section, mid_section
 
 ROOT = D.ROOT
 IMAGE = "dolfinx/dolfinx:v0.8.0"
@@ -35,14 +35,18 @@ def case_tube():
 
 
 def case_mid():
-    m, tw = D.MID, D.TWEETER
-    zs = np.r_[np.linspace(0, tw.face_from_mid_throat, 30), tw.face_from_mid_throat,
-               np.linspace(tw.face_from_mid_throat, m.length, 10)[1:]]
+    m = D.MID
+    fmax = min(1.6 * D.CROSSOVER_MID_HIGH_HZ, 12000)
+    n1 = max(int(60 * m.tweeter_face / m.length), 8)
+    zs = np.r_[np.linspace(0, m.tweeter_face, n1), m.tweeter_face,
+               np.linspace(m.tweeter_face, m.length, 70 - n1)[1:]]
     ro = [m.radius(z) for z in zs]
-    ri = [tw.housing_diameter / 2] * 30 + [0.0] + [0.0] * 9
+    ri = [m.plug_radius] * n1 + [0.0] * (len(zs) - n1)
+    h = min(343 / fmax / 10, 0.006)
     return dict(z=zs.tolist(), r_outer=ro, r_inner=ri,
-                freqs=np.geomspace(300, 12000, 70).tolist(), radius=0.5,
-                h_horn=0.003, h_far=0.007, angles=list(ANGLES))
+                freqs=np.geomspace(0.6 * D.CROSSOVER_LOW_MID_HZ, fmax, 70).tolist(),
+                radius=max(0.6, 1.5 * m.mouth_diameter),
+                h_horn=h, h_far=2 * h, angles=list(ANGLES))
 
 
 def case_low():
@@ -52,7 +56,7 @@ def case_low():
     ro = [float(np.sqrt(h.outer_area(z) / np.pi)) for z in zs]
     ri = [h.inner_radius(z) for z in zs]
     return dict(z=zs.tolist(), r_outer=ro, r_inner=ri,
-                freqs=np.geomspace(40, 1500, 60).tolist(), radius=2.5,
+                freqs=np.geomspace(40, min(3 * D.CROSSOVER_LOW_MID_HZ, 2000), 60).tolist(), radius=2.5,
                 h_horn=0.02, h_far=0.05, angles=list(ANGLES))
 
 
@@ -92,17 +96,17 @@ def compare_tube(raw, out):
 def couple(name, raw):
     if name == "mid":
         m = D.MID
+        cfg = D.config()
+        rear = None if cfg.mid_driver.factory_sealed else m.rear_volume_litres
         f, tr = fem_transfer(raw, m.area(0.0))
-        s = solve(D.mid_driver(), tr, front_m3=m.front_chamber_cc * 1e-6, rear_litres=None)
-        pw_tr = horn_transfer(f, m.area, m.length, 600, breaks=(D.TWEETER.face_from_mid_throat,))
-        spw = solve(D.mid_driver(), pw_tr, front_m3=m.front_chamber_cc * 1e-6, rear_litres=None)
-        pw = {th: far_field(f, spw["u_mouth"], m.mouth_diameter / 2, th, wavefront_radius=m.wavefront_radius)
-              for th in ANGLES}
+        s = solve(cfg.mid_driver, tr, front_m3=m.front_chamber_cc * 1e-6, rear_litres=rear)
+        pw = {th: mid_section(cfg, f, th)[0] for th in ANGLES}
     else:
         lo = D.LOW
+        cfg = D.config()
         f, tr = fem_transfer(raw, lo.area(lo.throat_z))
-        s = solve(D.low_driver(), tr, front_m3=lo.front_chamber_m3, rear_litres=D.LOW_REAR_LITRES)
-        pw = {th: low_response(lo, D.low_driver(), f, D.LOW_REAR_LITRES, theta=th)[0] for th in ANGLES}
+        s = solve(cfg.low_driver, tr, front_m3=lo.front_chamber_m3, rear_litres=D.LOW_REAR_LITRES)
+        pw = {th: low_section(cfg, f, th)[0] for th in ANGLES}
     cols = dict(frequency_hz=f)
     for th in ANGLES:
         p = h(raw, th) * s["u_throat"]
@@ -134,7 +138,7 @@ def main():
         else:
             df = couple(name, raw)
             df.to_csv(out / f"{name}.csv", index=False, float_format="%.6g")
-            band = dict(mid=(500, 7000), low=(100, 500))[name]
+            band = dict(mid=(D.CROSSOVER_LOW_MID_HZ, D.CROSSOVER_MID_HIGH_HZ), low=(100, D.CROSSOVER_LOW_MID_HZ))[name]
             b = (df.frequency_hz >= band[0]) & (df.frequency_hz <= band[1])
             d = df.fem_0deg_spl_db[b] - df.planewave_0deg_spl_db[b]
             summary[name] = dict(band_hz=band, max_abs_difference_db=float(d.abs().max()),

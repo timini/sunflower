@@ -227,41 +227,61 @@ def main():
     sc = reset(a.device)
     objs = load_parts()
     world_and_lights()
-    hero_cam = (1.55, -2.35, 0.75)
+    cut = json.loads((ROOT / "cad/cutlist.json").read_text())
+    ext = cut["external_mm"]
+    st = cut["stations_mm"]
+    W, Dp = ext["width"] / 1000, ext["depth"] / 1000
+    z_back = (st["mouth"] - ext["depth"]) / 1000
+    yc = -(z_back + st["mouth"] / 1000) / 2          # blender y of the cabinet centre
+    ym = -st["mouth"] / 1000                          # blender y of the mouth plane
+    k = max(W, Dp) / 0.89                             # scale the cameras with the cabinet
+    floor = bpy.data.objects.get("Plane")
+    if floor:
+        floor.location.z = -W / 2
+    cams = {}
+    hero_cam = (1.55 * k, yc - 1.95 * k, 0.75 * k)
     if "hero" in shots:
-        camera(hero_cam, lens=45)
+        camera(hero_cam, target=(0, yc, 0), lens=45)
         render(sc, out / "hero.jpg", a.samples, a.res)
     if "front" in shots:
-        camera((0, -4.0, 0), target=(0, 0, 0), lens=50, ortho=0.95)
+        s_front = 1.35 * W
+        camera((0, ym - 4.0, 0), target=(0, ym, 0), lens=50, ortho=s_front)
         render(sc, out / "front.jpg", a.samples, "1400x1400")
+        cams["front"] = dict(res=[1400, 1400], ortho=s_front, centre_h=0.0, centre_v=0.0, axes="x,y")
     if "detail" in shots:
-        camera((0.28, -1.45, 0.16), target=(0, -0.76, 0), lens=60)
+        rm = st["mouth"] / 1000
+        camera((0.28 * k, -rm - 0.62 * k, 0.16 * k), target=(0, -rm + 0.06, 0), lens=60)
         render(sc, out / "detail.jpg", a.samples, a.res)
     if "rear" in shots:
-        for n in ("back",):
-            objs[n].hide_render = True
-        camera((-1.2, 1.9, 0.9), target=(0, -0.2, 0), lens=45)
+        objs["back"].hide_render = True
+        camera((-1.2 * k, yc + 2.3 * k, 0.9 * k), target=(0, yc, 0), lens=45)
         render(sc, out / "rear-open.jpg", a.samples, a.res)
         objs["back"].hide_render = False
     if "exploded" in shots:
         explode(objs, 1.0)
-        camera((2.15, -2.75, 1.15), target=(0, -0.42, 0.0), lens=40)
+        camera((2.15 * k, yc - 2.35 * k, 1.15 * k), target=(0, yc, 0.0), lens=40)
         render(sc, out / "exploded.jpg", a.samples, a.res)
         explode(objs, 0.0)
     if "section" in shots:
         section(objs, True)
-        camera((2.3, -1.2, 0.85), target=(0, -0.38, 0), lens=42)
+        camera((2.3 * k, yc - 0.8 * k, 0.85 * k), target=(0, yc, 0), lens=42)
         render(sc, out / "section.jpg", a.samples, a.res)
-        camera((3.5, -0.38, 0.0), target=(0, -0.40, 0), lens=50, ortho=1.5)
+        s_side = 1.3 * max(Dp, W * 1.8)
+        camera((4.0, yc, 0.0), target=(0, yc, 0), lens=50, ortho=s_side)
         render(sc, out / "section-side.jpg", a.samples, "1800x1000")
+        cams["section-side"] = dict(res=[1800, 1000], ortho=s_side, centre_h=yc * 1000, centre_v=0.0, axes="-z,y")
         section(objs, False)
+    if cams:
+        old = json.loads((out / "cameras.json").read_text()) if (out / "cameras.json").exists() else {}
+        old.update(cams)
+        (out / "cameras.json").write_text(json.dumps(old, indent=1))
     if "turntable" in shots:
         frames = out / "turntable"
         frames.mkdir(exist_ok=True)
-        r = math.hypot(*hero_cam[:2])
+        r = math.hypot(hero_cam[0], hero_cam[1] - yc)
         for i in range(36):
             ang = math.radians(-35 + i * 10)
-            camera((r * math.sin(ang), -r * math.cos(ang), 0.75), lens=45)
+            camera((r * math.sin(ang), yc - r * math.cos(ang), 0.75 * k), target=(0, yc, 0), lens=45)
             render(sc, frames / f"f{i:03d}.png", max(24, a.samples // 6), "720x480")
 
 

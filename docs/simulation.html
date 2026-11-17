@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Sunflower simulation</title>
-<meta name="description" content="Phase and magnitude response of each Sunflower horn section, FEM check and DSP settings.">
+<meta name="description" content="Each Sunflower horn section with all its plots, and the full-range response with its cutoff frequencies.">
 <link rel="stylesheet" href="assets/style.css">
 <link rel="icon" href="data:image/svg+xml,<svg viewBox='0 0 32 32' aria-hidden='true'><g fill='none' stroke-width='2.4'><rect x='3' y='3' width='26' height='26' rx='4' stroke='%23d38a0c'/><circle cx='16' cy='16' r='8' stroke='%23eb6834'/><circle cx='16' cy='16' r='3.2' fill='%231baf7a' stroke='none'/></g></svg>">
 </head>
@@ -18,78 +18,68 @@
 <main><div class="wrap">
 
 <h1>Simulation</h1>
-<p class="lede">Each section was simulated on its own, unfiltered, then summed through the crossover with the
-gains, delays and polarity a DSP would apply. All curves are at 2.83 V and 1 m.</p>
+<p class="lede">Each horn on its own first, with all its plots, then the full-range system with the cutoff
+frequencies marked. All curves are at 2.83 V and 1 m.</p>
+<p><a href="#low">Low horn</a> · <a href="#mid">Mid horn</a> · <a href="#tweeter">Tweeter</a> ·
+<a href="#full-range">Full range</a> · <a href="#method">Method</a> · <a href="#limits">Limits</a></p>
+<h2 id="low">Low horn</h2>
+<p>18Sound 15W500 in the flat-panel low horn: 360 mm octagon to
+600 mm square over 850 mm, 35 litre sealed chamber. From 100 Hz to 400 Hz:
+2.4 dB variation at 105.5 dB mean. Lower -3 dB at 70 Hz; the mouth's own cutoff, where its
+circumference equals the wavelength, is 161 Hz. The air between the cone and the throat gives a
+high-frequency corner near 659 Hz. FEM agrees within 0.7 dB in band.</p>
+<figure class="figure"><img class="plot" src="img/plots/low-drawing.png" alt="Dimensioned section, mm." loading="lazy"><figcaption>Dimensioned section, mm.</figcaption></figure><figure class="figure"><img class="plot" src="img/plots/low-area.png" alt="Open area along the horn." loading="lazy"><figcaption>Open area along the horn.</figcaption></figure><figure class="figure"><img class="plot" src="img/plots/low-magnitude.png" alt="Magnitude on axis, unfiltered, with its cutoffs." loading="lazy"><figcaption>Magnitude on axis, unfiltered, with its cutoffs.</figcaption></figure><figure class="figure"><img class="plot" src="img/plots/low-phase.png" alt="Phase and group delay." loading="lazy"><figcaption>Phase and group delay.</figcaption></figure><figure class="figure"><img class="plot" src="img/plots/low-polar.png" alt="Off-axis responses and polar map." loading="lazy"><figcaption>Off-axis responses and polar map.</figcaption></figure><figure class="figure"><img class="plot" src="img/plots/low-electrical.png" alt="Impedance and cone excursion." loading="lazy"><figcaption>Impedance and cone excursion.</figcaption></figure>
+<h2 id="mid">Mid horn</h2>
+<p>PRV 6MR600X-NDY in an exponential horn: 124 mm annular throat around
+the 86 mm tweeter sleeve, 290 mm mouth, 260 mm long. From 400 Hz to
+6000 Hz: 5.7 dB variation at 103.7 dB mean. Lower -3 dB at 302 Hz, upper -3 dB at
+6032 Hz, mouth cutoff 376 Hz. FEM agrees within
+3.2 dB in band, mean difference +0.21 dB.</p>
+<figure class="figure"><img class="plot" src="img/plots/mid-drawing.png" alt="Dimensioned section, mm." loading="lazy"><figcaption>Dimensioned section, mm.</figcaption></figure><figure class="figure"><img class="plot" src="img/plots/mid-area.png" alt="Open area along the horn." loading="lazy"><figcaption>Open area along the horn.</figcaption></figure><figure class="figure"><img class="plot" src="img/plots/mid-magnitude.png" alt="Magnitude on axis, unfiltered, with its cutoffs." loading="lazy"><figcaption>Magnitude on axis, unfiltered, with its cutoffs.</figcaption></figure><figure class="figure"><img class="plot" src="img/plots/mid-phase.png" alt="Phase and group delay." loading="lazy"><figcaption>Phase and group delay.</figcaption></figure><figure class="figure"><img class="plot" src="img/plots/mid-polar.png" alt="Off-axis responses and polar map." loading="lazy"><figcaption>Off-axis responses and polar map.</figcaption></figure><figure class="figure"><img class="plot" src="img/plots/mid-electrical.png" alt="Impedance and cone excursion." loading="lazy"><figcaption>Impedance and cone excursion.</figcaption></figure>
+<h2 id="tweeter">Tweeter</h2>
+<p>Fostex T925A, not simulated: the curves are its published on-axis and off-axis response, read from the
+<a href="https://www.Lautsprechershop.de/pdf/fostex/t925a.pdf">datasheet</a> graph to about 2 dB, with minimum phase reconstructed from the magnitude. Its own
+horn cuts off at 3500 Hz. From 6000 Hz to 16 kHz: 3.0 dB variation at 108.6 dB. The tweeter's
+diaphragm sits 155 mm behind the mouth plane, which the system sum includes as a
+delay. The mid horn's effect on the tweeter's coverage is not modelled.</p>
+<figure class="figure"><img class="plot" src="img/plots/tweeter-drawing.png" alt="Dimensioned section, mm." loading="lazy"><figcaption>Dimensioned section, mm.</figcaption></figure><figure class="figure"><img class="plot" src="img/plots/tweeter-magnitude.png" alt="Magnitude on axis, unfiltered, with its cutoffs." loading="lazy"><figcaption>Magnitude on axis, unfiltered, with its cutoffs.</figcaption></figure><figure class="figure"><img class="plot" src="img/plots/tweeter-phase.png" alt="Phase and group delay." loading="lazy"><figcaption>Phase and group delay.</figcaption></figure><figure class="figure"><img class="plot" src="img/plots/tweeter-polar.png" alt="Off-axis responses and polar map." loading="lazy"><figcaption>Off-axis responses and polar map.</figcaption></figure>
 
-<h2>Method</h2>
+<h2 id="full-range">Full range</h2>
+<figure class="figure"><img class="plot" src="img/plots/full-range.png" alt="Top: each section unfiltered and level-matched, with the frequencies that limit it. Bottom: through the crossover, on axis and at 30 degrees." loading="lazy"><figcaption>Top: each section unfiltered and level-matched, with the frequencies that limit it. Bottom: through the crossover, on axis and at 30 degrees.</figcaption></figure>
+<div class="table-wrap"><table><thead><tr><th class="">Section</th><th class="">Lower -3 dB</th><th class="">Upper -3 dB</th><th class="">Other limit</th></tr></thead><tbody><tr><td class="">Low</td><td class="">70 Hz</td><td class="">583 Hz</td><td class="">Mouth cutoff 161 Hz</td></tr><tr><td class="">Mid</td><td class="">302 Hz</td><td class="">6032 Hz</td><td class="">Mouth cutoff 376 Hz</td></tr><tr><td class="">Tweeter</td><td class="">2713 Hz</td><td class="">26881 Hz</td><td class="">Horn cutoff 3500 Hz (datasheet)</td></tr><tr><td class="">Crossovers</td><td class="">400 Hz</td><td class="">6000 Hz</td><td class="">LR4</td></tr></tbody></table></div>
+<p>Through the crossover the on-axis sum stays within 4.9 dB peak to peak from 100 Hz to 16 kHz
+(RMS deviation 1.02 dB), before any equalisation.</p>
+<figure class="figure"><img class="plot" src="img/plots/full-range-group-delay.png" alt="Group delay of the summed response." loading="lazy"><figcaption>Group delay of the summed response.</figcaption></figure>
+<h3>DSP settings</h3>
+<div class="table-wrap"><table><thead><tr><th class="">Channel</th><th class="">Filter</th><th class="num">Gain</th><th class="num">Delay</th><th class="">Polarity in the model</th></tr></thead><tbody><tr><td class="">Low</td><td class="">LR4 low-pass 400 Hz</td><td class="num">-1.3 dB</td><td class="num">0.00 ms</td><td class="">Normal</td></tr><tr><td class="">Mid</td><td class="">LR4 high-pass 400 Hz, LR4 low-pass 6000 Hz</td><td class="num">+0.0 dB</td><td class="num">2.04 ms</td><td class="">Normal</td></tr><tr><td class="">Tweeter</td><td class="">LR4 high-pass 6000 Hz</td><td class="num">-3.4 dB</td><td class="num">2.32 ms</td><td class="">Inverted</td></tr></tbody></table></div>
+<div class="note"><p>In the model, positive voltage pushes air out of every horn. The reversed 15 inch does the
+opposite when wired red to positive: it pulls air out of the horn. So where the table says the low section is
+inverted, wire it normally and leave the DSP channel at normal polarity; where it says normal, invert it. Confirm with
+a measurement at the crossover.</p></div>
+
+<h2 id="method">Method</h2>
 <ol>
 <li><b>Plane-wave horn model.</b> Each horn is cut into a few hundred thin annular slices and cascaded as
-transfer matrices from throat to mouth, with the radiation load of a flanged piston at the mouth. Centre bodies
-are subtracted from the area slice by slice.</li>
-<li><b>Driver model.</b> Each driver is a Thiele/Small motor with its sealed rear volume and the front chamber
-between cone and throat, solved for cone velocity and electrical impedance.</li>
-<li><b>Radiation.</b> The mouth's far field includes the curvature of the wavefront in a conical or pyramidal horn.
-Treating the mouth as a flat piston gave false nulls off axis.</li>
-<li><b>FEM check.</b> The mid and low horns were solved again with an axisymmetric Helmholtz finite-element model
-(dolfinx 0.8, quadratic elements) in a baffled half-space with an absorbing outer boundary. The FEM throat impedance
-and far field were coupled to the same driver models, so the two results differ only in the acoustics. The FEM
-code was first checked against the exact solution for a straight tube: median error 3% in throat impedance.</li>
+transfer matrices, with a flanged-piston radiation load at the mouth. Centre bodies are subtracted slice by slice.</li>
+<li><b>Driver model.</b> Thiele/Small motor with its sealed rear volume and the front chamber between cone and throat.</li>
+<li><b>Radiation.</b> The far field includes the curved wavefront at a flared mouth, which matters off axis.</li>
+<li><b>FEM check.</b> Mid and low horns solved again with an axisymmetric Helmholtz finite-element model (dolfinx 0.8)
+in a baffled half-space, coupled to the same driver models. The FEM code matches the exact straight-tube solution to a
+median 3% in throat impedance.</li>
 </ol>
-
-<h2>Low section</h2>
-<figure class="figure"><img class="plot" src="img/plots/low-section.png" alt="18 Sound 15NMB420 in the low horn. Shaded: 100 to 500 Hz. The group delay peak near 95 Hz is the horn's low-frequency cut-off." loading="lazy"><figcaption>18 Sound 15NMB420 in the low horn. Shaded: 100 to 500 Hz. The group delay peak near 95 Hz is the horn's low-frequency cut-off.</figcaption></figure>
-<p>From 100 to 500 Hz the plane-wave model gives 3.0 dB variation at a mean of 106.7 dB.
-The FEM agrees within 0.8 dB in that band. The low horn stays
-usable to about 1 kHz on axis, which leaves room for the 500 Hz crossover. Off axis it narrows above about 500 Hz,
-roughly where the mid takes over.</p>
-
-<h2>Mid section</h2>
-<figure class="figure"><img class="plot" src="img/plots/mid-section.png" alt="Beyma 6MCF200Nd in the conical mid horn with the tweeter bullet in its throat. Shaded: 500 Hz to 7 kHz." loading="lazy"><figcaption>Beyma 6MCF200Nd in the conical mid horn with the tweeter bullet in its throat. Shaded: 500 Hz to 7 kHz.</figcaption></figure>
-<p>From 500 Hz to 7 kHz the plane-wave model gives 4.9 dB variation at a mean of 104.1 dB;
-FEM gives 4.2 dB with a mean difference of 0.03 dB and a largest difference of
-1.9 dB. Coverage narrows to about plus or minus 20 degrees above 3 kHz, as expected for
-a conical horn with a 20 degree half-angle.</p>
-
-<h2>Tweeter</h2>
-<figure class="figure"><img class="plot" src="img/plots/tweeter-section.png" alt="Fostex T90A, from the datasheet: 106 dB/W/m, horn cut-off at 3.6 kHz, roll-off above 35 kHz, 60 mm piston directivity. Not a horn simulation." loading="lazy"><figcaption>Fostex T90A, from the datasheet: 106 dB/W/m, horn cut-off at 3.6 kHz, roll-off above 35 kHz, 60 mm piston directivity. Not a horn simulation.</figcaption></figure>
-<p>The tweeter's internal horn and ring diaphragm were not simulated. Its curves are a minimum-phase model of the
-published figures. The effect of sitting 25 mm inside the mid horn is not modelled
-beyond the extra path length. Measuring it in place is the first job after building.</p>
-
-<h2>Electrical impedance</h2>
-<figure class="figure"><img class="plot" src="img/plots/impedance.png" alt="Impedance of the low and mid drivers in their horns." loading="lazy"><figcaption>Impedance of the low and mid drivers in their horns.</figcaption></figure>
-
-<h2>FEM against plane-wave</h2>
-<figure class="figure"><img class="plot" src="img/plots/fem-vs-planewave.png" alt="Grey: plane-wave. Colour: FEM. Solid on axis, dotted 30 degrees." loading="lazy"><figcaption>Grey: plane-wave. Colour: FEM. Solid on axis, dotted 30 degrees.</figcaption></figure>
-<div class="table-wrap"><table><thead><tr><th class="">Section</th><th class="">Band</th><th class="num">Largest on-axis difference</th><th class="num">Mean difference</th><th class="num">Variation, FEM</th><th class="num">Variation, plane-wave</th></tr></thead><tbody><tr><td class="">Low</td><td class="">100 to 500 Hz</td><td class="num">0.84 dB</td><td class="num">-0.03 dB</td><td class="num">3.35 dB</td><td class="num">2.98 dB</td></tr><tr><td class="">Mid</td><td class="">500 Hz to 7 kHz</td><td class="num">1.88 dB</td><td class="num">+0.03 dB</td><td class="num">4.22 dB</td><td class="num">4.89 dB</td></tr></tbody></table></div>
-
-<h2>The complete system</h2>
-<figure class="figure"><img class="plot" src="img/plots/system.png" alt="Each section through its LR4 filters, and their sum on axis." loading="lazy"><figcaption>Each section through its LR4 filters, and their sum on axis.</figcaption></figure>
-<p>With the settings below, the on-axis sum stays within 3.6 dB peak to peak from 100 Hz to 20 kHz
-(RMS deviation 0.98 dB), before any equalisation.</p>
-<figure class="figure"><img class="plot" src="img/plots/system-off-axis.png" alt="Summed response at 0, 15 and 30 degrees." loading="lazy"><figcaption>Summed response at 0, 15 and 30 degrees.</figcaption></figure>
-<h3>DSP settings</h3>
-<div class="table-wrap"><table><thead><tr><th class="">Channel</th><th class="">Filter</th><th class="num">Gain</th><th class="num">Delay</th><th class="">Polarity in the model</th></tr></thead><tbody><tr><td class="">Low</td><td class="">LR4 low-pass 500 Hz</td><td class="num">-2.1 dB</td><td class="num">0.00 ms</td><td class="">Inverted</td></tr><tr><td class="">Mid</td><td class="">LR4 high-pass 500 Hz, LR4 low-pass 7 kHz</td><td class="num">+0.0 dB</td><td class="num">1.56 ms</td><td class="">Normal</td></tr><tr><td class="">Tweeter</td><td class="">LR4 high-pass 7 kHz</td><td class="num">-0.9 dB</td><td class="num">1.82 ms</td><td class="">Normal</td></tr></tbody></table></div>
-<div class="note"><p>The model wants the low section inverted relative to a forward-facing driver. The reversed
-mounting already does that: with the 15 inch wired red to positive, a positive voltage pulls air out of the horn.
-So wire all three drivers normally and leave every DSP channel at normal polarity, then confirm with a
-measurement at the crossover.</p>
-<p>The 1.56 ms on the mid and 1.82 ms on the tweeter make up for the longer path from the 15 inch cone to the mouth
-and for the delay of the low horn itself.</p></div>
+<figure class="figure"><img class="plot" src="img/plots/fem-vs-planewave.png" alt="FEM against plane-wave. Solid on axis, dotted 30 degrees." loading="lazy"><figcaption>FEM against plane-wave. Solid on axis, dotted 30 degrees.</figcaption></figure>
 
 <h2 id="limits">What the models leave out</h2>
 <ul>
-<li>No cross modes in the plane-wave model. The FEM is axisymmetric, so it includes radial modes but not the
-octagon to square corners, which it replaces with circles of equal area.</li>
-<li>Cone breakup, wall losses, distortion and power compression are not modelled.</li>
-<li>The cabinet front is treated as an infinite baffle at the mouth plane. A real 736 mm front face will show
-baffle step and edge diffraction below about 300 Hz.</li>
-<li>The four support rods, the three bullet vanes and the cable channels are not in the acoustic models.
-They block about 2% of each passage.</li>
-<li>The 15NMB420 motor diameter and the split between cone depth and motor length are estimated from the datasheet
-drawing, as is the 6.5 inch cone profile behind the lead-in. Measure the drivers before printing the nose and the
-mid horn.</li>
-<li>The T90A response is a datasheet model, not a simulation.</li>
+<li>No cross modes in the plane-wave model. The FEM is axisymmetric: it replaces the octagon and square of the low horn
+with circles of equal area.</li>
+<li>Cone breakup, wall losses, distortion and power compression. Cone sizes are only trusted to a crossover of
+7 kHz for 6 inch, 5 kHz for 8 inch and 3.6 kHz for 10 inch.</li>
+<li>The cabinet front is an infinite baffle at the mouth plane. A real front face shows baffle step and edge
+diffraction in the low and mid bands.</li>
+<li>The tweeter is its datasheet response. How the mid horn around it changes its coverage is not modelled.</li>
+<li>Support rods, vanes and cable channels block about 2% of each passage and are not in the acoustic models.</li>
+<li>Motor and cone dimensions of the drivers not on a datasheet drawing are estimates; measure before printing.</li>
 </ul>
 
 </div></main>

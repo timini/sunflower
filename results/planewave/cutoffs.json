@@ -1,0 +1,25 @@
+{
+  "low": {
+    "f_low_3db": 69.8337,
+    "f_high_3db": 583.31,
+    "level_db": 105.5031754385965,
+    "mouth_cutoff_hz": 161.26418929740035,
+    "front_chamber_corner_hz": 659.3682344335286
+  },
+  "mid": {
+    "f_low_3db": 301.865,
+    "f_high_3db": 6031.81,
+    "level_db": 103.68304279279278,
+    "mouth_cutoff_hz": 376.48376193462144
+  },
+  "tweeter": {
+    "f_low_3db": 2712.91,
+    "f_high_3db": 26880.7,
+    "level_db": 108.26575126903553,
+    "datasheet_cutoff_hz": 3500
+  },
+  "crossover_hz": [
+    400.0,
+    6000.0
+  ]
+}

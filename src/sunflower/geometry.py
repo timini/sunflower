@@ -1,14 +1,14 @@
 """Nested geometry of the Sunflower horn. All lengths in metres.
 
-Coordinates: z is the horn axis, positive towards the listener. z = 0 is the
-front face of the 15 inch mounting baffle. The low horn mouth is at
-z = low.length. The mid horn and the tweeter sit on the axis, and the mid
-horn mouth is flush with the low horn mouth.
+Coordinates: z is the horn axis, positive towards the listener. For the low
+horn z = 0 is the 15 inch cone rim (the back face of the baffle); for the
+mid horn z = 0 is the mid throat. The mid horn mouth is flush with the low
+horn mouth.
 
 Nesting:
   * the tweeter body is the phase plug of the mid horn;
-  * the mid horn can (mid horn + 6.5 inch driver + rear cap) and the reversed
-    15 inch motor together form the phase plug of the low horn.
+  * the mid horn can (mid horn, mid driver, rear cap and tail) and the
+    reversed 15 inch motor together form the phase plug of the low horn.
 """
 from __future__ import annotations
 
@@ -20,61 +20,129 @@ import numpy as np
 SQ2 = math.sqrt(2.0)
 
 
-@dataclass(frozen=True)
-class Tweeter:
-    """Fostex T90A, horn super tweeter. Body sits in a printed bullet housing."""
-    model: str = "Fostex T90A"
-    housing_diameter: float = 0.064      # bullet housing OD (T90A horn is 60 mm)
-    face_from_mid_throat: float = 0.100  # tweeter mouth plane, measured from mid throat
-    body_depth: float = 0.0878           # T90A envelope depth (horn-simulation study)
-    nose_length: float = 0.040           # ogive tail of the bullet, behind the mid throat
-    sensitivity_db: float = 106.0        # 1 W / 1 m, 8 ohm (Fostex)
-    horn_cutoff_hz: float = 3600.0       # Fostex published cut-off
-    upper_hz: float = 35000.0
-    impedance_ohm: float = 8.0
+PROFILES = ("conical", "exponential", "hypex", "os")
+
+# Frame diameter and depth by nominal size, used when a catalogue record has
+# no published envelope. Typical pro midrange values; check the chosen driver.
+SIZE_ENVELOPE = {"6in": (0.160, 0.070), "6.5in": (0.174, 0.075), "8in": (0.220, 0.095), "10in": (0.262, 0.115)}
+# Highest crossover trusted for a cone of each size (cone breakup is not modelled).
+SIZE_MAX_XO = {"6in": 7000.0, "6.5in": 7000.0, "8in": 5000.0, "10in": 3600.0}
+
+
+def profile_radius(profile, rt, rm, length, z):
+    """Outer radius of a flare from rt at z = 0 to rm at z = length."""
+    t = z / length
+    if profile == "conical":
+        return rt + (rm - rt) * t
+    if profile == "exponential":
+        return rt * (rm / rt) ** t
+    if profile == "os":
+        tan = math.sqrt(rm * rm - rt * rt) / length
+        return math.sqrt(rt * rt + (z * tan) ** 2)
+    if profile == "hypex":                      # T = 0.6, radius = rt (cosh mz + T sinh mz)
+        T = 0.6
+        target = rm / rt
+        lo, hi = 1e-6, 50.0
+        for _ in range(60):
+            m = 0.5 * (lo + hi)
+            if math.cosh(m) + T * math.sinh(m) < target:
+                lo = m
+            else:
+                hi = m
+        m = 0.5 * (lo + hi)
+        return rt * (math.cosh(m * t) + T * math.sinh(m * t))
+    raise ValueError(profile)
 
 
 @dataclass(frozen=True)
 class MidHorn:
-    """Beyma 6MCF200Nd into an annular conical horn around the tweeter."""
+    """Cone midrange into an annular horn around the tweeter body.
+
+    z = 0 is the mid throat. The tweeter body, in a printed sleeve, runs from
+    the throat to its face at ``tweeter_face``, so the mid throat is an
+    annulus. The tweeter face is never behind its own depth.
+    """
     driver_id: str = "beyma-6mcf200nd"
+    nominal: str = "6.5in"
+    sd: float = 0.014
+    frame_diameter: float = 0.174
+    driver_depth: float = 0.075
+    profile: str = "conical"
     equivalent_throat_diameter: float = 0.076
     mouth_diameter: float = 0.190
     length: float = 0.125
-    front_chamber_cc: float = 20.0
-    wall: float = 0.005                 # printed horn wall
-    driver_frame_diameter: float = 0.174
-    driver_depth: float = 0.075
-    adapter_length: float = 0.012       # cone-to-annulus adapter / front chamber ring
+    tweeter_id: str = "fostex-t90a"
+    tweeter_face: float = 0.100           # from the mid throat
+    tweeter_body_diameter: float = 0.060
+    sleeve: float = 0.002
+    front_chamber_cc: float = 25.0
+    wall: float = 0.006
+    adapter_length: float = 0.012
     rear_cap: float = 0.018
-    can_diameter: float = 0.200         # outer diameter of the mid can
+    tail_length: float = 0.120
+
+    @property
+    def plug_radius(self) -> float:
+        return self.tweeter_body_diameter / 2 + self.sleeve
 
     @property
     def outer_throat_radius(self) -> float:
-        return math.hypot(self.equivalent_throat_diameter, Tweeter().housing_diameter) / 2
+        return math.hypot(self.equivalent_throat_diameter / 2, self.plug_radius)
 
     @property
     def throat_area(self) -> float:
         return math.pi * (self.equivalent_throat_diameter / 2) ** 2
 
+    @property
+    def compression_ratio(self) -> float:
+        return self.sd / self.throat_area
+
     def radius(self, z: float) -> float:
-        rt, rm = self.outer_throat_radius, self.mouth_diameter / 2
-        return rt + (rm - rt) * z / self.length
+        return profile_radius(self.profile, self.outer_throat_radius, self.mouth_diameter / 2, self.length,
+                              min(max(z, 0.0), self.length))
 
     def area(self, z: float) -> float:
-        tw = Tweeter()
-        inner = tw.housing_diameter / 2 if z < tw.face_from_mid_throat else 0.0
+        inner = self.plug_radius if z < self.tweeter_face else 0.0
         return math.pi * (self.radius(z) ** 2 - inner**2)
 
     @property
     def wavefront_radius(self) -> float:
-        """Spherical wavefront radius at the mouth (distance to the cone apex)."""
-        rt, rm = self.outer_throat_radius, self.mouth_diameter / 2
-        return rm / math.sin(math.atan((rm - rt) / self.length))
+        """Radius of the mouth wavefront, from the wall angle at the mouth."""
+        rm = self.mouth_diameter / 2
+        dz = self.length * 1e-3
+        slope = (self.radius(self.length) - self.radius(self.length - dz)) / dz
+        return rm / math.sin(max(math.atan(slope), math.radians(2)))
+
+    @property
+    def can_diameter(self) -> float:
+        return max(self.mouth_diameter, self.frame_diameter) + 2 * self.wall
 
     @property
     def can_length(self) -> float:
         return self.length + self.adapter_length + self.driver_depth + self.rear_cap
+
+    @property
+    def rear_volume_litres(self) -> float:
+        """Sealed volume behind the cone: half the sleeve plus the hollow tail."""
+        rc = self.can_diameter / 2 - self.wall
+        sleeve = math.pi * rc**2 * (self.driver_depth + self.rear_cap) * 0.5
+        tail = 2 / 3 * math.pi * rc**2 * self.tail_length
+        return (sleeve + tail) * 1000
+
+    def check(self):
+        problems = []
+        if self.mouth_diameter / 2 < self.outer_throat_radius + 0.01:
+            problems.append("mouth not larger than the throat")
+        if not 1.4 <= self.compression_ratio <= 7.0:
+            problems.append(f"compression ratio {self.compression_ratio:.1f} outside 1.4 to 7")
+        if self.tweeter_face > self.length:
+            problems.append("tweeter face outside the mid mouth")
+        if self.radius(self.tweeter_face) - self.plug_radius < 0.006:
+            problems.append("annulus too narrow at the tweeter face")
+        half = math.degrees(math.atan((self.mouth_diameter / 2 - self.outer_throat_radius) / self.length))
+        if half > 35:
+            problems.append(f"mean flare half-angle {half:.0f} deg above 35 deg")
+        return problems
 
 
 @dataclass(frozen=True)
@@ -100,7 +168,6 @@ class LowHorn:
     throat_width: float = 0.40          # across flats at the baffle front face
     mouth_width: float = 0.62
     length: float = 0.80                # baffle front face to mouth
-    tail_length: float = 0.120          # ogive tail on the mid can
     baffle: float = 0.025
     cutout_radius: float = 0.1765       # 15NMB420 baffle cutout 353 mm
     body: LowDriverBody = field(default_factory=LowDriverBody)
@@ -153,7 +220,7 @@ class LowHorn:
 
     @property
     def tail_start(self):
-        return self.can_start - self.tail_length
+        return self.can_start - self.mid.tail_length
 
     @property
     def nose_end(self):
@@ -172,7 +239,7 @@ class LowHorn:
         if z >= self.can_start:
             r = max(r, rc)
         elif z >= self.tail_start:
-            t = (self.can_start - z) / self.tail_length
+            t = (self.can_start - z) / self.mid.tail_length
             r = max(r, rc * math.sqrt(max(0.0, 1 - t * t)))
         return r
 

@@ -1,33 +1,72 @@
 {
   "low": {
-    "driver": "18 Sound 15NMB420",
+    "driver": "18Sound 15W500",
     "throat_width_mm": 360.0,
-    "mouth_width_mm": 700.0,
-    "length_mm": 800.0,
-    "rear_chamber_litres": 25.0,
-    "throat_area_m2": 0.11955350717091341,
-    "mouth_area_m2": 0.458584073464102,
-    "min_area_m2": 0.11955350717091341,
-    "min_area_z_m": 0.105,
-    "expansion": 3.835806111555651,
-    "front_chamber_litres": 9.06654899338035
+    "mouth_width_mm": 600.0,
+    "length_mm": 850.0,
+    "rear_chamber_litres": 35.0,
+    "throat_area_m2": 0.10136361274795475,
+    "mouth_area_m2": 0.2883685459054991,
+    "min_area_m2": 0.10136361274795475,
+    "min_area_z_m": 0.1,
+    "expansion": 2.8448921470719544,
+    "front_chamber_litres": 8.392054814554132
   },
   "mid": {
-    "driver": "Beyma 6MCF200Nd",
-    "profile": "conical",
-    "outer_throat_diameter_mm": 99.35793878699377,
-    "mouth_diameter_mm": 190.0,
-    "length_mm": 125.0,
-    "can_diameter_mm": 200.0,
-    "can_length_mm": 230.0
+    "driver": "PRV 6MR600X-NDY",
+    "nominal": "6in",
+    "profile": "exponential",
+    "outer_throat_diameter_mm": 124.48293055676349,
+    "mouth_diameter_mm": 290.0,
+    "length_mm": 260.0,
+    "compression_ratio": 2.2478179616929417,
+    "can_diameter_mm": 302.0,
+    "can_length_mm": 377.0
   },
   "tweeter": {
-    "driver": "Fostex T90A",
-    "housing_diameter_mm": 64.0,
-    "face_recess_mm": 24.999999999999993
+    "driver": "Fostex T925A",
+    "body_diameter_mm": 82.0,
+    "face_from_mid_throat_mm": 130.0,
+    "face_recess_mm": 130.0
   },
   "crossover_hz": [
-    500.0,
-    7000.0
-  ]
+    400.0,
+    6000.0
+  ],
+  "selection": {
+    "tweeter": "fostex-t925a",
+    "crossover_hz": [
+      400.0,
+      6000.0
+    ],
+    "mid": {
+      "driver_id": "prv-6mr600x-ndy",
+      "label": "PRV 6MR600X-NDY",
+      "nominal": "6in",
+      "profile": "exponential",
+      "equivalent_throat_diameter": 0.09,
+      "mouth_diameter": 0.29,
+      "length": 0.26,
+      "tweeter_face": 0.13
+    },
+    "low": {
+      "driver_id": "18sound-15w500",
+      "throat_width": 0.36,
+      "mouth_width": 0.6,
+      "length": 0.85,
+      "rear_litres": 35.0
+    },
+    "scores": {
+      "score": 2.4777361658041563,
+      "rms_on_db": 1.0522953522548395,
+      "spread_30_db": 2.8508816270986337,
+      "f3_hz": 69.51004102024962
+    },
+    "cabinet": {
+      "width": 0.636,
+      "depth": 0.9815108475932055,
+      "volume_m3": 0.39701721180806127
+    },
+    "rule": "smallest cabinet within 0.25 of the best score (2.42) that fits 850 mm wide and 1200 mm deep, excluding drivers in data/drivers/excluded.json"
+  }
 }

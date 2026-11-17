@@ -20,40 +20,43 @@
 <h1>Build</h1>
 <p class="lede">The cabinet is flat birch-ply panels. The round parts are 3D printed. Everything here comes from the
 CAD in <code>cad/</code>, which is generated from the same design file as the simulations.</p>
+<figure class="figure"><img class="plot" src="img/plots/low-drawing.png" alt="Cabinet section with dimensions, mm." loading="lazy"><figcaption>Cabinet section with dimensions, mm.</figcaption></figure>
+<figure class="figure"><img class="plot" src="img/plots/mid-drawing.png" alt="Mid horn section with dimensions, mm." loading="lazy"><figcaption>Mid horn section with dimensions, mm.</figcaption></figure>
 <figure class="figure"><img class="render" src="img/renders/exploded.jpg" alt="Exploded view. Cabinet panels move outwards, the horn walls and corner fillers inwards, the mid can and tweeter forwards." loading="lazy"><figcaption>Exploded view. Cabinet panels move outwards, the horn walls and corner fillers inwards, the mid can and tweeter forwards.</figcaption></figure>
 
 <h2>Bill of materials</h2>
-<div class="table-wrap"><table><thead><tr><th class="">Item</th><th class="">Qty</th><th class="">Notes</th></tr></thead><tbody><tr><td class="">18 Sound 15NMB420, 8 ohm</td><td class="">1</td><td class="">Low. Rear-mounted, motor forward</td></tr><tr><td class="">Beyma 6MCF200Nd, 8 ohm</td><td class="">1</td><td class="">Mid. Factory sealed back</td></tr><tr><td class="">Fostex T90A, 8 ohm</td><td class="">1</td><td class="">Tweeter. The SE and ST variants differ in response; re-check the crossover if you use one</td></tr><tr><td class="">Birch ply 18 mm</td><td class="">About 3.6 m²</td><td class="">Two 2440 x 1220 sheets with offcuts</td></tr><tr><td class="">Birch ply 25 mm, or two layers of 12 mm</td><td class="">700 x 700</td><td class="">Baffle</td></tr><tr><td class="">Birch ply 12 mm</td><td class="">About 0.3 m²</td><td class="">Corner filler faces and ribs</td></tr><tr><td class="">Aluminium tube, 12 mm OD, 10 mm bore</td><td class="">4 x 248 mm</td><td class="">Mid can supports; the top one carries the cables</td></tr><tr><td class="">PETG or ASA filament</td><td class="">About 3 kg</td><td class="">Printed parts, see below</td></tr><tr><td class="">M6 threaded inserts and M6 x 30 bolts</td><td class="">8</td><td class="">15 inch, fitted from the chamber side</td></tr><tr><td class="">M4 heat-set inserts and M4 x 16 screws</td><td class="">8</td><td class="">Mid driver into the mid horn, tail into sleeve</td></tr><tr><td class="">Speaker cable, 2 x 1.0 mm²</td><td class="">About 3 m</td><td class="">Two pairs for mid and tweeter, one for the low</td></tr><tr><td class="">Terminal cup, 4 pole or two 2 pole</td><td class="">1</td><td class="">Back panel, one pair per amplifier channel</td></tr><tr><td class="">Polyester wadding, 25 mm</td><td class="">0.5 m²</td><td class="">Rear chamber, lightly</td></tr><tr><td class="">Foam gasket tape, 3 mm</td><td class="">2 m</td><td class="">15 inch flange, mid driver flange, back panel</td></tr><tr><td class="">PU glue, wood glue, 2-part epoxy, silicone</td><td class=""></td><td class=""></td></tr><tr><td class="">3-way DSP crossover and 3 amplifier channels</td><td class="">per speaker</td><td class="">LR4 filters, delay, gain, limiter</td></tr></tbody></table></div>
+<div class="table-wrap"><table><thead><tr><th class="">Item</th><th class="">Qty</th><th class="">Notes</th></tr></thead><tbody><tr><td class="">18Sound 15W500, 8 ohm</td><td class="">1</td><td class="">Low. Rear-mounted, motor forward</td></tr><tr><td class="">PRV 6MR600X-NDY, 8 ohm</td><td class="">1</td><td class="">Mid, 6 inch</td></tr><tr><td class="">Fostex T925A, 8 ohm</td><td class="">1</td><td class="">Bullet tweeter</td></tr><tr><td class="">Birch ply 18 mm</td><td class="">About 3.6 m²</td><td class="">Two 2440 x 1220 sheets with offcuts</td></tr><tr><td class="">Birch ply 25 mm, or two layers of 12 mm</td><td class="">600 x 600</td><td class="">Baffle</td></tr><tr><td class="">Birch ply 12 mm</td><td class="">About 0.3 m²</td><td class="">Corner filler faces and ribs</td></tr><tr><td class="">Aluminium tube, 12 mm OD, 10 mm bore</td><td class="">4 x 145 mm</td><td class="">Mid can supports; the top one carries the cables</td></tr><tr><td class="">PETG or ASA filament</td><td class="">About 3 kg</td><td class="">Printed parts, see below</td></tr><tr><td class="">M6 threaded inserts and M6 x 30 bolts</td><td class="">8</td><td class="">15 inch, fitted from the chamber side</td></tr><tr><td class="">M4 heat-set inserts and M4 x 16 screws</td><td class="">8</td><td class="">Mid driver into the mid horn, tail into sleeve</td></tr><tr><td class="">Speaker cable, 2 x 1.0 mm²</td><td class="">About 3 m</td><td class="">Two pairs for mid and tweeter, one for the low</td></tr><tr><td class="">Terminal cup, 4 pole or two 2 pole</td><td class="">1</td><td class="">Back panel, one pair per amplifier channel</td></tr><tr><td class="">Polyester wadding, 25 mm</td><td class="">0.5 m²</td><td class="">Rear chamber, lightly</td></tr><tr><td class="">Foam gasket tape, 3 mm</td><td class="">2 m</td><td class="">15 inch flange, mid driver flange, back panel</td></tr><tr><td class="">PU glue, wood glue, 2-part epoxy, silicone</td><td class=""></td><td class=""></td></tr><tr><td class="">3-way DSP crossover and 3 amplifier channels</td><td class="">per speaker</td><td class="">LR4 filters, delay, gain, limiter</td></tr></tbody></table></div>
 
 <h2>Cut list</h2>
-<div class="table-wrap"><table><thead><tr><th class="">Part</th><th class="num">Qty</th><th class="">Size (mm)</th><th class="num">Ply (mm)</th><th class="">Notes</th></tr></thead><tbody><tr><td class="">Sides, left and right</td><td class="num">2</td><td class="">736 x 888</td><td class="num">18</td><td class="">Square edges</td></tr><tr><td class="">Top and bottom</td><td class="num">2</td><td class="">700 x 888</td><td class="num">18</td><td class="">Fit between the sides</td></tr><tr><td class="">Back</td><td class="num">1</td><td class="">700 x 700</td><td class="num">18</td><td class="">Terminal cup, 4 pole</td></tr><tr><td class="">Baffle</td><td class="num">1</td><td class="">700 x 700</td><td class="num">25</td><td class="">353 mm hole, 8 x M6 inserts on 370 mm PCD (baffle.dxf)</td></tr><tr><td class="">Horn walls</td><td class="num">4</td><td class="">Trapezoid 360 to 700 wide, 818 long (inner face)</td><td class="num">18</td><td class="">Long edges bevelled 43.8 deg, ends 12.0 deg (horn_wall_inner_face.dxf)</td></tr><tr><td class="">Corner filler faces</td><td class="num">4</td><td class="">Triangle, base 149, height 860</td><td class="num">12</td><td class="">Three ribs each behind the face</td></tr></tbody></table></div>
+<div class="table-wrap"><table><thead><tr><th class="">Part</th><th class="num">Qty</th><th class="">Size (mm)</th><th class="num">Ply (mm)</th><th class="">Notes</th></tr></thead><tbody><tr><td class="">Sides, left and right</td><td class="num">2</td><td class="">636 x 982</td><td class="num">18</td><td class="">Square edges</td></tr><tr><td class="">Top and bottom</td><td class="num">2</td><td class="">600 x 982</td><td class="num">18</td><td class="">Fit between the sides</td></tr><tr><td class="">Back</td><td class="num">1</td><td class="">600 x 600</td><td class="num">18</td><td class="">Terminal cup, 4 pole</td></tr><tr><td class="">Baffle</td><td class="num">1</td><td class="">600 x 600</td><td class="num">25</td><td class="">353 mm hole, 8 x M6 inserts (baffle.dxf)</td></tr><tr><td class="">Horn walls</td><td class="num">4</td><td class="">Trapezoid 360 to 600 wide, 858 long (inner face)</td><td class="num">18</td><td class="">Long edges bevelled 44.4 deg, ends 8.0 deg (horn_wall_inner_face.dxf)</td></tr><tr><td class="">Corner filler faces</td><td class="num">4</td><td class="">Triangle, base 149, height 884</td><td class="num">12</td><td class="">Three ribs each behind the face</td></tr></tbody></table></div>
 <p>DXF flat patterns: <a href="cad/dxf/horn_wall_inner_face.dxf">horn wall</a>, <a href="cad/dxf/baffle.dxf">baffle</a>.
 The horn walls are dimensioned on their inner face. Cut the trapezoid, then bevel the two long edges at
-43.8 degrees so neighbours meet in a mitre, and the two short edges at 12.0 degrees
+44.4 degrees so neighbours meet in a mitre, and the two short edges at 8.0 degrees
 so the throat end sits flat on the baffle and the mouth end is flush with the front.</p>
 
 <h2>Printed parts</h2>
-<div class="table-wrap"><table><thead><tr><th class="">Part</th><th class="">File</th><th class="">Size (mm)</th><th class="num">Est. mass (kg)</th></tr></thead><tbody><tr><td class="">Mid horn and cone lead-in</td><td class=""><code>mid_horn.stl</code></td><td class="">200 x 200 x 137</td><td class="num">1.16</td></tr><tr><td class="">Mid driver sleeve</td><td class=""><code>mid_sleeve.stl</code></td><td class="">200 x 200 x 75</td><td class="num">0.62</td></tr><tr><td class="">Mid rear cap and tail</td><td class=""><code>mid_tail.stl</code></td><td class="">200 x 200 x 138</td><td class="num">0.98</td></tr><tr><td class="">Tweeter bullet with vanes</td><td class=""><code>bullet.stl</code></td><td class="">96 x 87 x 125</td><td class="num">0.15</td></tr><tr><td class="">15 inch nose cone</td><td class=""><code>low_nose.stl</code></td><td class="">150 x 150 x 135</td><td class="num">0.62</td></tr></tbody></table></div>
+<div class="table-wrap"><table><thead><tr><th class="">Part</th><th class="">File</th><th class="">Size (mm)</th><th class="num">Est. mass (kg)</th></tr></thead><tbody><tr><td class="">Mid horn and cone lead-in</td><td class=""><code>mid_horn.stl</code></td><td class="">302 x 302 x 272</td><td class="num">6.31</td></tr><tr><td class="">Mid driver sleeve</td><td class=""><code>mid_sleeve.stl</code></td><td class="">302 x 302 x 87</td><td class="num">5.45</td></tr><tr><td class="">Mid rear cap and tail</td><td class=""><code>mid_tail.stl</code></td><td class="">302 x 302 x 138</td><td class="num">2.23</td></tr><tr><td class="">Tweeter sleeve, nose and vanes</td><td class=""><code>phase_plug.stl</code></td><td class="">118 x 110 x 150</td><td class="num">0.31</td></tr><tr><td class="">15 inch nose cone</td><td class=""><code>low_nose.stl</code></td><td class="">180 x 180 x 145</td><td class="num">0.96</td></tr></tbody></table></div>
 <p>Print in PETG or ASA, 0.2 mm layers. Use four or more perimeters on every acoustic surface. Print the mid horn
 mouth-down and the tail point-up. Before printing, check two dimensions that came from datasheet drawings, not
 measurements:</p>
 <ul>
-<li>The motor diameter of your 15NMB420. The nose cone assumes 150 mm and has a 20 mm bore to keep the pole vent open.</li>
-<li>The cone profile of your 6MCF200Nd. The lead-in in <code>mid_horn</code> assumes a straight cone and leaves 1.5 mm.
-Peak excursion in use is under 1 mm, but confirm the clearance with modelling clay before gluing anything.</li>
+<li>The motor diameter of your 18Sound 15W500. The nose cone assumes 180 mm and has a 20 mm bore to keep the pole vent open.</li>
+<li>The cone profile of your PRV 6MR600X-NDY. The lead-in in <code>mid_horn</code> assumes a straight cone and leaves 1.5 mm.
+Confirm the clearance with modelling clay before gluing anything.</li>
+<li>Your Fostex T925A's body. The sleeve in <code>phase_plug</code> is bored to 83 mm for a 82 mm body.</li>
 </ul>
 <p>Add two features in your slicer or CAD before printing, because the generated parts leave them out:</p>
 <ul>
 <li>A 6 mm cable channel inside the top wall of <code>mid_horn</code>, from the top rod hole back to the sleeve.</li>
-<li>A 4 mm channel along the top vane of <code>bullet</code> for the tweeter pair.</li>
+<li>A 4 mm channel along the top vane of <code>phase_plug</code> for the tweeter pair.</li>
 </ul>
 
 <h2>Assembly</h2>
 <ol class="steps">
-<li><b>Carcass.</b> Glue the sides, top and bottom around the back panel. Fit the baffle 45 mm in front of the back panel's
-inner face. That gap is the 25 litre sealed chamber, including the volume inside the cone. Seal every joint.
+<li><b>Carcass.</b> Glue the sides, top and bottom around the back panel. Fit the baffle 89 mm in front of the back panel's
+inner face. That gap is the 35 litre sealed chamber, including the volume inside the cone. Seal every joint.
 Add two dowel braces between baffle and back.</li>
-<li><b>15 inch.</b> Before the back goes on, pass the 15NMB420 motor-first through the baffle cutout from the
+<li><b>15 inch.</b> Before the back goes on, pass the 15 inch motor-first through the baffle cutout from the
 chamber side. The flange sits on the back face of the baffle, on gasket tape, held by eight M6 bolts into inserts.
 Wire it red to positive.</li>
 <li><b>Nose cone.</b> Bond the printed nose to the back plate with silicone so it can be removed. Keep the bore clear.</li>
@@ -64,14 +67,14 @@ mouth ends meet the inner faces of the box at the front. Glue and pin. The voids
 with sand or foam is optional.</li>
 <li><b>Corner fillers.</b> Glue the triangular faces into the four corners on their ribs, wide end at the baffle, point at the
 mouth corner. Fill and paint the inside of the horn.</li>
-<li><b>Mid can.</b> Press the T90A into the bullet and run its pair through the vane. Key the bullet vanes into the mid horn
-throat. Fit the 6MCF200Nd to the back of the mid horn, then the sleeve and the tail. Pass both pairs into the top rod hole.</li>
-<li><b>Supports.</b> Drill the four horn walls at 710 mm from the cone rim, on the centre lines. Push the
+<li><b>Mid can.</b> Slide the Fostex T925A into the phase-plug sleeve, face flush with its front, and run its pair through the
+top vane. Key the three vanes into the mid horn throat: the tweeter face ends up 130 mm in front of the throat.
+Fit the mid driver to the back of the mid horn, then the sleeve and the tail. Pass both pairs into the top rod hole.</li>
+<li><b>Supports.</b> Drill the four horn walls at 686 mm from the cone rim, on the centre lines. Push the
 rods through into blind holes in the mid can, centre the can with its front flush with the mouth, and epoxy.
 Run the cables out of the top rod through the void, through a sealed hole in the baffle, and to the terminal cup.</li>
-<li><b>Set up the DSP.</b> Start from the <a href="simulation.html">simulated settings</a>. On the low channel add a
-second-order high-pass at 60 Hz and a limiter set to about 400 W: in the model the 15NMB420 reaches its 6.5 mm Xmax
-near 80 Hz at 450 W.</li>
+<li><b>Set up the DSP.</b> Start from the <a href="simulation.html#full-range">simulated settings</a>. On the low channel add a
+second-order high-pass at 60 Hz and a limiter set from the excursion plot in the <a href="simulation.html#low">low horn section</a>.</li>
 <li><b>Measure.</b> Measure each section alone at 1 m on axis and at 30 degrees, then the crossovers. Adjust the delays
 for the deepest null with one section inverted, then restore polarity. Compare the result with the
 <a href="downloads.html">simulated data</a>.</li>

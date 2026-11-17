@@ -1,0 +1,36 @@
+{
+  "tweeter": "fostex-t925a",
+  "crossover_hz": [
+    400.0,
+    6000.0
+  ],
+  "mid": {
+    "driver_id": "prv-6mr600x-ndy",
+    "label": "PRV 6MR600X-NDY",
+    "nominal": "6in",
+    "profile": "exponential",
+    "equivalent_throat_diameter": 0.09,
+    "mouth_diameter": 0.29,
+    "length": 0.26,
+    "tweeter_face": 0.13
+  },
+  "low": {
+    "driver_id": "18sound-15w500",
+    "throat_width": 0.36,
+    "mouth_width": 0.6,
+    "length": 0.85,
+    "rear_litres": 35.0
+  },
+  "scores": {
+    "score": 2.4777361658041563,
+    "rms_on_db": 1.0522953522548395,
+    "spread_30_db": 2.8508816270986337,
+    "f3_hz": 69.51004102024962
+  },
+  "cabinet": {
+    "width": 0.636,
+    "depth": 0.9815108475932055,
+    "volume_m3": 0.39701721180806127
+  },
+  "rule": "smallest cabinet within 0.25 of the best score (2.42) that fits 850 mm wide and 1200 mm deep, excluding drivers in data/drivers/excluded.json"
+}

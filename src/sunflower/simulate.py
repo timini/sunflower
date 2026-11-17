@@ -1,6 +1,10 @@
-"""Plane-wave simulation of all three sections, the crossover and the sum.
+"""Section responses, crossover tuning and the summed system.
 
-Outputs (results/planewave/):
+``Config`` holds one complete design. ``evaluate`` returns its section
+responses, DSP settings and scores; the optimiser and the published design
+both go through it.
+
+Outputs of ``run`` (results/planewave/):
   low.csv, mid.csv, tweeter.csv   unfiltered section responses at 2.83 V, 1 m
   system.csv                       filtered sections and their sum, 0/15/30 degrees
   dsp.json                         crossover, gains, delays and polarity
@@ -10,66 +14,78 @@ from __future__ import annotations
 import argparse
 import itertools
 import json
+import math
+from dataclasses import dataclass, replace
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
-from sunflower import design as D
-from sunflower.acoustics import C, far_field, group_delay, horn_transfer, solve, spl, P_REF
-from sunflower.screen_15 import low_response
+from sunflower import tweeters as TW
+from sunflower.acoustics import C, Driver, far_field, group_delay, horn_transfer, solve, spl
+from sunflower.geometry import LowDriverBody, LowHorn, MidHorn
 
-ROOT = D.ROOT
+ROOT = Path(__file__).resolve().parents[2]
 F = np.geomspace(20, 30000, 1200)
 ANGLES = (0.0, 15.0, 30.0)
 
 
+@dataclass
+class Config:
+    low: LowHorn
+    low_driver: Driver
+    rear_litres: float
+    mid: MidHorn
+    mid_driver: Driver
+    tweeter: str
+    f1: float
+    f2: float
+
+    @classmethod
+    def from_rows(cls, m, c, cat_by_id):
+        from sunflower.optimise import mid_from_row, low_catalogue
+        mid = mid_from_row(m, cat_by_id)
+        lowd = {d.driver_id: d for d in low_catalogue()}[c.low_driver]
+        body = LowDriverBody(cone_radius=math.sqrt(lowd.sd / math.pi))
+        low = LowHorn(throat_width=c.throat_width, mouth_width=c.mouth_width, length=c.length, body=body, mid=mid)
+        return cls(low, lowd, c.rear_litres, mid, cat_by_id[m.driver_id]["drv"], m.tweeter, m.f1, m.f2)
+
+    @property
+    def tw(self):
+        return TW.load(self.tweeter)
+
+
 # ---------------------------------------------------------------- sections
-def low_section(f=F, theta=0.0):
-    p, s = low_response(D.LOW, D.low_driver(), f, D.LOW_REAR_LITRES, theta=theta)
+def low_section(cfg: Config, f=F, theta=0.0):
+    h = cfg.low
+    tr = horn_transfer(f, h.acoustic_area, h.acoustic_length, 300, h.breaks, mouth_area=h.outer_area(h.mouth_z))
+    s = solve(cfg.low_driver, tr, front_m3=h.front_chamber_m3, rear_litres=cfg.rear_litres)
+    a_out = math.sqrt(h.outer_area(h.mouth_z) / math.pi)
+    p = far_field(f, s["u_mouth"], a_out, theta, inner_radius=h.mid.can_diameter / 2,
+                  wavefront_radius=h.wavefront_radius)
     return p, s
 
 
-def mid_transfer(f=F):
-    return horn_transfer(f, D.MID.area, D.MID.length, 600, breaks=(D.TWEETER.face_from_mid_throat,))
+def mid_transfer(cfg: Config, f=F):
+    m = cfg.mid
+    return horn_transfer(f, m.area, m.length, 400, breaks=(m.tweeter_face,))
 
 
-def mid_section(f=F, theta=0.0):
-    s = solve(D.mid_driver(), mid_transfer(f), front_m3=D.MID.front_chamber_cc * 1e-6, rear_litres=None)
-    return far_field(f, s["u_mouth"], D.MID.mouth_diameter / 2, theta,
-                     wavefront_radius=D.MID.wavefront_radius), s
+def mid_section(cfg: Config, f=F, theta=0.0):
+    m = cfg.mid
+    rear = None if cfg.mid_driver.factory_sealed else m.rear_volume_litres
+    s = solve(cfg.mid_driver, mid_transfer(cfg, f), front_m3=m.front_chamber_cc * 1e-6, rear_litres=rear)
+    return far_field(f, s["u_mouth"], m.mouth_diameter / 2, theta, wavefront_radius=m.wavefront_radius), s
 
 
-def _hp2(s, w0, q):
-    return s**2 / (s**2 + s * w0 / q + w0**2)
+def tweeter_section(cfg: Config, f=F, theta=0.0):
+    return TW.response(cfg.tweeter, f, theta), None
 
 
-def _lp2(s, w0, q):
-    return w0**2 / (s**2 + s * w0 / q + w0**2)
-
-
-def tweeter_section(f=F, theta=0.0):
-    """Datasheet model of the T90A: 106 dB/W/m, 2nd-order horn cut-off at
-    3.6 kHz, 2nd-order roll-off at 35 kHz, piston directivity of its 60 mm
-    mouth, acoustic centre recessed behind the mid horn mouth.
-    """
-    tw = D.TWEETER
-    s = 2j * np.pi * f
-    h = _hp2(s, 2 * np.pi * tw.horn_cutoff_hz, 0.6) * _lp2(s, 2 * np.pi * tw.upper_hz, 0.6)
-    a = tw.housing_diameter / 2 - 0.002
-    k = 2 * np.pi * f / C
-    x = k * a * np.sin(np.radians(theta))
-    from scipy.special import j1
-    with np.errstate(invalid="ignore", divide="ignore"):
-        dirc = np.where(np.abs(x) < 1e-9, 1.0, 2 * j1(x) / x)
-    p0 = P_REF * 10 ** (tw.sensitivity_db / 20)
-    return p0 * h * dirc, None
-
-
-def source_offset():
+def source_offset(cfg: Config):
     """Axial distance (m) of each acoustic reference behind the common mouth plane."""
-    recess = D.MID.length - D.TWEETER.face_from_mid_throat
-    return dict(low=0.0, mid=0.0, tweeter=recess + D.TWEETER_ACOUSTIC_CENTRE_BEHIND_FACE)
+    m, tw = cfg.mid, cfg.tw
+    return dict(low=0.0, mid=0.0, tweeter=m.length - m.tweeter_face + tw.horn_depth)
 
 
 def place(f, p, offset, theta):
@@ -77,18 +93,24 @@ def place(f, p, offset, theta):
     return p * np.exp(-1j * k * offset * np.cos(np.radians(theta)))
 
 
+def sections(cfg, f, theta):
+    off = source_offset(cfg)
+    return dict(low=place(f, low_section(cfg, f, theta)[0], off["low"], theta),
+                mid=place(f, mid_section(cfg, f, theta)[0], off["mid"], theta),
+                tweeter=place(f, tweeter_section(cfg, f, theta)[0], off["tweeter"], theta))
+
+
 # ---------------------------------------------------------------- crossover
 def lr4(f, fc, kind):
-    s = 2j * np.pi * f
-    w = 2 * np.pi * fc
-    q = 1 / np.sqrt(2)
-    h = _lp2(s, w, q) if kind == "lp" else _hp2(s, w, q)
+    s = 2j * np.pi * f / (2 * np.pi * fc)
+    q = 1 / math.sqrt(2)
+    h = (s * s if kind == "hp" else 1.0) / (s * s + s / q + 1)
     return h * h
 
 
-def filters(f):
-    f1, f2 = D.CROSSOVER_LOW_MID_HZ, D.CROSSOVER_MID_HIGH_HZ
-    return dict(low=lr4(f, f1, "lp"), mid=lr4(f, f1, "hp") * lr4(f, f2, "lp"), tweeter=lr4(f, f2, "hp"))
+def filters(cfg, f):
+    return dict(low=lr4(f, cfg.f1, "lp"), mid=lr4(f, cfg.f1, "hp") * lr4(f, cfg.f2, "lp"),
+                tweeter=lr4(f, cfg.f2, "hp"))
 
 
 def band_level(f, p, lo, hi):
@@ -96,15 +118,8 @@ def band_level(f, p, lo, hi):
     return float(np.mean(spl(p[b])))
 
 
-def sections(f, theta):
-    off = source_offset()
-    return dict(low=place(f, low_section(f, theta)[0], off["low"], theta),
-                mid=place(f, mid_section(f, theta)[0], off["mid"], theta),
-                tweeter=place(f, tweeter_section(f, theta)[0], off["tweeter"], theta))
-
-
-def apply(f, raw, dsp):
-    filt = filters(f)
+def apply(cfg, f, raw, dsp):
+    filt = filters(cfg, f)
     out = {}
     for name, p in raw.items():
         g = 10 ** (dsp["gain_db"][name] / 20) * dsp["polarity"][name]
@@ -113,35 +128,32 @@ def apply(f, raw, dsp):
     return out
 
 
-def tune(f, raw):
+def tune(cfg, f, raw):
     """Gains to the quietest section, then delays and polarity for the flattest sum."""
-    levels = dict(low=band_level(f, raw["low"], 150, 400), mid=band_level(f, raw["mid"], 800, 5000),
-                  tweeter=band_level(f, raw["tweeter"], 9000, 16000))
+    levels = dict(low=band_level(f, raw["low"], 150, 0.8 * cfg.f1),
+                  mid=band_level(f, raw["mid"], 1.6 * cfg.f1, 0.7 * cfg.f2),
+                  tweeter=band_level(f, raw["tweeter"], 1.5 * cfg.f2, 16000))
     target = min(levels.values())
     gains = {k: target - v for k, v in levels.items()}
-    band = (f >= 100) & (f <= 20000)
+    band = (f >= 100) & (f <= 16000)
 
     def cost(dsp):
-        s = spl(apply(f, raw, dsp)["sum"][band]) - target
+        s = spl(apply(cfg, f, raw, dsp)["sum"][band]) - target
         return float(np.sqrt(np.mean(s**2)))
 
     best = None
-    steps = np.arange(0, 3.0001, 0.02)
-    # Mid/tweeter first (low is far below 7 kHz), then the low/mid pair.
-    for pol_t in (1, -1):
-        for dt in steps:
-            for dm in (0.0,):
-                dsp = dict(gain_db=gains, polarity=dict(low=1, mid=1, tweeter=pol_t),
-                           delay_ms=dict(low=0.0, mid=dm, tweeter=dt))
-                c = cost(dsp)
-                if best is None or c < best[0]:
-                    best = (c, dsp)
+    for pol_t, dt in itertools.product((1, -1), np.arange(-1.0, 3.0001, 0.02)):
+        dsp = dict(gain_db=gains, polarity=dict(low=1, mid=1, tweeter=pol_t),
+                   delay_ms=dict(low=0.0, mid=max(-dt, 0.0), tweeter=max(dt, 0.0)))
+        c = cost(dsp)
+        if best is None or c < best[0]:
+            best = (c, dsp)
     mt = best[1]
     best = None
     for pol_l, rel in itertools.product((1, -1), np.arange(-3, 3.0001, 0.02)):
         dl, dm = max(rel, 0.0), max(-rel, 0.0)
         dsp = dict(gain_db=gains, polarity=dict(low=pol_l, mid=1, tweeter=mt["polarity"]["tweeter"]),
-                   delay_ms=dict(low=dl, mid=dm, tweeter=mt["delay_ms"]["tweeter"] + dm))
+                   delay_ms=dict(low=dl, mid=mt["delay_ms"]["mid"] + dm, tweeter=mt["delay_ms"]["tweeter"] + dm))
         c = cost(dsp)
         if best is None or c < best[0]:
             best = (c, dsp)
@@ -149,10 +161,29 @@ def tune(f, raw):
     base = min(dsp["delay_ms"].values())
     dsp["delay_ms"] = {k: round(v - base, 3) for k, v in dsp["delay_ms"].items()}
     dsp["gain_db"] = {k: round(v, 2) for k, v in gains.items()}
-    dsp.update(crossover=dict(type="Linkwitz-Riley 24 dB/oct",
-                              low_mid_hz=D.CROSSOVER_LOW_MID_HZ, mid_high_hz=D.CROSSOVER_MID_HIGH_HZ),
-               section_levels_db=levels, target_db=target, rms_deviation_100_20k_db=cost_db)
+    dsp.update(crossover=dict(type="Linkwitz-Riley 24 dB/oct", low_mid_hz=cfg.f1, mid_high_hz=cfg.f2),
+               section_levels_db=levels, target_db=target, rms_deviation_100_16k_db=cost_db)
     return dsp
+
+
+def evaluate(cfg: Config, f=None):
+    f = np.geomspace(20, 30000, 500) if f is None else f
+    raw0 = sections(cfg, f, 0.0)
+    dsp = tune(cfg, f, raw0)
+    on = apply(cfg, f, raw0, dsp)["sum"]
+    off = apply(cfg, f, sections(cfg, f, 30.0), dsp)["sum"]
+    s0, s30 = spl(on), spl(off)
+    b = (f >= 100) & (f <= 16000)
+    rms = float(np.sqrt(np.mean((s0[b] - dsp["target_db"]) ** 2)))
+    d = (f >= 300) & (f <= 12000)
+    rel = s30[d] - s0[d]
+    lf = np.log10(f[d])
+    spread = float(np.std(rel - np.polyval(np.polyfit(lf, rel, 1), lf)))
+    ref = s0[(f >= 200) & (f <= 2000)].mean()
+    f3 = float(f[np.argmax(s0 > ref - 3)])
+    score = rms + 0.5 * spread + max(0.0, f3 - 70) / 20
+    return dict(dsp=dsp, scores=dict(score=score, rms_on_db=rms, spread_30_db=spread, f3_hz=f3,
+                                     sensitivity_db=float(dsp["target_db"])))
 
 
 def write_section(path, f, p, s):
@@ -166,17 +197,23 @@ def write_section(path, f, p, s):
 
 
 def run(out: Path):
+    from sunflower import design as D
+    cfg = D.config()
     out.mkdir(parents=True, exist_ok=True)
     f = F
-    off = source_offset()
+    off = source_offset(cfg)
     for name, fn in (("low", low_section), ("mid", mid_section), ("tweeter", tweeter_section)):
-        p, s = fn(f)
+        p, s = fn(cfg, f)
         write_section(out / f"{name}.csv", f, place(f, p, off[name], 0.0), s)
-    raw0 = sections(f, 0.0)
-    dsp = tune(f, raw0)
+        cols = dict(frequency_hz=f)
+        for th in (0, 15, 30, 45, 60):
+            cols[f"spl_{th}deg_db"] = spl(fn(cfg, f, th)[0])
+        pd.DataFrame(cols).to_csv(out / f"{name}-polar.csv", index=False, float_format="%.6g")
+    raw0 = sections(cfg, f, 0.0)
+    dsp = tune(cfg, f, raw0)
     cols = dict(frequency_hz=f)
     for th in ANGLES:
-        res = apply(f, sections(f, th), dsp)
+        res = apply(cfg, f, sections(cfg, f, th), dsp)
         for k, v in res.items():
             cols[f"{k}_{int(th)}deg_spl_db"] = spl(v)
             cols[f"{k}_{int(th)}deg_phase_deg"] = np.degrees(np.angle(v))

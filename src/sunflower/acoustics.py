@@ -183,6 +183,67 @@ def solve(driver: Driver, tr: HornTransfer, *, v=2.83, front_m3=0.0, rear_litres
     )
 
 
+@dataclass
+class DriverSet:
+    """Many drivers as arrays, for vectorised screening. Shapes (D, 1)."""
+    ids: list
+    labels: list
+    re: np.ndarray
+    le: np.ndarray
+    bl: np.ndarray
+    sd: np.ndarray
+    mms: np.ndarray
+    cms: np.ndarray
+    rms: np.ndarray
+    xmax: np.ndarray
+    sealed: np.ndarray
+
+    @classmethod
+    def from_drivers(cls, drivers):
+        col = lambda a: np.array(a, float)[:, None]  # noqa: E731
+        return cls([d.driver_id for d in drivers], [d.label for d in drivers],
+                   col([d.re for d in drivers]), col([d.le for d in drivers]), col([d.bl for d in drivers]),
+                   col([d.sd for d in drivers]), col([d.mms for d in drivers]), col([d.cms for d in drivers]),
+                   col([d.rms for d in drivers]), col([d.xmax or np.nan for d in drivers]),
+                   np.array([d.factory_sealed for d in drivers])[:, None])
+
+    def subset(self, mask):
+        m = np.asarray(mask)
+        pick = lambda a: a[m]  # noqa: E731
+        return DriverSet([i for i, k in zip(self.ids, m) if k], [i for i, k in zip(self.labels, m) if k],
+                         pick(self.re), pick(self.le), pick(self.bl), pick(self.sd), pick(self.mms),
+                         pick(self.cms), pick(self.rms), pick(self.xmax), pick(self.sealed))
+
+
+def solve_many(ds: DriverSet, tr: HornTransfer, *, v=2.83, front_m3=0.0, rear_litres=None):
+    """Vectorised ``solve`` over a DriverSet. Returns (D, F) arrays."""
+    w = 2 * np.pi * tr.f[None, :]
+    cms = ds.cms
+    if rear_litres is not None:
+        k_box = RHO * C**2 * ds.sd**2 / (rear_litres * 1e-3)
+        cms = np.where(ds.sealed, ds.cms, 1 / (1 / ds.cms + k_box))
+    shunt = 1 + 1j * w * (front_m3 / (RHO * C**2)) * tr.z_in[None, :]
+    z_front = tr.z_in[None, :] / shunt
+    zm = ds.rms + 1j * w * ds.mms + 1 / (1j * w * cms) + ds.sd**2 * z_front
+    den = (ds.re + 1j * w * ds.le) * zm + ds.bl**2
+    vel = ds.bl * v / den
+    u_mouth = vel * ds.sd / shunt * tr.u_ratio[None, :]
+    return dict(u_mouth=u_mouth, x_peak_m=np.sqrt(2) * np.abs(vel) / w)
+
+
+def beamwidth(f, polar_fn, angles=np.arange(0, 91, 2.5)):
+    """-6 dB full angle (deg) at each f, from a function theta -> complex pressure over f."""
+    ref = np.abs(polar_fn(0.0))
+    out = np.full(len(np.atleast_1d(f)), 180.0)
+    done = np.zeros_like(out, bool)
+    for th in angles[1:]:
+        lvl = np.abs(polar_fn(th)) / np.maximum(ref, 1e-30)
+        hit = (lvl < 0.5) & ~done
+        out[hit] = 2 * th
+        done |= hit
+    return out
+
+
 def group_delay(f, p):
     ph = np.unwrap(np.angle(p))
     return -np.gradient(ph, 2 * np.pi * np.asarray(f))

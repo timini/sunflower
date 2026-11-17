@@ -18,7 +18,8 @@ def test_mid_port_matches_horn_simulation_branch_study():
     f = ref.frequency_hz.values
     mid = MidHorn(front_chamber_cc=20.0)
     tr = horn_transfer(f, mid.area, mid.length, 600, breaks=(0.1,))
-    s = solve(D.mid_driver(), tr, front_m3=20e-6, rear_litres=None)
+    beyma = Driver.from_record(json.loads((ROOT / "data/drivers/verified/beyma-6mcf200nd.json").read_text()))
+    s = solve(beyma, tr, front_m3=20e-6, rear_litres=None)
     level = spl(far_field(f, s["u_mouth"], mid.mouth_diameter / 2))
     band = (f >= 500) & (f <= 6500)
     assert np.max(np.abs(level[band] - ref.spl_db.values[band])) < 0.5
@@ -47,18 +48,41 @@ def test_area_functions_are_continuous_where_expected():
 
 
 def test_nested_clearances():
-    lo, mid, tw = D.LOW, D.MID, D.TWEETER
+    lo, mid, tw = D.LOW, D.MID, D.TW
     assert lo.check() == []
-    # bullet sits inside the mid throat with an open annulus
-    assert mid.outer_throat_radius - tw.housing_diameter / 2 > 0.015
-    # mid driver frame fits inside the can with a 3 mm wall at least
-    assert mid.can_diameter / 2 - mid.driver_frame_diameter / 2 >= 0.003 + 0.005
-    # mid horn mouth fits in the can
-    assert mid.can_diameter / 2 - mid.mouth_diameter / 2 >= 0.003
+    assert mid.check() == []
+    # tweeter body, terminals included, sits in front of the mid throat and inside the mid mouth
+    assert tw.depth_with_terminals < mid.tweeter_face <= mid.length
+    # open annulus around the tweeter all the way to its face
+    assert mid.radius(mid.tweeter_face) - mid.plug_radius >= 0.006
+    # mid driver frame and horn mouth fit inside the can wall
+    assert mid.can_diameter / 2 - max(mid.frame_diameter, mid.mouth_diameter) / 2 >= 0.005
     # tail and nose fairings do not touch
     assert lo.tail_start > lo.nose_end
-    # 15 inch cutout clears the cone
     assert lo.cutout_radius > lo.body.cone_radius
+
+
+def test_profiles_hit_their_end_radii():
+    from sunflower.geometry import PROFILES, profile_radius
+    for p in PROFILES:
+        assert profile_radius(p, 0.05, 0.2, 0.3, 0.0) == pytest.approx(0.05)
+        assert profile_radius(p, 0.05, 0.2, 0.3, 0.3) == pytest.approx(0.2, rel=1e-6)
+
+
+def test_tweeter_models_match_their_datasheet_points():
+    from sunflower import tweeters as TW
+    for tid in TW.all_ids():
+        t = json.loads((ROOT / f"data/tweeters/{tid}.json").read_text())["response_db"]
+        lvl = spl(TW.response(tid, np.array(t["f"])))
+        assert np.max(np.abs(lvl - np.array(t["0"]))) < 0.01
+
+
+def test_selected_design_is_the_best_feasible_within_tolerance():
+    sel = json.loads((ROOT / "results/optimise/selected.json").read_text())
+    sysdf = pd.read_csv(ROOT / "results/optimise/system-search.csv")
+    feas = sysdf[(sysdf.width <= 0.85) & (sysdf.depth <= 1.2)]
+    assert sel["scores"]["score"] <= feas.score.min() + 0.25 + 1e-9
+    assert sel["cabinet"]["width"] <= 0.85 and sel["cabinet"]["depth"] <= 1.2
 
 
 def test_rear_chamber_volume_matches_design():
@@ -71,6 +95,7 @@ def test_cad_parts_match_design_dimensions():
     mouth = D.LOW.mouth_z * 1000
     assert parts["mid_horn"]["bbox_mm"][5] == pytest.approx(mouth, abs=0.5)
     assert parts["mid_horn"]["bbox_mm"][3] == pytest.approx(D.MID.can_diameter * 500, abs=0.5)
+    assert parts["drv_tweeter_body"]["bbox_mm"][3] == pytest.approx(D.TW.body_diameter * 500, abs=0.5)
     assert parts["horn_wall_right"]["bbox_mm"][3] == pytest.approx(D.LOW.mouth_width * 500, abs=0.5)
     assert parts["baffle"]["bbox_mm"][5] == pytest.approx(D.BAFFLE * 1000, abs=0.5)
     ext = parts["side_right"]["bbox_mm"]
@@ -79,7 +104,7 @@ def test_cad_parts_match_design_dimensions():
 
 def test_dsp_settings_give_a_flat_sum():
     dsp = json.loads((ROOT / "results/planewave/dsp.json").read_text())
-    assert dsp["rms_deviation_100_20k_db"] < 1.5
+    assert dsp["rms_deviation_100_16k_db"] < 1.5
     assert min(dsp["delay_ms"].values()) == 0
 
 

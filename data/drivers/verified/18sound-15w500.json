@@ -1,0 +1,45 @@
+{
+ "driver_id": "18sound-15w500",
+ "manufacturer": "18Sound",
+ "model_name": "15W500",
+ "driver_type": "cone",
+ "parameters": {
+  "fs_hz": 50,
+  "re_ohm": 5.2,
+  "bl_tm": 12.6,
+  "sd_m2": 0.085,
+  "mms_kg": 0.055,
+  "le_h": 0.00104,
+  "qts": 0.52,
+  "nominal_impedance_ohm": 8.0,
+  "xmax_m": 0.004,
+  "qms": 9.64,
+  "qes": 0.55,
+  "power_w": 350,
+  "vas_l": 189,
+  "sensitivity_db_2p83v": 100.5
+ },
+ "nominal_diameter": "15in",
+ "catalogue_status": "manufacturer_verified",
+ "nominal_diameter_verified": true,
+ "parameter_source": "https://www.eighteensound.it/en/products/lf-driver/15-0/8/15W500.pdf",
+ "physical_envelope_mm": {
+  "overall_diameter": 387,
+  "bolt_circle": 370,
+  "baffle_cutout": 353,
+  "depth": 161,
+  "flange_thickness": 11
+ },
+ "body_mm": {
+  "cone_depth": 100,
+  "motor_diameter": 180,
+  "motor_length": 61,
+  "nose_length": 130,
+  "note": "cone depth and ferrite motor diameter estimated from the datasheet outline drawing; measure before printing the nose"
+ },
+ "weight_kg": 4.3,
+ "provenance": {
+  "retrieved_on": "2026-11-17",
+  "capture_method": "Checked by hand against the manufacturer datasheet (page 2)"
+ }
+}

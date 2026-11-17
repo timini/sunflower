@@ -1,0 +1,60 @@
+{
+ "model": "JBL 2402H",
+ "kind": "ring radiator with bullet phase plug, exponential horn",
+ "body_diameter_mm": 119,
+ "body_depth_mm": 94,
+ "depth_with_terminals_mm": 104,
+ "mouth_diameter_mm": 79,
+ "bullet_base_mm": 30,
+ "horn_depth_mm": 40,
+ "sensitivity_db_1w": 110,
+ "impedance_ohm": 8,
+ "power_w": 40,
+ "cutoff_hz": 2500,
+ "crossover_min_hz": 3000,
+ "crossover_slope": "12 dB/oct",
+ "source": "https://jblpro.com/en/products/2402h",
+ "estimated": [
+  "bullet_base_mm",
+  "horn_depth_mm",
+  "depth_with_terminals_mm",
+  "response_db (from the published 3-15 kHz +-3 dB and 2.5 kHz -10 dB limits, not a curve)"
+ ],
+ "response_db": {
+  "f": [
+   1000,
+   1500,
+   2000,
+   2500,
+   3000,
+   4000,
+   5000,
+   7000,
+   10000,
+   12500,
+   15000,
+   18000,
+   20000,
+   25000
+  ],
+  "0": [
+   78,
+   88,
+   95,
+   100,
+   107,
+   110,
+   110.5,
+   110,
+   109.5,
+   109,
+   107,
+   101,
+   97,
+   90
+  ]
+ },
+ "off_axis": "piston",
+ "note": "40 degree conical coverage at 10 kHz (JBL)",
+ "id": "jbl-2402h"
+}

@@ -29,7 +29,7 @@ ROOT = D.ROOT
 OUT = ROOT / "cad"
 MM = 1000.0
 
-LOW, MID, TW = D.LOW, D.MID, D.TWEETER
+LOW, MID, TW = D.LOW, D.MID, D.TW
 T = D.PLY * MM
 BAF = D.BAFFLE * MM
 WM = LOW.mouth_width * MM
@@ -47,9 +47,12 @@ Z_MID_BACK = Z_MID_RIM - MID.driver_depth * MM
 Z_CAN = LOW.can_start * MM
 Z_TAIL = LOW.tail_start * MM
 R_CAN = MID.can_diameter / 2 * MM
-Z_TW_FACE = Z_MID_THROAT + TW.face_from_mid_throat * MM
+Z_TW_FACE = Z_MID_THROAT + MID.tweeter_face * MM
 Z_TW_BACK = Z_TW_FACE - TW.body_depth * MM
-NOSE = 0.025 * MM     # bullet nose behind the mid throat, clears the dust cap
+Z_TW_TERM = Z_TW_FACE - TW.depth_with_terminals * MM
+R_PLUG = MID.plug_radius * MM
+R_CONE_MID = math.sqrt(MID.sd / math.pi) * MM
+NOSE = min(0.3 * R_CONE_MID, 30.0)     # phase plug nose behind the mid throat, towards the dust cap
 Z_ROD = 0.5 * (Z_CAN + Z_MOUTH)
 ROD_R = 6.0           # 12 mm aluminium tube, 10 mm bore for cables
 
@@ -242,47 +245,49 @@ def low_nose():
     vent = occ.addCylinder(0, 0, z_motor - 20, 0, 0, b.nose_length * MM + 40, 10)
     occ.cut(nose, [(3, vent)])
     save("low_nose", None, "print_black", explode=(0, 0, 160), group="low",
-         note="bonds to the 15NMB420 back plate, 15 mm spigot, 20 mm bore keeps the pole vent open")
+         note=f"bonds to the {D.label(D.LOW_RECORD)} back plate, 15 mm spigot, 20 mm bore keeps the pole vent open")
 
 
 def mid_can():
     rt = MID.outer_throat_radius * MM
-    rm = MID.mouth_diameter / 2 * MM
-    wall = MID.wall * MM
-    r_lead = 78.0
-    # A: horn + cone-following lead-in
+    zs = np.linspace(0, MID.length, 60)
+    bore = [(MID.radius(z) * MM, Z_MID_THROAT + z * MM) for z in zs]
+    r_lead = R_CONE_MID + 1.5
+    # A: horn with a cone-following lead-in from the cone rim to the annular throat
     start("mid_horn")
-    prof = [(r_lead, Z_MID_RIM), (rt, Z_MID_THROAT), (rm, Z_MOUTH), (R_CAN, Z_MOUTH), (R_CAN, Z_MID_RIM)]
+    prof = [(r_lead, Z_MID_RIM)] + bore + [(R_CAN, Z_MOUTH), (R_CAN, Z_MID_RIM)]
     revolve(prof)
     save("mid_horn", None, "print_black", explode=(0, 0, 330), group="mid",
-         note="conical bore, 190 mm mouth, cone lead-in at 1.5 mm clearance")
+         note=f"{MID.profile} bore, {MID.mouth_diameter*1000:.0f} mm mouth, {MID.length*1000:.0f} mm long, "
+              f"lead-in to the {2*R_CONE_MID:.0f} mm cone at 1.5 mm clearance")
     # B: driver sleeve
+    r_in = MID.frame_diameter / 2 * MM + 2
     start("mid_sleeve")
-    revolve([(89, Z_MID_BACK), (R_CAN, Z_MID_BACK), (R_CAN, Z_MID_RIM), (89, Z_MID_RIM)])
-    save("mid_sleeve", None, "print_black", explode=(0, 0, 230), group="mid")
-    # C: rear cap + tail ogive
+    revolve([(r_in, Z_MID_BACK), (R_CAN, Z_MID_BACK), (R_CAN, Z_MID_RIM), (r_in, Z_MID_RIM)])
+    save("mid_sleeve", None, "print_black", explode=(0, 0, 230), group="mid",
+         note=f"holds the {MID.frame_diameter*1000:.0f} mm driver frame")
+    # C: rear cap + elliptical tail, hollow: part of the mid rear volume
     start("mid_tail")
-    cap = MID.rear_cap * MM
     prof = [(0, Z_MID_BACK), (R_CAN, Z_MID_BACK), (R_CAN, Z_CAN)]
     prof += [(r, z) for r, z in ellipse(R_CAN, Z_CAN, Z_TAIL)][1:]
     revolve(prof)
     save("mid_tail", None, "print_black", explode=(0, 0, 130), group="mid",
-         note=f"{cap:.0f} mm rear cap with ogive tail, cable gland at the rod")
-    # D: bullet / tweeter housing with three vanes
-    start("bullet")
-    rb = TW.housing_diameter / 2 * MM
-    prof = [(0, Z_MID_THROAT - NOSE)] + [(r, z) for r, z in reversed(ellipse(rb, Z_MID_THROAT, Z_MID_THROAT - NOSE))]
-    prof += [(rb, Z_TW_FACE), (30.5, Z_TW_FACE), (30.5, Z_TW_BACK - 2), (0, Z_TW_BACK - 2)]
+         note=f"{MID.rear_cap*1000:.0f} mm rear cap with elliptical tail, print hollow")
+    # D: phase plug: sleeve round the tweeter, nose towards the mid dust cap, three vanes
+    start("phase_plug")
+    prof = [(0, Z_MID_THROAT - NOSE)] + [(r, z) for r, z in reversed(ellipse(R_PLUG, Z_MID_THROAT, Z_MID_THROAT - NOSE))]
+    prof += [(R_PLUG, Z_TW_FACE), (TW.body_radius * MM + 0.5, Z_TW_FACE),
+             (TW.body_radius * MM + 0.5, Z_TW_TERM - 3), (0, Z_TW_TERM - 3)]
     body = revolve(prof)
     vanes = []
     for k in range(3):
         ang = k * 2 * math.pi / 3 + math.pi / 2
-        v = occ.addBox(rb - 1, -1, Z_MID_THROAT, rt + 6 - rb, 2, 40)
+        v = occ.addBox(R_PLUG - 1, -1.25, Z_MID_THROAT, rt + 6 - R_PLUG, 2.5, 0.35 * (Z_TW_FACE - Z_MID_THROAT))
         occ.rotate([(3, v)], 0, 0, 0, 0, 0, 1, ang)
         vanes.append((3, v))
     occ.fuse(body, vanes)
-    save("bullet", None, "print_grey", explode=(0, 0, 520), group="mid",
-         note="T90A pocket 61 mm, three 2 mm vanes key into the mid horn throat")
+    save("phase_plug", None, "print_grey", explode=(0, 0, 520), group="mid",
+         note=f"{2*R_PLUG:.0f} mm sleeve for the {TW.model}, nose towards the mid dust cap, three 2.5 mm vanes")
 
 
 def rods():
@@ -299,9 +304,12 @@ def rods():
 def driver_proxies():
     b = LOW.body
     a = b.cone_radius * MM
-    start("drv_15nmb420_frame")
-    flange = occ.addCylinder(0, 0, -11, 0, 0, 11, 387 / 2)
-    hole = occ.addCylinder(0, 0, -12, 0, 0, 14, a + 2)
+    env = D.LOW_RECORD.get("physical_envelope_mm", {})
+    flange_d = env.get("overall_diameter", 2 * a + 40)
+    flange_t = env.get("flange_thickness", 11)
+    start("drv_low_frame")
+    flange = occ.addCylinder(0, 0, -flange_t, 0, 0, flange_t, flange_d / 2)
+    hole = occ.addCylinder(0, 0, -flange_t - 1, 0, 0, flange_t + 3, a + 2)
     occ.cut([(3, flange)], [(3, hole)])
     spokes = []
     zc = b.cone_depth * MM
@@ -312,25 +320,41 @@ def driver_proxies():
         spokes.append((3, occ.addCylinder(x0, y0, 0, x1 - x0, y1 - y0, zc, 6)))
     motor = occ.addCylinder(0, 0, zc, 0, 0, b.motor_length * MM, b.motor_radius * MM)
     occ.fuse([(3, motor)], spokes)
-    save("drv_15nmb420_frame", None, "driver_metal", explode=(0, 0, -150), group="low",
-         note="proxy: flange, basket spokes, neodymium motor")
-    start("drv_15nmb420_cone")
-    prof = [(a, 0), (40, zc), (36, zc), (a - 3, 0)]
-    revolve(prof)
-    save("drv_15nmb420_cone", None, "driver_cone", explode=(0, 0, -150), group="low", note="proxy cone")
-    start("drv_6mcf200nd")
-    frame = occ.addCylinder(0, 0, Z_MID_RIM - 5, 0, 0, 5, 87)
-    can = occ.addCylinder(0, 0, Z_MID_BACK, 0, 0, Z_MID_RIM - 5 - Z_MID_BACK, 62)
+    save("drv_low_frame", None, "driver_metal", explode=(0, 0, -150), group="low",
+         note=f"proxy of the {D.label(D.LOW_RECORD)}: flange, basket, motor")
+    start("drv_low_cone")
+    revolve([(a, 0), (40, zc), (36, zc), (a - 3, 0)])
+    save("drv_low_cone", None, "driver_cone", explode=(0, 0, -150), group="low", note="proxy cone")
+    # mid driver
+    fr = MID.frame_diameter / 2 * MM
+    start("drv_mid")
+    frame = occ.addCylinder(0, 0, Z_MID_RIM - 6, 0, 0, 6, fr)
+    can = occ.addCylinder(0, 0, Z_MID_BACK, 0, 0, Z_MID_RIM - 6 - Z_MID_BACK, 0.7 * fr)
     occ.fuse([(3, frame)], [(3, can)])
-    save("drv_6mcf200nd", None, "driver_metal", explode=(0, 0, 230), group="mid", note="proxy, sealed back")
-    start("drv_6mcf200nd_cone")
-    revolve([(70, Z_MID_RIM), (22, Z_MID_RIM - 28), (18, Z_MID_RIM - 28), (67, Z_MID_RIM)])
-    save("drv_6mcf200nd_cone", None, "driver_cone", explode=(0, 0, 230), group="mid", note="proxy cone")
-    start("drv_t90a")
-    prof = [(0, Z_TW_BACK), (29.5, Z_TW_BACK), (29.5, Z_TW_FACE - 1), (27, Z_TW_FACE - 1),
-            (10, Z_TW_FACE - 30), (0, Z_TW_FACE - 30)]
+    save("drv_mid", None, "driver_metal", explode=(0, 0, 230), group="mid", note=f"proxy of the {D.label(D.MID_RECORD)}")
+    start("drv_mid_cone")
+    rc = R_CONE_MID
+    revolve([(rc, Z_MID_RIM), (0.3 * rc, Z_MID_RIM - 0.4 * rc), (0.26 * rc, Z_MID_RIM - 0.4 * rc), (rc - 3, Z_MID_RIM)])
+    save("drv_mid_cone", None, "driver_cone", explode=(0, 0, 230), group="mid", note="proxy cone")
+    # bullet tweeter, from the datasheet drawing
+    rb = TW.body_radius * MM
+    rmouth = TW.mouth_diameter / 2 * MM
+    rbul = TW.bullet_base / 2 * MM
+    hd = TW.horn_depth * MM
+    start("drv_tweeter_body")
+    t = np.linspace(0, 1, 16)
+    horn = [(rmouth * math.exp(math.log((rbul + 3) / rmouth) * s), Z_TW_FACE - hd * s) for s in t]
+    prof = [(0, Z_TW_BACK), (rb, Z_TW_BACK), (rb, Z_TW_FACE - 2), (rb - 2, Z_TW_FACE)] + horn + [(0, Z_TW_FACE - hd)]
     revolve(prof)
-    save("drv_t90a", None, "driver_metal", explode=(0, 0, 520), group="mid", note="proxy, 60 mm alloy horn")
+    for k, sx in enumerate((-1, 1)):
+        c = occ.addCylinder(sx * rb * 0.45, 0, Z_TW_TERM, 0, 0, Z_TW_BACK - Z_TW_TERM, 4)
+    save("drv_tweeter_body", None, "driver_metal", explode=(0, 0, 620), group="mid",
+         note=f"{TW.model}: {TW.body_diameter*1000:.0f} x {TW.body_depth*1000:.1f} mm body, "
+              f"{TW.mouth_diameter*1000:.0f} mm horn mouth")
+    start("drv_tweeter_bullet")
+    prof = [(0, Z_TW_FACE - hd), (rbul, Z_TW_FACE - hd), (0, Z_TW_FACE - hd + 0.9 * hd)]
+    revolve(prof)
+    save("drv_tweeter_bullet", None, "aluminium", explode=(0, 0, 620), group="mid", note="bullet phase plug")
 
 
 # ------------------------------------------------------------------ outputs

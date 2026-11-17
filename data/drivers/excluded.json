@@ -1,0 +1,7 @@
+{
+ "note": "Drivers removed from selection after a manual check. The optimiser skips them.",
+ "drivers": {
+  "eminence-delta-pro-15a": "Listed as discontinued by several retailers (Eminence suggests the Kappa-15A); not safe to base a published design on. Checked 2026-11-17.",
+  "eminence-delta-15a": "Listed as discontinued by retailers. Checked 2026-11-17."
+ }
+}

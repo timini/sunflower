@@ -37,5 +37,12 @@
   "unverified": [
    "motor diameter and cone depth split: estimated from the outline drawing, not published"
   ]
+ },
+ "body_mm": {
+  "cone_depth": 105,
+  "motor_diameter": 150,
+  "motor_length": 64,
+  "nose_length": 120,
+  "note": "cone depth and motor size estimated from the datasheet outline drawing; measure before printing the nose"
  }
 }

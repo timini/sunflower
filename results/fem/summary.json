@@ -5,22 +5,22 @@
   },
   "mid": {
     "band_hz": [
-      500,
-      7000
+      400.0,
+      6000.0
     ],
-    "max_abs_difference_db": 1.8758669481511845,
-    "mean_difference_db": 0.0286030097956531,
-    "fem_ripple_db": 4.216201633727778,
-    "planewave_ripple_db": 4.893546343150291
+    "max_abs_difference_db": 3.189351141573667,
+    "mean_difference_db": 0.21495495783183904,
+    "fem_ripple_db": 4.6808077418687475,
+    "planewave_ripple_db": 5.396208258217584
   },
   "low": {
     "band_hz": [
       100,
-      500
+      400.0
     ],
-    "max_abs_difference_db": 0.8436824818898145,
-    "mean_difference_db": -0.025522548797039444,
-    "fem_ripple_db": 3.3502749405094505,
-    "planewave_ripple_db": 2.9785943632828236
+    "max_abs_difference_db": 0.6815261650100837,
+    "mean_difference_db": -0.20219025199712348,
+    "fem_ripple_db": 2.921991219022928,
+    "planewave_ripple_db": 2.3020793041065275
   }
 }

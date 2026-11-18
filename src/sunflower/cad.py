@@ -47,6 +47,7 @@ import os
 import struct
 import sys
 import time
+from pathlib import Path
 
 import gmsh
 import numpy as np
@@ -900,6 +901,18 @@ def _loop(coords, tags):
     return occ.addCurveLoop(curves)
 
 
+def _line_loop(coords):
+    """Closed loop of straight segments through the polygon's vertices (planar and conical faces when revolved:
+    OCC's booleans and gmsh's mesher are far more reliable on those than on long splines)."""
+    pts = _dedupe([(float(r), float(z)) for r, z in list(coords)[:-1]], tol=0.02)
+    if math.hypot(pts[0][0] - pts[-1][0], pts[0][1] - pts[-1][1]) < 0.02:
+        pts = pts[:-1]
+    pts = [(0.0 if r < 1e-4 else r, z) for r, z in pts]
+    ids = [occ.addPoint(r, 0, z) for r, z in pts]
+    lines = [occ.addLine(ids[i], ids[(i + 1) % len(ids)]) for i in range(len(ids))]
+    return occ.addCurveLoop(lines)
+
+
 def revolve_poly(poly):
     """Revolve a shapely polygon (with holes) in the (r, z) half plane about the z axis. Each loop is revolved on its
     own and the holes are cut out."""
@@ -908,8 +921,10 @@ def revolve_poly(poly):
         if p.area < 1.0:
             continue
 
+        p = p.simplify(0.01, preserve_topology=True)
+
         def rev(coords):
-            surf = occ.addPlaneSurface([_loop(coords, {})])
+            surf = occ.addPlaneSurface([_line_loop(coords)])
             return [e for e in occ.revolve([(2, surf)], 0, 0, 0, 0, 0, 1, 2 * math.pi) if e[0] == 3]
         v = rev(p.exterior.coords)
         holes = [e for h in p.interiors if Polygon(h).area > 1.0 for e in rev(h.coords)]
@@ -924,6 +939,8 @@ def pappus_litres(polys):
 
 
 def rib_slabs(z0, z1, n=4):
+    if n == 0:
+        return []
     """n thin boxes through the axis: 2 n radial ribs."""
     out = []
     for k in range(n):
@@ -989,8 +1006,8 @@ BODY = {}
 
 
 def robust_fuse(body, tools):
-    """Fuse the ribs and bosses into the shell. OCC's general fuse sometimes fails on the spline shell; then fuse them
-    in groups, then one at a time with a small boolean tolerance, and report any that will not go."""
+    """Fuse the ribs and bosses into the shell: all at once, else one at a time with a small boolean tolerance,
+    reporting any that will not go."""
     try:
         out, _ = occ.fuse(body, tools)
         return out
@@ -1008,52 +1025,93 @@ def robust_fuse(body, tools):
     return body
 
 
-def build_body():
+def _build_body(n_slabs):
+    """Build the hollow centre body in this process: n_slabs rib slabs through the axis (2 n_slabs ribs)."""
     start("body_full")
     reg = body_regions()
     body = revolve_poly(reg["solid"])
     zlo = min(y for p in reg["motor"] for _, y in p.exterior.coords) - 1 if reg["motor"] else Z_TURN
     ribs = []
-    if reg["motor"]:
-        mv = revolve_poly(reg["mframe"])
-        r_, _ = occ.intersect(mv, rib_slabs(zlo, Z_MOTOR + 1))
+    if n_slabs:
+        if reg["motor"]:
+            r_, _ = occ.intersect(revolve_poly(reg["mframe"]), rib_slabs(zlo, Z_MOTOR + 1, n_slabs))
+            ribs += r_
+        r_, _ = occ.intersect(revolve_poly(reg["frame"]), rib_slabs(Z_MOTOR - 1, Z_M + 2, n_slabs))
         ribs += r_
-    fr = revolve_poly(reg["frame"])
-    r_, _ = occ.intersect(fr, rib_slabs(Z_MOTOR - 1, Z_M + 2))
-    ribs += r_
     env = revolve_poly(reg["env"])
     bos, _ = occ.intersect(body_bosses(), env)
+    occ.synchronize()
+    boss_in_chamber = sum(occ.getMass(*e) for e in bos if occ.getCenterOfMass(*e)[2] > Z_MOTOR)
     body = robust_fuse(body, ribs + bos)
     body_features(body)
     clean()
     TMP.mkdir(exist_ok=True)
     quiet_write(TMP / "body_full.step")
-    v = sum(occ.getMass(*e) for e in gmsh.model.getEntities(3))
-    BODY.update(reg=reg, volume=v)
-    if not FINAL:
-        mesh_write(TMP / "body_full.stl", size=12.0, curv=120)
-    else:
-        BODY["chamber"] = chamber_volume(reg)
-    return v
+    mesh_write(TMP / "body_full.stl", size=12.0, curv=120)
+    v = mesh_volume(TMP / "body_full.stl")
+    ribs_in_chamber = 2 * n_slabs * RIB_T * reg["frame"].area
+    return dict(volume=v, chamber=chamber_volume(reg, ribs_in_chamber + boss_in_chamber), ribs=2 * n_slabs,
+                warnings=warnings)
 
 
-def chamber_volume(reg):
-    """Mid rear chamber air from the built body: the voids in front of the motor wall and the driver bay, less the
-    plastic inside them (ribs, bosses) and the mid driver (the same allowance as Kick.mid_rear_litres)."""
-    start("chamber")
-    body = occ.importShapes(str(TMP / "body_full.step"))
-    void = revolve_poly(unary_union(reg["chamber"]))
-    bay = [(3, occ.addCylinder(0, 0, Z_MOTOR, 0, 0, Z_MF - Z_MOTOR, R_POD))]
-    void, _ = occ.fuse(void, bay)
-    v_void = pappus_litres(reg["chamber"]) * 1e6 + math.pi * R_POD ** 2 * (Z_MF - Z_MOTOR)   # exact, from the profile
-    inside, _ = occ.intersect(occ.copy(void), body)
-    v_plastic = sum(occ.getMass(*e) for e in inside if e[0] == 3)
+BODY_TIMEOUT = 1200                                  # s for one attempt at the body; a hung OCC boolean is killed
+
+
+def build_body():
+    """Build the body in a child process with a time limit; if it hangs or fails, try again with fewer ribs."""
+    import pickle
+    import subprocess
+    reg = body_regions()
+    BODY.update(reg=reg)
+    TMP.mkdir(exist_ok=True)
+    for n in (4, 2, 0):
+        job = TMP / "body_job.pkl"
+        job.write_bytes(pickle.dumps(dict(P=P, n=n)))
+        (TMP / "body_job.json").unlink(missing_ok=True)
+        t0 = time.time()
+        try:
+            r = subprocess.run([sys.executable, "-m", "sunflower.cad", "--body-job", str(job)], timeout=BODY_TIMEOUT,
+                               capture_output=True, text=True)
+            ok = r.returncode == 0 and (TMP / "body_job.json").exists()
+            why = "" if ok else (r.stderr.strip().splitlines() or ["no output"])[-1]
+        except subprocess.TimeoutExpired:
+            ok, why = False, f"timed out after {BODY_TIMEOUT} s"
+        if ok:
+            res = json.loads((TMP / "body_job.json").read_text())
+            for w in res["warnings"]:
+                if w not in warnings:
+                    warnings.append(w)
+            if n < 4:
+                warnings.append(f"centre body built with {2 * n} radial ribs, not 8")
+            BODY.update(volume=res["volume"], chamber=res["chamber"], ribs=res["ribs"])
+            print(f"  centre body: {res['volume'] / 1e6:.2f} L, {res['ribs']} radial ribs, "
+                  f"{time.time() - t0:.0f} s", flush=True)
+            return res["volume"]
+        print(f"  centre body with {2 * n} ribs failed: {why}", flush=True)
+    raise RuntimeError("centre body would not build")
+
+
+def body_job(path):
+    import pickle
+    job = pickle.loads(Path(path).read_bytes())
+    P.update(job["P"])
+    gmsh.initialize()
+    gmsh.option.setNumber("General.Terminal", 0)
+    gmsh.option.setString("Geometry.OCCTargetUnit", "MM")
+    res = _build_body(job["n"])
+    gmsh.finalize()
+    (TMP / "body_job.json").write_text(json.dumps(res))
+
+
+def chamber_volume(reg, plastic_inside):
+    """Mid rear chamber air: the voids in front of the motor wall and the driver bay (exact, from the profile), less
+    the ribs and bosses inside them and the mid driver (the same allowance as Kick.mid_rear_litres)."""
+    v_void = pappus_litres(reg["chamber"]) * 1e6 + math.pi * R_POD ** 2 * (Z_MF - Z_MOTOR)
     d = MD
     displaced = (math.pi * d.motor_r ** 2 * d.motor_h + 0.25 * math.pi * (d.frame_od / 2) ** 2 * (d.depth - d.motor_h)) * 1e9
-    motor = pappus_litres(reg["motor"])
-    return dict(void_litres=round(v_void / 1e6, 2), plastic_inside_litres=round(v_plastic / 1e6, 2),
-                driver_litres=round(displaced / 1e6, 2), litres=round((v_void - v_plastic - displaced) / 1e6, 2),
-                geometry_litres=round(K.mid_rear_litres, 2), motor_void_litres=round(motor, 2))
+    return dict(void_litres=round(v_void / 1e6, 2), plastic_inside_litres=round(plastic_inside / 1e6, 2),
+                driver_litres=round(displaced / 1e6, 2), litres=round((v_void - plastic_inside - displaced) / 1e6, 2),
+                geometry_litres=round(K.mid_rear_litres, 2), motor_void_litres=round(pappus_litres(reg["motor"]), 2))
 
 
 def module(name, z0, z1, explode, note):
@@ -2112,4 +2170,7 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    if len(sys.argv) > 2 and sys.argv[1] == "--body-job":
+        body_job(sys.argv[2])
+    else:
+        main()

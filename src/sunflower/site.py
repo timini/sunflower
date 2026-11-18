@@ -551,16 +551,24 @@ rear chamber.</p>
 <p>Drivers are per box at the prices found when the design was made. All three are simulated, not built or measured.</p>
 {"".join(blocks)}
 
-<h2 id="hex">Hex 12: a two-way for small rooms (concept)</h2>
-<p>For a cafe or bar that wants something striking but not large: the mid and HF sections on their own, with no kick
-horn. A 12 inch cone in a hexagonal horn, with a 1 inch compression driver on its waveguide inside the yellow phase
-plug. About 460 mm across the flats and 300 mm deep. Hexagons tile a flat wall, so several can hang as a honeycomb.</p>
+<h2 id="hex">Hex 8: a small two-way for single use (concept)</h2>
+<p>For a cafe or bar that wants one striking box per side, not an array: a 350 mm hexagonal cabinet, 350 mm deep, with
+an 8 inch coaxial driver. The compression driver fires through the centre of the woofer and the cone is its horn, so the
+two share one source and one coverage pattern. It is a hybrid: a short hexagonal horn on the front of the cone, and the
+22 litre rear chamber radiating through a slot at the bottom of the horn mouth.</p>
+{table(["", "Hex 8 (simulated low end)"], [
+    ["Driver", "Faital 8HX150 coaxial, about $282"],
+    ["Low end, on a wall", "-6 dB at 49 Hz, with a few dB of bass EQ below about 100 Hz"],
+    ["Sensitivity and level", "95 dB at 2.83 V; about 113 dB before the cone reaches its excursion limit"],
+    ["HF", "Takes over from 1.7 kHz (maker's figure)"],
+    ["Size", "350 mm across the flats, 350 mm deep"]])}
 <div class="grid2">
-{fig("img/range/concepts/hex2way-single.jpg", "Hex 12, one box.", "render")}
-{fig("img/range/concepts/hex2way-wall.jpg", "Three on a wall.", "render")}
+{fig("img/range/concepts/hex8-single.jpg", "Hex 8.", "render")}
+{fig("img/range/concepts/hex8-cafe.jpg", "On a wall. The dark slit under the horn is the rear chamber's slot.", "render")}
 </div>
-<div class="note"><p><b>Concept only.</b> The shapes here are drawn for the look; the horn, plug and waveguide have not
-been sized or simulated yet.</p></div>
+<div class="note"><p><b>Concept.</b> The low end is simulated (a ported-box model with the driver's datasheet
+parameters). The front horn, the crossover and the top end are not: those figures are the maker's. An alternative
+with a Beyma 8MI100 and a bullet tweeter as its phase plug keeps the yellow plug and crosses at about 3.2 kHz on FEM.</p></div>
 
 <h2 id="clusters">Festival clusters (concepts)</h2>
 <p>For festivals, the boxes fly as a cluster: one centre box ringed by five, every mouth aimed out from one point.
@@ -581,7 +589,7 @@ phase plug that holds the HF waveguide. The flown frame hangs above.</p>
 not been designed or simulated: each needs its own horn, sized from the inside out and checked like the boxes above.
 Neighbours sit about 37 degrees apart, so a cluster covers a wide area from one flying point.</p></div>
 """
-    return page("range.html", "Sunflower range", body, "The Sunflower range: 15C, 15B, 12C and the festival clusters.")
+    return page("range.html", "Sunflower range", body, "The Sunflower range: 15C, 15B, 12C, the Hex 8 and the festival clusters.")
 
 
 def main():

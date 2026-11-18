@@ -534,7 +534,8 @@ def range_page(d):
                      f"{K.external_mouth*1000:.0f} x {K.external_height*1000:.0f} x {K.depth*1000:.0f}",
                      f"{K.splay_deg:.0f} deg", f"{x['shell']:.0f} L", f"${x['price']:.0f}"])
         figs = []
-        for f, cap in ((f"{x['img']}/renders/hero.jpg", "Render"), (f"{x['img']}/plots/kick-drawing.png", "Section, mm"),
+        for f, cap in ((f"{x['img']}/renders/hero.jpg", "Rendered from the design profiles"),
+                       (f"{x['img']}/renders/front.jpg", "From the front"), (f"{x['img']}/plots/kick-drawing.png", "Section, mm"),
                        (f"{x['img']}/plots/full-range.png", "Each section and the sum"), (f"{x['img']}/plots/slices.png",
                        "The model sliced every 1 cm")):
             if (DOCS / f).exists():

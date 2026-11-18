@@ -552,21 +552,21 @@ rear chamber.</p>
 {"".join(blocks)}
 
 <h2 id="hex">Hex 8: a small two-way for single use (concept)</h2>
-<p>For a cafe or bar that wants one striking box per side, not an array: a 350 mm hexagonal cabinet, 260 mm deep, with
+<p>For a cafe or bar that wants one striking box per side, not an array: a 350 mm hexagonal cabinet, 300 mm deep, with
 an 8 inch coaxial driver. The compression driver fires through the centre of the woofer and the cone is its horn, so the
 two share one source and one coverage pattern. It is a hybrid: a short hexagonal horn on the front of the cone, and the
-14 litre rear chamber radiating into that horn through two round ports in its lower walls near the mouth, as in a
-multiple-entry horn.</p>
+18 litre rear chamber radiating into that horn through three round ports, one in every other wall near the mouth,
+as in a multiple-entry horn. The ports are printed and bend inside the box to reach their length.</p>
 {table(["", "Hex 8 (simulated low end)"], [
     ["Driver", "Faital 8HX150 coaxial, about $282"],
-    ["Low end, on a wall", "-6 dB at 60 Hz, with a few dB of bass EQ below about 100 Hz (49 Hz if the box is 350 mm deep)"],
+    ["Low end, on a wall", "-6 dB at 54 Hz, with a few dB of bass EQ below about 100 Hz"],
     ["Sensitivity and level", "95 dB at 2.83 V; about 113 dB before the cone reaches its excursion limit"],
     ["HF", "Takes over from 1.7 kHz (maker's figure)"],
-    ["Size", "350 mm across the flats, 260 mm deep; two 54 mm ports"]])}
+    ["Size", "350 mm across the flats, 300 mm deep; three 44 mm ports, each about 230 mm long"]])}
 <div class="grid2">
 {fig("img/range/concepts/hex8-single.jpg", "Hex 8: the HF horn stands in the centre of the cone, inside the hexagonal front horn.", "render")}
 {fig("img/range/concepts/hex8-front.jpg", "From the front.", "render")}
-{fig("img/range/concepts/hex8-cafe.jpg", "On a wall. The two dark openings in the horn are the rear chamber's ports.", "render")}
+{fig("img/range/concepts/hex8-cafe.jpg", "On a wall. The three dark openings in the horn are the rear chamber's ports.", "render")}
 </div>
 <div class="note"><p><b>Concept.</b> The low end is simulated (a ported-box model with the driver's datasheet
 parameters). The front horn, the crossover and the top end are not: those figures are the maker's. An alternative

@@ -553,15 +553,16 @@ rear chamber.</p>
 
 <h2 id="hex">Hex 8: a small two-way for single use (concept)</h2>
 <p>For a cafe or bar that wants one striking box per side, not an array: a 350 mm hexagonal cabinet, 300 mm deep, with
-an 8 inch coaxial driver. The compression driver fires through the centre of the woofer and the cone is its horn, so the
-two share one source and one coverage pattern. It is a hybrid: a short hexagonal horn on the front of the cone, and the
+an 8 inch coaxial driver. The compression driver fires through the centre of the woofer into its own small horn standing in
+the cone, so the two share one source. Of the pro 8 inch coaxials checked, only the Beyma 8CX300 has such a separate centre
+horn (the others hide the exit under a dust cap), which makes it the one a printed, coloured horn could replace or copy. It is a hybrid: a short hexagonal horn on the front of the cone, and the
 18 litre rear chamber radiating into that horn through three round ports, one in every other wall near the mouth,
 as in a multiple-entry horn. The ports are printed and bend inside the box to reach their length.</p>
 {table(["", "Hex 8 (simulated low end)"], [
-    ["Driver", "Faital 8HX150 coaxial, about $282"],
+    ["Driver", "Beyma 8CX300Nd/N coaxial, about $429 (or the 8CX300Fe at about $289, which reaches 59 Hz)"],
     ["Low end, on a wall", "-6 dB at 54 Hz, with a few dB of bass EQ below about 100 Hz"],
-    ["Sensitivity and level", "95 dB at 2.83 V; about 113 dB before the cone reaches its excursion limit"],
-    ["HF", "Takes over from 1.7 kHz (maker's figure)"],
+    ["Sensitivity and level", "95 dB at 2.83 V; about 115 dB before the cone reaches its excursion limit"],
+    ["HF", "Takes over from 1.5 kHz, 70 degree conical horn (maker's figures)"],
     ["Size", "350 mm across the flats, 300 mm deep; three 44 mm ports, each about 230 mm long"]])}
 <div class="grid2">
 {fig("img/range/concepts/hex8-single.jpg", "Hex 8: the HF horn stands in the centre of the cone, inside the hexagonal front horn.", "render")}
@@ -569,7 +570,8 @@ as in a multiple-entry horn. The ports are printed and bend inside the box to re
 {fig("img/range/concepts/hex8-cafe.jpg", "On a wall. The three dark openings in the horn are the rear chamber's ports.", "render")}
 </div>
 <div class="note"><p><b>Concept.</b> The low end is simulated (a ported-box model with the driver's datasheet
-parameters). The front horn, the crossover and the top end are not: those figures are the maker's. An alternative
+parameters). The front horn, the crossover and the top end are not: those figures are the maker's. How Beyma fixes its
+centre horn is not documented, so a printed replacement needs a sample driver to check. An alternative
 with a Beyma 8MI100 and a bullet tweeter as its phase plug keeps the yellow plug and crosses at about 3.2 kHz on FEM.</p></div>
 
 <h2 id="clusters">Festival clusters (concepts)</h2>

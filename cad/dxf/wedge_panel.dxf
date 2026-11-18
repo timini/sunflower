@@ -489,7 +489,7 @@ $SKPOLY
   9
 $TDCREATE
  40
-2461363.4784027776
+2461363.9048032407
   9
 $TDUCREATE
  40
@@ -497,7 +497,7 @@ $TDUCREATE
   9
 $TDUPDATE
  40
-2461363.4784027776
+2461363.9048032407
   9
 $TDUUPDATE
  40
@@ -929,11 +929,11 @@ $PSTYLEMODE
   9
 $FINGERPRINTGUID
   2
-{EE9D7A6E-3057-4282-B9AE-3742C0F34A91}
+{C97504B9-C08B-4C4F-A200-D3D4274AC05E}
   9
 $VERSIONGUID
   2
-{4845F6F2-B561-4FE9-82C6-046BD88404CE}
+{4B8239EC-1327-43C2-BFBC-4E3A3A27CF61}
   9
 $EXTNAMES
 290
@@ -1323,9 +1323,9 @@ ISM
   0
 CLASS
   1
-LAYOUT
+ACDBPLACEHOLDER
   2
-AcDbLayout
+AcDbPlaceHolder
   3
 ObjectDBX Classes
  90
@@ -1339,9 +1339,9 @@ ObjectDBX Classes
   0
 CLASS
   1
-ACDBPLACEHOLDER
+LAYOUT
   2
-AcDbPlaceHolder
+AcDbLayout
   3
 ObjectDBX Classes
  90
@@ -2119,13 +2119,13 @@ AcDbPolyline
  20
 0.0
  10
-395.8124553986978
+319.42979682275495
  20
-602.0130989084632
+507.7512605826835
  10
--395.8124553986978
+-319.42979682275495
  20
-602.0130989084632
+507.7512605826835
   0
 LINE
   5
@@ -2139,15 +2139,15 @@ INNER_FACE
 100
 AcDbLine
  10
--377.1774841513164
+-301.20542455857094
  20
-530.0130989084632
+391.2528133926911
  30
 0.0
  11
-377.1774841513164
+301.20542455857094
  21
-530.0130989084632
+391.2528133926911
  31
 0.0
   0
@@ -2163,7 +2163,7 @@ TEXT
 100
 AcDbText
  10
--395.8124553986978
+-319.42979682275495
  20
 -30.0
  30
@@ -2171,9 +2171,9 @@ AcDbText
  40
 10.0
   1
-Wedge panel x2, 18 mm birch, horn face shown. Long edges: blade bevel 3.8 deg, edge taper 14.5 deg. Back end bevelled 15.0 deg on the baffle. Plane the back face to a feather edge from the dashed line to the mouth.
+Wedge panel x2, 18 mm birch, horn face shown. Long edges: blade bevel 1.4 deg, edge taper 8.9 deg. Back end bevelled 9.0 deg on the baffle. Plane the back face to a feather edge from the dashed line to the mouth.
  11
--395.8124553986978
+-319.42979682275495
  21
 -30.0
  31
@@ -3183,7 +3183,7 @@ DictionaryVariables
 280
 0
   1
-1.4.5 @ 2026-11-18T11:28:54.997994+00:00
+1.4.5 @ 2026-11-18T21:42:55.733142+00:00
   0
 DICTIONARYVAR
   5
@@ -3195,7 +3195,7 @@ DictionaryVariables
 280
 0
   1
-1.4.5 @ 2026-11-18T11:28:54.998483+00:00
+1.4.5 @ 2026-11-18T21:42:55.733609+00:00
   0
 ENDSEC
   0

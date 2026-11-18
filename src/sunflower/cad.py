@@ -1401,9 +1401,10 @@ def basket(drv, zmap, arm, r_flange_in, z_flange_back, n=4, width_deg=10):
     sgn = 1 if zmap(1.0) > zmap(0.0) else -1
     lower = [(r, zmap(float(drv.cone_z(r / MM)) * MM) + sgn * arm) for r in rr]
     upper = [(r, z + sgn * t) for r, z in lower[::-1]]
-    ztp = zmap(drv.top_plate_z * MM)
-    pts = [(drv.spider_r * MM + 4, ztp)] + lower + [(r_flange_in, z_flange_back)] + \
-          [(r_flange_in + 2 * t, z_flange_back)] + upper + [(drv.spider_r * MM + 4 + t, ztp)]
+    ztp = zmap(drv.top_plate_z * MM) - sgn * 1.0                # 1 mm into the housing, and 1 mm into the flange,
+    zfb = z_flange_back - sgn * 1.0                             # so no face of the fused frame is coincident
+    pts = [(drv.spider_r * MM + 4, ztp)] + lower + [(r_flange_in, zfb)] + \
+          [(r_flange_in + 2 * t, zfb)] + upper + [(drv.spider_r * MM + 4 + t, ztp)]
     width = 2 * drv.rim_r * MM * math.sin(math.radians(width_deg / 2))
     pts = _dedupe(pts)
     ids = [occ.addPoint(r, 0, z) for r, z in pts]

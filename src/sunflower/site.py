@@ -563,7 +563,8 @@ two share one source and one coverage pattern. It is a hybrid: a short hexagonal
     ["HF", "Takes over from 1.7 kHz (maker's figure)"],
     ["Size", "350 mm across the flats, 350 mm deep"]])}
 <div class="grid2">
-{fig("img/range/concepts/hex8-single.jpg", "Hex 8.", "render")}
+{fig("img/range/concepts/hex8-single.jpg", "Hex 8: the HF horn stands in the centre of the cone, inside the hexagonal front horn.", "render")}
+{fig("img/range/concepts/hex8-front.jpg", "From the front.", "render")}
 {fig("img/range/concepts/hex8-cafe.jpg", "On a wall. The dark slit under the horn is the rear chamber's slot.", "render")}
 </div>
 <div class="note"><p><b>Concept.</b> The low end is simulated (a ported-box model with the driver's datasheet

@@ -1,0 +1,132 @@
+{
+  "15C": {
+    "title": "15 inch kick, 8 inch mid, compression HF",
+    "kick": "18 Sound 15MB700",
+    "mid": "Beyma 8MI100",
+    "hf": "B&C DE111",
+    "hf_kind": "compression",
+    "crossover_hz": [
+      250.0,
+      2500.0
+    ],
+    "mid_fem_minus6_hz": 2300.496897,
+    "kick_minus6_ground_hz": 87.35903662459697,
+    "sensitivity_db": 102.98467537247905,
+    "rms_100_16k_db": 2.0825382467648508,
+    "external_mm": [
+      568.5095915182494,
+      568.4601870623243,
+      599.5
+    ],
+    "body_envelope_litres": 68.42439214223556,
+    "body_shell_litres": 5.612279383347195,
+    "mid_pod_litres": 3.261621599149906,
+    "horn_air_litres": 40.47608773850798,
+    "drivers_usd": 464.15,
+    "checks": []
+  },
+  "15C6": {
+    "title": "15 inch kick, 6.5 inch mid, compression HF",
+    "kick": "18 Sound 15W700",
+    "mid": "18 Sound 6ND430",
+    "hf": "B&C DE111",
+    "hf_kind": "compression",
+    "crossover_hz": [
+      250.0,
+      2500.0
+    ],
+    "mid_fem_minus6_hz": 2593.36026,
+    "kick_minus6_ground_hz": 100.03417358832212,
+    "sensitivity_db": 105.45486802857941,
+    "rms_100_16k_db": 2.8060596621215312,
+    "external_mm": [
+      775.7501901323184,
+      774.8032422517564,
+      700.5
+    ],
+    "body_envelope_litres": 95.75320552805755,
+    "body_shell_litres": 6.935218459253692,
+    "mid_pod_litres": 1.5799089875255317,
+    "horn_air_litres": 94.21623133727911,
+    "drivers_usd": 417.37,
+    "checks": []
+  },
+  "15B": {
+    "title": "15 inch kick, 8 inch mid, bullet HF in a big plug at the mid throat",
+    "kick": "18 Sound 15W700",
+    "mid": "Beyma 8MI100",
+    "hf": "DS18 PRO-TW920",
+    "hf_kind": "bullet",
+    "crossover_hz": [
+      250.0,
+      2500.0
+    ],
+    "mid_fem_minus6_hz": 2923.506417,
+    "kick_minus6_ground_hz": 95.61694663692978,
+    "sensitivity_db": 104.42927592411823,
+    "rms_100_16k_db": 2.9276186742288366,
+    "external_mm": [
+      675.308338173878,
+      674.8595936455099,
+      599.5
+    ],
+    "body_envelope_litres": 75.89164055259681,
+    "body_shell_litres": 6.168730726894622,
+    "mid_pod_litres": 3.261621599149906,
+    "horn_air_litres": 61.86129167376013,
+    "drivers_usd": 429.9,
+    "checks": []
+  },
+  "12C": {
+    "title": "12 inch kick, 8 inch mid, compression HF",
+    "kick": "B&C 12CL76",
+    "mid": "Beyma 8MI100",
+    "hf": "B&C DE111",
+    "hf_kind": "compression",
+    "crossover_hz": [
+      250.0,
+      2500.0
+    ],
+    "mid_fem_minus6_hz": 3295.68163,
+    "kick_minus6_ground_hz": 107.85432980843876,
+    "sensitivity_db": 103.0005853237434,
+    "rms_100_16k_db": 2.508404949554664,
+    "external_mm": [
+      496.0294171174576,
+      495.98001266153244,
+      600.0
+    ],
+    "body_envelope_litres": 56.56024507352388,
+    "body_shell_litres": 5.084031651954129,
+    "mid_pod_litres": 3.261621599149906,
+    "horn_air_litres": 27.890236811796274,
+    "drivers_usd": 415.3,
+    "checks": []
+  },
+  "12C6": {
+    "title": "12 inch kick, 6.5 inch mid, compression HF",
+    "kick": "B&C 12CL76",
+    "mid": "18 Sound 6ND430",
+    "hf": "B&C DE111",
+    "hf_kind": "compression",
+    "crossover_hz": [
+      250.0,
+      2500.0
+    ],
+    "mid_fem_minus6_hz": 2593.36026,
+    "kick_minus6_ground_hz": 131.16848238208047,
+    "sensitivity_db": 105.45443289630198,
+    "rms_100_16k_db": 3.543614488195597,
+    "external_mm": [
+      689.5141760026635,
+      688.5672281221015,
+      700.0
+    ],
+    "body_envelope_litres": 78.80956349350382,
+    "body_shell_litres": 6.069623109975976,
+    "mid_pod_litres": 1.5799089875255317,
+    "horn_air_litres": 60.68752201395106,
+    "drivers_usd": 381.47,
+    "checks": []
+  }
+}

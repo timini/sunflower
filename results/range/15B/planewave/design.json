@@ -1,0 +1,114 @@
+{
+  "kick": {
+    "driver": "18 Sound 15W700",
+    "law": "hypex",
+    "throat_width_mm": 480.0,
+    "mouth_width_mm": 638.8595936455099,
+    "protrusion_mm": 0.0,
+    "estimated_geometry": [
+      "cone profile and neck position",
+      "spider diameter",
+      "basket arm envelope"
+    ],
+    "throat_area_m2": 0.04901669937763474,
+    "mouth_area_m2": 0.341175391388986,
+    "compression": 1.6,
+    "cone_to_throat": 1.7341028889999817,
+    "horn_length_m": 0.4352904019335815,
+    "mouth_width_m": 0.6388595936455099,
+    "external_mouth_m": 0.675308338173878,
+    "external_back_m": 0.485405394224759,
+    "external_height_m": 0.67485959364551,
+    "wedge_litres": 21.229627393415885,
+    "wedge_chamber": false,
+    "depth_m": 0.5995,
+    "overall_depth_m": 0.5995,
+    "splay_deg": 18.0,
+    "chamber_litres": 21.843563006373355,
+    "trapped_litres": 0.9641191788497642,
+    "mid_rear_litres": 44.72967302542872,
+    "turn_z_m": 0.06620959806641859,
+    "max_body_radius_m": 0.25367592598342925
+  },
+  "mid": {
+    "driver": "Beyma 8MI100",
+    "law": "os",
+    "compression": 4.0,
+    "plug_diameter_mm": 101.63769033449205,
+    "outer_throat_diameter_mm": 131.65499455992352,
+    "mouth_diameter_mm": 280.0,
+    "length_mm": 200.0,
+    "half_angle_deg": 32.455687615257816,
+    "gap_mm": 4.500000000000001,
+    "front_cavity_litres": 0.08641422842811286,
+    "rear_litres": 3.261621599149906,
+    "estimated_geometry": [
+      "cone rim (from Sd)",
+      "motor height",
+      "motor diameter",
+      "top plate position",
+      "cone profile and neck position",
+      "spider diameter",
+      "basket arm envelope"
+    ]
+  },
+  "tweeter": {
+    "driver": "DS18 PRO-TW920",
+    "kind": "bullet",
+    "body_diameter_mm": 69.2,
+    "hf_horn_mouth_mm": 50.0,
+    "price_usd": 83.95
+  },
+  "crossover_hz": [
+    250.0,
+    2500.0
+  ],
+  "prices_usd": {
+    "kick": 233,
+    "mid": 112.95,
+    "hf": 83.95
+  },
+  "selection": {
+    "tweeter": "ds18-pro-tw920",
+    "mid": {
+      "driver_id": "beyma-8mi100",
+      "geometry": {
+        "law": "os",
+        "compression": 4.0,
+        "mouth_diameter": 0.28,
+        "length": 0.2,
+        "hf_mouth_ratio": 2.4,
+        "gap_override": 0.0045000000000000005,
+        "hf_law": "os",
+        "hf_half_angle_deg": 15.0,
+        "hf_mount": "throat",
+        "plug_cover": 0.65
+      }
+    },
+    "kick": {
+      "driver_id": "18sound-15w700",
+      "geometry": {
+        "compression": 1.6,
+        "law": "hypex",
+        "half_angle_deg": 9.0,
+        "protrusion": 0.0,
+        "chamber_depth": 0.055,
+        "wedge_chamber": false,
+        "throat_width": 0.48
+      }
+    },
+    "crossover_hz": [
+      250.0,
+      2500.0
+    ],
+    "scores": {
+      "system": 7.00452870604112,
+      "score": 5.9545287060411205,
+      "rms_on_db": 2.9139152541818136,
+      "spread_30_db": 3.3001663253867095,
+      "f3_hz": 117.81060578331903,
+      "sensitivity_db": 104.42927592411823
+    },
+    "rule": "lowest system score; among designs within 0.25 of it, the cheapest"
+  }
+}

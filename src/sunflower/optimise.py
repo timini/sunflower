@@ -45,7 +45,7 @@ import pandas as pd
 from sunflower import tweeters as TW
 from sunflower.acoustics import Driver, beamwidth, couple, far_field, baffle_step, spl
 from sunflower.design_tools import make_kick, make_mid
-from sunflower.geometry import load_drivers
+from sunflower.geometry import ConeDriver, load_drivers
 from sunflower.models import kick_network, mid_network
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -55,6 +55,8 @@ F_LOW = np.geomspace(30, 1200, 110)
 F1 = 250.0
 F2S = (4000.0, 4500.0, 5000.0)   # Res 2 style: the mid carries the voice up to 4 to 5 kHz
 MAX_DEPTH = 0.60
+MAX_SIZE = None      # outside width and height limit, m (None = no limit)
+KICK_IDS = None   # restrict the kick stage to these drivers (range study)
 EXCLUDED = json.loads((ROOT / "data/drivers/excluded.json").read_text())["drivers"]
 
 
@@ -122,7 +124,7 @@ def mid_stage(quick=False):
 def kick_stage(mid_rows, quick=False):
     kicks = {k: r for k, r in load_drivers("kick").items() if k not in EXCLUDED}
     grid = dict(compression=(1.6, 2.0, 2.5, 3.0), law=("exponential", "hypex", "conical"),
-                half_angle_deg=(9.0, 11.0, 13.0, 15.0, 17.0), protrusion=(0.0,),   # owner's rule: mid mouth inside the kick mouth
+                half_angle_deg=(3.0, 5.0, 7.0, 9.0, 11.0, 13.0, 15.0, 17.0), protrusion=(0.0,),   # owner's rule: mid mouth inside the kick mouth
                 wedge_chamber=(False, True))
     if quick:
         grid = dict(compression=(2.0, 2.5), law=("exponential", "hypex"), half_angle_deg=(11.0, 13.0), protrusion=(0.0,),
@@ -133,18 +135,27 @@ def kick_stage(mid_rows, quick=False):
         tw = TW.load(mr.tweeter)
         mid = make_mid(mids[mr.mid_driver], tw, law="os", compression=mr.compression,
                        mouth_diameter=mr.mouth_diameter, length=mr.length, hf_mouth_ratio=mr.hf_mouth_ratio,
-                       gap_override=float(mr.get("gap_override", 0.0) or 0.0))
+                       gap_override=float(mr.get("gap_override", 0.0) or 0.0),
+                       hf_law=str(mr.get("hf_law", "exponential") or "exponential"),
+                       hf_half_angle_deg=float(mr.get("hf_half_angle_deg", 30.0) or 30.0),
+                       hf_mount=str(mr.get("hf_mount", "bullet") or "bullet"),
+                       plug_cover=float(mr.get("plug_cover", 0.0) or 0.0))
         for kid, rec in kicks.items():
+            if KICK_IDS and kid not in KICK_IDS:
+                continue
             drv = Driver.from_record(rec)
+            tw_ = round(ConeDriver.from_record(rec, "kick").frame_od + 0.093, 3)   # throat clears the flange as on the 15 inch
             for cr, law, ha, pr, wc in itertools.product(*grid.values()):
                 k0 = make_kick(rec, mid, compression=cr, law=law, half_angle_deg=ha, protrusion=pr, chamber_depth=0.05,
-                               wedge_chamber=wc)
+                               wedge_chamber=wc, throat_width=tw_)
                 lc = MAX_DEPTH - (k0.depth - k0.chamber_depth)
                 if lc < 0.04:
                     continue
                 k = make_kick(rec, mid, compression=cr, law=law, half_angle_deg=ha, protrusion=pr,
-                              chamber_depth=round(min(lc, 0.20), 3), wedge_chamber=wc)
+                              chamber_depth=round(min(lc, 0.20), 3), wedge_chamber=wc, throat_width=tw_)
                 if k.check():
+                    continue
+                if MAX_SIZE and (k.external_mouth > MAX_SIZE + 1e-9 or k.external_height > MAX_SIZE + 1e-9):
                     continue
                 net = kick_network(k)
                 s = couple(drv, net.solve(F_LOW), rear_litres=k.chamber_litres)
@@ -165,8 +176,12 @@ def kick_stage(mid_rows, quick=False):
                          + 3 * abs(splay - 0.8) + 4 * max(0.0, k.external_mouth - 0.75) + 2 * max(0.0, xratio - 1))
                 rows.append(dict(tweeter=mr.tweeter, mid_driver=mr.mid_driver, mid_compression=mr.compression,
                                  hf_mouth_ratio=mr.hf_mouth_ratio, gap_override=float(mr.get("gap_override", 0.0) or 0.0),
+                                 hf_law=str(mr.get("hf_law", "exponential") or "exponential"),
+                                 hf_half_angle_deg=float(mr.get("hf_half_angle_deg", 30.0) or 30.0),
+                                 hf_mount=str(mr.get("hf_mount", "bullet") or "bullet"),
+                                 plug_cover=float(mr.get("plug_cover", 0.0) or 0.0),
                                  mid_mouth=mr.mouth_diameter, mid_length=mr.length, f2=mr.f2, kick_driver=kid,
-                                 compression=cr, law=law, half_angle_deg=ha, protrusion=pr, wedge_chamber=wc,
+                                 compression=cr, law=law, half_angle_deg=ha, protrusion=pr, wedge_chamber=wc, throat_width=tw_,
                                  chamber_depth=k.chamber_depth, chamber_litres=k.chamber_litres, f3=f3, f6=f6,
                                  ripple_db=ripple, slope_db_oct=float(fit[0]), level_db=float(ref), xratio=xratio,
                                  splay_ratio=splay, external_mouth=k.external_mouth, depth=k.depth, score=score,
@@ -184,12 +199,17 @@ def selection(row):
         mid=dict(driver_id=row.mid_driver, geometry=dict(law="os", compression=float(row.mid_compression),
                                                          mouth_diameter=float(row.mid_mouth), length=float(row.mid_length),
                                                          hf_mouth_ratio=float(row.hf_mouth_ratio),
-                                                         gap_override=float(getattr(row, "gap_override", 0.0) or 0.0))),
+                                                         gap_override=float(getattr(row, "gap_override", 0.0) or 0.0),
+                                                         hf_law=str(getattr(row, "hf_law", "exponential")),
+                                                         hf_half_angle_deg=float(getattr(row, "hf_half_angle_deg", 30.0)),
+                                                         hf_mount=str(getattr(row, "hf_mount", "bullet")),
+                                                         plug_cover=float(getattr(row, "plug_cover", 0.0)))),
         kick=dict(driver_id=row.kick_driver, geometry=dict(compression=float(row.compression), law=row.law,
                                                            half_angle_deg=float(row.half_angle_deg),
                                                            protrusion=float(row.protrusion),
                                                            chamber_depth=float(row.chamber_depth),
-                                                           wedge_chamber=bool(row.wedge_chamber))),
+                                                           wedge_chamber=bool(row.wedge_chamber),
+                                                           throat_width=float(getattr(row, "throat_width", 0.48)))),
         crossover_hz=[F1, float(row.f2)])
 
 

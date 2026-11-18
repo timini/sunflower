@@ -1,0 +1,39 @@
+{
+  "tweeter": "bc-de111",
+  "mid": {
+    "driver_id": "18sound-6nd430",
+    "geometry": {
+      "law": "os",
+      "compression": 2.2,
+      "mouth_diameter": 0.44,
+      "length": 0.28,
+      "hf_mouth_ratio": 2.4,
+      "gap_override": 0.006500000000000001
+    }
+  },
+  "kick": {
+    "driver_id": "bc-12cl76",
+    "geometry": {
+      "compression": 1.6,
+      "law": "conical",
+      "half_angle_deg": 13.0,
+      "protrusion": 0.0,
+      "chamber_depth": 0.123,
+      "wedge_chamber": false,
+      "throat_width": 0.406
+    }
+  },
+  "crossover_hz": [
+    250.0,
+    2500.0
+  ],
+  "scores": {
+    "system": 8.800897090718443,
+    "score": 8.629468519289873,
+    "rms_on_db": 3.6014042529054078,
+    "spread_30_db": 4.161729435861442,
+    "f3_hz": 148.9439909690749,
+    "sensitivity_db": 105.19411580740633
+  },
+  "rule": "lowest system score; among designs within 0.25 of it, the cheapest"
+}

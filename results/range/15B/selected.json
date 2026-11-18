@@ -1,0 +1,43 @@
+{
+  "tweeter": "ds18-pro-tw920",
+  "mid": {
+    "driver_id": "beyma-8mi100",
+    "geometry": {
+      "law": "os",
+      "compression": 4.0,
+      "mouth_diameter": 0.28,
+      "length": 0.2,
+      "hf_mouth_ratio": 2.4,
+      "gap_override": 0.0045000000000000005,
+      "hf_law": "os",
+      "hf_half_angle_deg": 15.0,
+      "hf_mount": "throat",
+      "plug_cover": 0.65
+    }
+  },
+  "kick": {
+    "driver_id": "18sound-15w700",
+    "geometry": {
+      "compression": 1.6,
+      "law": "hypex",
+      "half_angle_deg": 9.0,
+      "protrusion": 0.0,
+      "chamber_depth": 0.055,
+      "wedge_chamber": false,
+      "throat_width": 0.48
+    }
+  },
+  "crossover_hz": [
+    250.0,
+    2500.0
+  ],
+  "scores": {
+    "system": 7.00452870604112,
+    "score": 5.9545287060411205,
+    "rms_on_db": 2.9139152541818136,
+    "spread_30_db": 3.3001663253867095,
+    "f3_hz": 117.81060578331903,
+    "sensitivity_db": 104.42927592411823
+  },
+  "rule": "lowest system score; among designs within 0.25 of it, the cheapest"
+}

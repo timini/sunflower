@@ -471,15 +471,16 @@ def case_tube(scale=1.0, freqs=None):
 
 # ---------------------------------------------------------------- running
 def run_case(name, case, procs, script="fem/axisym.py"):
-    work = ROOT / "results/fem/work"
+    work = D.RESULTS / "fem/work"
+    rel = work.relative_to(ROOT).as_posix()
     work.mkdir(parents=True, exist_ok=True)
     (work / f"{name}.json").write_text(json.dumps(case))
     procs = max(1, min(procs, len(case["freqs"])))
     for old in work.glob(f"{name}-raw-*.csv*"):
         old.unlink()
     loop = " ".join(
-        f"python3 {script} results/fem/work/{name}.json results/fem/work/{name}-raw-{i}.csv {i} {procs} "
-        f"> results/fem/work/{name}-{i}.log 2>&1 &" for i in range(procs))
+        f"python3 {script} {rel}/{name}.json {rel}/{name}-raw-{i}.csv {i} {procs} "
+        f"> {rel}/{name}-{i}.log 2>&1 &" for i in range(procs))
     cmd = ["docker", "run", "--rm", "-v", f"{ROOT}:/w", "-w", "/w", "-e", "OMP_NUM_THREADS=1", IMAGE, "bash", "-c",
            f"source /usr/local/bin/dolfinx-complex-mode >/dev/null; {loop} wait"]
     t0 = time.time()
@@ -543,7 +544,7 @@ def compare_tube(raw):
     df = pd.DataFrame(dict(frequency_hz=f, fem_zrad_abs=np.abs(zf), network_zrad_abs=np.abs(r["z_rad"]),
                            rel_error=err, farfield_0deg_diff_db=ff, farfield_0deg_phase_diff_deg=ph,
                            u_mouth_ratio=np.abs(cplx(raw, "umouth") / r["u_mouth"])))
-    df.to_csv(ROOT / "results/fem/tube-check.csv", index=False, float_format="%.6g")
+    df.to_csv(D.RESULTS / "fem/tube-check.csv", index=False, float_format="%.6g")
     return dict(max_relative_impedance_error=float(err.max()), median=float(np.median(err)),
                 farfield_max_abs_db=float(np.abs(ff).max()), farfield_max_phase_deg=float(np.abs(ph).max()))
 
@@ -598,7 +599,7 @@ def compare(name, raw, variants=None):
         z = cplx(rv, "zrad")
         cols[f"fem_{lab}_zrad_re"], cols[f"fem_{lab}_zrad_im"] = z.real, z.imag
     df = pd.DataFrame(cols)
-    df.to_csv(ROOT / f"results/fem/{name}-vs-network.csv", index=False, float_format="%.6g")
+    df.to_csv(D.RESULTS / f"fem/{name}-vs-network.csv", index=False, float_format="%.6g")
     if name == "kick":
         bands = dict(passband=(40.0, D.CROSSOVER_LOW_MID_HZ), full=(40.0, 1000.0))
     else:
@@ -642,7 +643,7 @@ def compare_3d(raw3, raw2):
                            diff_3d_2d_db=p3 - p2, diff_3d_network_db=p3 - pn,
                            fem3d_zrad_re=z3.real, fem3d_zrad_im=z3.imag, fem2d_zrad_re=z2.real, fem2d_zrad_im=z2.imag,
                            zrad_diff_3d_2d_db=20 * np.log10(np.abs(z3) / np.abs(z2))))
-    df.to_csv(ROOT / "results/fem/kick-3d-vs-axisym.csv", index=False, float_format="%.6g")
+    df.to_csv(D.RESULTS / "fem/kick-3d-vs-axisym.csv", index=False, float_format="%.6g")
     out = {}
     for bn, band in dict(passband=(40.0, D.CROSSOVER_LOW_MID_HZ), full=(40.0, 1000.0)).items():
         out[bn] = dict(spl_3d_vs_2d=stats(df.diff_3d_2d_db, f, band),
@@ -684,7 +685,7 @@ def felt_sweep(get, procs):
         ff, df_ = null_depth(f, pf)
         fn, dn = null_depth(f, pn)
         rows.append(dict(eta=eta, fem_null_hz=ff, fem_null_depth_db=df_, network_null_hz=fn, network_null_depth_db=dn))
-    pd.DataFrame(cols).to_csv(ROOT / "results/fem/mid-felt-sweep.csv", index=False, float_format="%.6g")
+    pd.DataFrame(cols).to_csv(D.RESULTS / "fem/mid-felt-sweep.csv", index=False, float_format="%.6g")
     return dict(note="centre-cavity dip: deepest on-axis point 3.2 to 4.3 kHz, depth below the 2.5 to 6 kHz "
                      "median, coupled SPL",
                 rows=rows)
@@ -704,7 +705,7 @@ def hf_compare(raw):
             np.abs(far_field(f, np.ones_like(f), m.hf_mouth_radius, th))
             / np.abs(far_field(f, np.ones_like(f), m.hf_mouth_radius, 0.0)))
     df = pd.DataFrame(cols)
-    df.to_csv(ROOT / "results/fem/hf-in-mid.csv", index=False, float_format="%.6g")
+    df.to_csv(D.RESULTS / "fem/hf-in-mid.csv", index=False, float_format="%.6g")
     b = (f >= D.CROSSOVER_MID_HIGH_HZ) & (f <= 16000)
     return dict(band_hz=[D.CROSSOVER_MID_HIGH_HZ, 16000],
                 onaxis_change_db_mean=float(df.onaxis_vs_piston_db[b].mean()),
@@ -779,7 +780,7 @@ def main():
     ap.add_argument("--procs", type=int, default=8)
     ap.add_argument("--no-convergence", action="store_true")
     args = ap.parse_args()
-    out = ROOT / "results/fem"
+    out = D.RESULTS / "fem"
     work = out / "work"
     out.mkdir(parents=True, exist_ok=True)
     sp = out / "summary.json"

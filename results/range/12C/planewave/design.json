@@ -1,0 +1,115 @@
+{
+  "kick": {
+    "driver": "B&C 12CL76",
+    "law": "hypex",
+    "throat_width_mm": 406.0,
+    "mouth_width_mm": 459.9800126615325,
+    "protrusion_mm": 0.0,
+    "estimated_geometry": [
+      "cone rim (from Sd)",
+      "cone profile and neck position",
+      "spider diameter",
+      "basket arm envelope"
+    ],
+    "throat_area_m2": 0.02729440781716939,
+    "mouth_area_m2": 0.12139427944625691,
+    "compression": 1.6,
+    "cone_to_throat": 1.9124796679839997,
+    "horn_length_m": 0.4629174826668549,
+    "mouth_width_m": 0.4599800126615325,
+    "external_mouth_m": 0.4960294171174576,
+    "external_back_m": 0.4331400819778082,
+    "external_height_m": 0.49598001266153247,
+    "wedge_litres": 5.893438859745124,
+    "wedge_chamber": false,
+    "depth_m": 0.6,
+    "overall_depth_m": 0.6,
+    "splay_deg": 6.0,
+    "chamber_litres": 10.742764833247321,
+    "trapped_litres": 0.47917109578851147,
+    "mid_rear_litres": 30.362852544946183,
+    "turn_z_m": 0.05208251733314512,
+    "max_body_radius_m": 0.20449822159451359
+  },
+  "mid": {
+    "driver": "Beyma 8MI100",
+    "law": "os",
+    "compression": 2.0,
+    "plug_diameter_mm": 67.4184151512799,
+    "outer_throat_diameter_mm": 136.20160679521047,
+    "mouth_diameter_mm": 280.0,
+    "length_mm": 240.0,
+    "half_angle_deg": 0.0,
+    "gap_mm": 4.500000000000001,
+    "front_cavity_litres": 0.08641422842811286,
+    "rear_litres": 3.261621599149906,
+    "estimated_geometry": [
+      "cone rim (from Sd)",
+      "motor height",
+      "motor diameter",
+      "top plate position",
+      "cone profile and neck position",
+      "spider diameter",
+      "basket arm envelope"
+    ]
+  },
+  "tweeter": {
+    "driver": "B&C DE111",
+    "kind": "compression",
+    "body_diameter_mm": 60.0,
+    "hf_horn_mouth_mm": 178.02837306228352,
+    "price_usd": 105.25
+  },
+  "crossover_hz": [
+    250.0,
+    2500.0
+  ],
+  "prices_usd": {
+    "kick": 197.1,
+    "mid": 112.95,
+    "hf": 105.25
+  },
+  "selection": {
+    "tweeter": "bc-de111",
+    "mid": {
+      "driver_id": "beyma-8mi100",
+      "geometry": {
+        "law": "os",
+        "compression": 2.0,
+        "mouth_diameter": 0.28,
+        "length": 0.24,
+        "hf_mouth_ratio": 2.4,
+        "gap_override": 0.0045000000000000005,
+        "hf_law": "os",
+        "hf_half_angle_deg": 25.0,
+        "hf_mount": "bullet",
+        "plug_cover": 0.0
+      }
+    },
+    "kick": {
+      "driver_id": "bc-12cl76",
+      "geometry": {
+        "compression": 1.6,
+        "law": "hypex",
+        "half_angle_deg": 3.0,
+        "protrusion": 0.0,
+        "chamber_depth": 0.042,
+        "wedge_chamber": false,
+        "throat_width": 0.406
+      }
+    },
+    "crossover_hz": [
+      250.0,
+      2500.0
+    ],
+    "scores": {
+      "system": 9.048609409137839,
+      "score": 7.098609409137838,
+      "rms_on_db": 2.4762628714416905,
+      "spread_30_db": 5.380757298455185,
+      "f3_hz": 128.6393577693711,
+      "sensitivity_db": 103.0005853237434
+    },
+    "rule": "lowest system score; among designs within 0.25 of it, the cheapest"
+  }
+}

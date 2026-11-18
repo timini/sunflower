@@ -1,12 +1,12 @@
 {
   "gain_db": {
-    "low": -1.51,
-    "mid": -2.49,
-    "tweeter": 0.0
+    "low": 0.0,
+    "mid": -2.44,
+    "tweeter": -0.11
   },
   "eq": {
-    "mid_high_shelf_hz": 1925.0,
-    "mid_high_shelf_db": 7.5
+    "mid_high_shelf_hz": 2200.0,
+    "mid_high_shelf_db": 12.0
   },
   "polarity": {
     "low": 1,
@@ -15,45 +15,45 @@
   },
   "delay_ms": {
     "low": 0.0,
-    "mid": 1.42,
-    "tweeter": 0.42
+    "mid": 1.44,
+    "tweeter": 0.44
   },
   "crossover": {
     "type": "Linkwitz-Riley 24 dB/oct",
     "low_mid_hz": 250.0,
-    "mid_high_hz": 3500.0
+    "mid_high_hz": 4000.0
   },
   "section_levels_db": {
-    "low": 106.43806842614923,
-    "mid": 107.4168330786926,
-    "tweeter": 104.93113093838967
+    "low": 104.58153322912848,
+    "mid": 107.0225917773318,
+    "tweeter": 104.69010385202678
   },
-  "target_db": 104.93113093838967,
-  "rms_deviation_100_16k_db": 1.7395192757023619,
+  "target_db": 104.58153322912848,
+  "rms_deviation_100_16k_db": 2.070103921324089,
   "no_sub_shelf": {
     "type": "2nd-order low shelf +6 dB at the low section's -3 dB point, LR4 high-pass 30 Hz",
-    "shelf_hz": 134.1227501892642,
+    "shelf_hz": 145.19070108295406,
     "f_minus6_hz": 79.37664433572425,
-    "max_excursion_mm": 15.096996481153791,
+    "max_excursion_mm": 12.44099658289665,
     "xmax_mm": 6.5,
     "rated_power_w": 450,
-    "safe_power_w": 83.41768235703184
+    "safe_power_w": 122.83691066931303
   },
   "kick_low_end": {
     "single_free_db": {
-      "f_minus3_hz": 134.6033809009352,
-      "f_minus6_hz": 106.46115398704521,
-      "level_150_250_db": 106.95912696479107
+      "f_minus3_hz": 146.11965834299883,
+      "f_minus6_hz": 105.21991083954002,
+      "level_150_250_db": 105.76036302284591
     },
     "single_half_space_db": {
-      "f_minus3_hz": 122.54907817872727,
+      "f_minus3_hz": 123.9947475611544,
       "f_minus6_hz": 95.79702228225322,
-      "level_150_250_db": 108.25675467395372
+      "level_150_250_db": 107.50094493800367
     },
     "cluster9_free_db": {
-      "f_minus3_hz": 153.13751939519625,
-      "f_minus6_hz": 114.22222324467309,
-      "level_150_250_db": 125.49988956800259
+      "f_minus3_hz": 147.8433817636605,
+      "f_minus6_hz": 103.99313949225049,
+      "level_150_250_db": 124.12192153585521
     }
   }
 }

@@ -16,7 +16,16 @@ from sunflower.design_tools import make_kick, make_mid
 from sunflower.geometry import load_drivers  # noqa: F401  (re-exported for plots)
 
 ROOT = Path(__file__).resolve().parents[2]
-SELECTED = json.loads((ROOT / "results/optimise/selected.json").read_text())
+import os
+
+# SUNFLOWER_VARIANT=15B (for example) loads results/range/15B/selected.json instead of the flagship selection.
+VARIANT = os.environ.get("SUNFLOWER_VARIANT", "")
+SELECTION_FILE = ROOT / (f"results/range/{VARIANT}/selected.json" if VARIANT else "results/optimise/selected.json")
+SELECTED = json.loads(SELECTION_FILE.read_text())
+# Output folders: the flagship uses the top-level ones, a variant gets its own
+RESULTS = ROOT / (f"results/range/{VARIANT}" if VARIANT else "results")
+CAD_DIR = ROOT / (f"cad/range/{VARIANT}" if VARIANT else "cad")
+IMG = ROOT / (f"docs/img/range/{VARIANT}" if VARIANT else "docs/img")
 
 SUPPORT_ROD_DIAMETER = 0.020
 SUPPORT_ROD_COUNT = 4

@@ -143,7 +143,7 @@ class ConeDriver:
         return cls(rec["driver_id"], f"{rec['manufacturer']} {rec['model_name']}", rec, sd=sd,
                    xmax=p.get("xmax_m") or 0.005, frame_od=frame_od, flange_t=flange_t, depth=depth,
                    vc_r=vc_r, rim_r=rim_r, rim_z=0.008 if kick else 0.005, neck_z=neck_z, top_plate_z=top,
-                   motor_r=motor_r, motor_h=motor_h, spider_r=min(2.4 * vc_r, 0.12), estimated=tuple(est))
+                   motor_r=motor_r, motor_h=motor_h, spider_r=min(2.4 * vc_r, 0.12, 0.70 * rim_r), estimated=tuple(est))
 
     @property
     def xmech(self):
@@ -209,6 +209,10 @@ class MidHorn:
     lip_radius: float = 0.015         # rolled lip at the mid mouth
     felt_loss: float = 0.3            # felt on the bullet underside damps the centre cavity (estimate; measure it)
     gap_override: float = 0.0         # cone to plug gap, m; 0 = 1.15 Xmax + 3 mm
+    hf_mount: str = "bullet"          # "throat": HF unit sits in a big plug at the mid throat and fires down the mid horn
+    plug_cover: float = 0.0           # with hf_mount "throat": plug radius as a fraction of the cone rim radius
+    hf_law: str = "exponential"       # "os": constant-directivity HF waveguide of hf_half_angle_deg
+    hf_half_angle_deg: float = 30.0
 
     # ------------------------------------------------ cone and front cavity
     @property
@@ -229,12 +233,29 @@ class MidHorn:
         return self.hf_body_diameter / 2 + self.sleeve
 
     @property
+    def is_bullet(self):
+        """A bullet tweeter carries its own phase plug, so it sits at the mid mouth on a slim nose."""
+        return self.hf_kind == "bullet"
+
+    @property
+    def throat_mounted(self):
+        return self.hf_mount == "throat"
+
+    @property
+    def s_face(self):
+        """Throat mount: the HF face, far enough forward that the HF body clears the cone behind it."""
+        r = self.hf_body_diameter / 2 + self.sleeve
+        return max(0.010, float(self.s_cone(r)) + self.gap + self.hf_depth + 0.003)
+
+    @property
     def s_exit(self):
-        return self.hf_depth + 0.005
+        if self.throat_mounted:
+            return self.s_face
+        return self.s_tip if self.is_bullet else self.hf_depth + 0.005
 
     @property
     def s_tip(self):
-        return self.length - 0.010
+        return self.s_face + 0.012 if self.throat_mounted else self.length - 0.010
 
     @property
     def hf_len(self):
@@ -242,32 +263,80 @@ class MidHorn:
 
     @property
     def hf_mouth_radius(self):
-        return self.hf_exit_diameter / 2 * self.hf_mouth_ratio
+        return self.hf_horn_radius(self.s_tip)
 
     @property
     def tip_radius(self):
-        return self.hf_mouth_radius + self.hf_wall
+        return self.plug_radius if self.is_bullet else self.hf_mouth_radius + self.hf_wall
+
+    @property
+    def nose_length(self):
+        return 0.3 * math.sqrt(self.drv.sd / math.pi)
+
+    @property
+    def _ogive_end(self):
+        """Radius the holding taper heads for at the HF mouth: the old exponential tip, or the bare HF exit."""
+        if self.hf_law == "os":
+            return self.hf_exit_diameter / 2 + self.hf_wall
+        return self.tip_radius
+
+    NOSE = 0.016                                  # slim nose of a bullet-tweeter holder: a cable conduit
 
     @property
     def plug_r0(self):
         """Bullet radius at the throat plane, so the taper still clears the HF body at its front."""
+        if self.throat_mounted:
+            return max(self.plug_cover * self.drv.rim_r, self.plug_radius)
+        if self.is_bullet:
+            return self.NOSE
         u = self.s_exit / self.s_tip
         c = math.cos(math.pi * u / 2)
-        return self.tip_radius + (self.plug_radius + 0.001 - self.tip_radius) / c
+        e = self._ogive_end
+        return e + (self.plug_radius + 0.001 - e) / c
 
     def plug(self, s):
-        """Bullet outer radius at s >= 0: one smooth curve from the throat plane to the HF mouth."""
+        """Bullet outer radius at s >= 0. A smooth taper holds the HF body; with an OS HF waveguide the bullet
+        then follows the waveguide's outside, joined to the taper by a smooth maximum (no corner)."""
         if s < 0 or s > self.s_tip:
             return 0.0
-        return self.tip_radius + (self.plug_r0 - self.tip_radius) * math.cos(math.pi * s / (2 * self.s_tip))
+        if self.throat_mounted:                # big plug: full radius, rounds in to the HF body by its face,
+            r0, rb = self.plug_r0, self.plug_radius        # then a short taper in front of the face
+            rf = min(self.hf_mouth_radius + self.hf_wall, rb)
+            s1 = max(self.s_face - 0.03, 0.0)
+            if s <= s1:
+                return r0
+            if s <= self.s_face:
+                t = (s - s1) / max(self.s_face - s1, 1e-6)
+                return rb + (r0 - rb) * 0.5 * (1 + math.cos(math.pi * t))
+            t = (s - self.s_face) / max(self.s_tip - self.s_face, 1e-6)
+            return rf + (rb - rf) * 0.5 * (1 + math.cos(math.pi * min(t, 1.0)))
+        if self.is_bullet:                     # slim nose rising smoothly to hold the tweeter body at the mouth
+            s1 = self.s_tip - self.hf_depth    # back of the tweeter body
+            s0 = max(s1 - 0.06, 0.0)
+            if s >= s1:
+                return self.plug_radius
+            t = min(max((s - s0) / (s1 - s0), 0.0), 1.0)
+            return self.NOSE + (self.plug_radius - self.NOSE) * 0.5 * (1 - math.cos(math.pi * t))
+        e = self._ogive_end
+        a = e + (self.plug_r0 - e) * math.cos(math.pi * s / (2 * self.s_tip))
+        if self.hf_law != "os" or s < self.s_exit:
+            return a
+        b = self.hf_horn_radius(s) + self.hf_wall
+        k = 0.004                                   # blend width, m
+        return k * math.log(math.exp(a / k) + math.exp(b / k))
 
     def nose(self, r):
         """Underside of the bullet nose (r < plug_r0): the cone surface plus the gap."""
         return self.s_cone(r) + self.gap
 
     def hf_horn_radius(self, s):
-        t = (s - self.s_exit) / self.hf_len
-        return self.hf_exit_diameter / 2 * self.hf_mouth_ratio ** min(max(t, 0.0), 1.0)
+        if self.throat_mounted:                # the HF face: a short barrel, the mid horn is its waveguide
+            return self.hf_exit_diameter / 2
+        x = min(max(s - self.s_exit, 0.0), self.hf_len)
+        r0 = self.hf_exit_diameter / 2
+        if self.hf_law == "os":
+            return math.sqrt(r0 * r0 + (x * math.tan(math.radians(self.hf_half_angle_deg))) ** 2)
+        return r0 * self.hf_mouth_ratio ** (x / self.hf_len)
 
     # ------------------------------------------------ open area
     @property
@@ -337,11 +406,15 @@ class MidHorn:
             p.append("mid cone smaller than 1.6 x the plug")
         if self.outer_throat_radius > d.rim_r - 0.004:
             p.append("throat annulus wider than the cone")
-        if self.hf_len < 0.05:
-            p.append("HF horn shorter than 50 mm")
-        ss = np.linspace(self.s_exit, self.s_tip, 50)
-        if min(self.plug(s) - self.hf_horn_radius(s) for s in ss) < self.hf_wall - 1e-4:
-            p.append("bullet wall thinner than the HF horn wall")
+        if self.throat_mounted:
+            if self.plug_r0 < self.plug_radius - 1e-9:
+                p.append("plug too small to hold the HF unit")
+        elif not self.is_bullet:
+            if self.hf_len < 0.05:
+                p.append("HF horn shorter than 50 mm")
+            ss = np.linspace(self.s_exit, self.s_tip, 50)
+            if min(self.plug(s) - self.hf_horn_radius(s) for s in ss) < self.hf_wall - 1e-4:
+                p.append("bullet wall thinner than the HF horn wall")
         if self.half_angle_deg > 40:
             p.append("mid flare above 40 degrees")
         if not 1.3 <= self.compression <= 4:
@@ -368,6 +441,7 @@ class Kick:
     arm_offset: float = 0.0           # basket arm surface above the cone; 0 = xmech + 10 mm
     arm_thickness: float = 0.006
     wedge_chamber: bool = False       # hollow top and bottom wedges vented into the sealed chamber
+    shell: float = 0.006              # centre body printed as a ribbed shell this thick; its inside is the mid's rear chamber
 
     # ------------------------------------------------ positions along z
     @property
@@ -543,6 +617,19 @@ class Kick:
     def area(self, z):
         return self.wall_area(z) - math.pi * self.body_radius(z) ** 2
 
+    # ------------------------------------------------ hollow centre body
+    @property
+    def mid_rear_litres(self):
+        """Sealed air inside the shell body, from the kick motor enclosure's front wall to the mouth, outside the
+        mid horn wall, less the mid driver. This is the mid's rear chamber."""
+        m, d = self.mid, self.mid.drv
+        zz = np.linspace(self.motor_front, self.mouth_z, 300)
+        inner = np.array([m.outer(z - self.mid_throat_z) if z >= self.mid_throat_z else 0.0 for z in zz])
+        outer = np.array([max(self.body_radius(z) if z >= self.turn_z else 0.0, self.envelope(z)) for z in zz]) - self.shell
+        v = float(np.trapezoid(np.pi * np.clip(outer**2 - inner**2, 0, None), zz))
+        displaced = math.pi * d.motor_r**2 * d.motor_h + 0.25 * math.pi * (d.frame_od / 2) ** 2 * (d.depth - d.motor_h)
+        return max(v - displaced, 0.0) * 1000
+
     # ------------------------------------------------ chamber
     @property
     def chamber_litres(self):
@@ -561,7 +648,10 @@ class Kick:
         p = []
         d = self.drv
         if self.throat_width < d.frame_od + 0.04:
-            p.append("throat too narrow for the 15 inch flange")
+            p.append("throat too narrow for the kick flange")
+        if self.channel_start > d.rim_r - 0.02:
+            p.append("motor enclosure covers the cone: no channel left")
+            return p
         zz = np.linspace(self.turn_z, self.mouth_z, 300)
         rb = np.array([self.body_radius(z) for z in zz])
         env = np.array([self.envelope(z) for z in zz])
@@ -592,6 +682,7 @@ class Kick:
                     wedge_chamber=self.wedge_chamber,
                     depth_m=self.depth, overall_depth_m=self.overall_depth, splay_deg=self.splay_deg,
                     chamber_litres=self.chamber_litres, trapped_litres=self.trapped_litres,
+                    mid_rear_litres=self.mid_rear_litres,
                     turn_z_m=self.turn_z, max_body_radius_m=max(self.body_radius(z) for z in
                                                                  np.linspace(self.turn_z, self.mouth_z, 200)))
 

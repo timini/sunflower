@@ -33,6 +33,7 @@ from sunflower.acoustics import C, Driver, baffle_step, couple, far_field, group
 from sunflower.geometry import Kick, MidHorn
 from sunflower.models import kick_network, mid_network
 
+from sunflower import design as _D
 ROOT = Path(__file__).resolve().parents[2]
 F = np.geomspace(20, 30000, 1200)
 ANGLES = (0.0, 15.0, 30.0)
@@ -90,7 +91,7 @@ def low_section(cfg: Config, f=F, theta=0.0):
     return p * _bs(cfg, f), s
 
 
-MID_FEM = ROOT / "results/fem/mid-vs-network.csv"
+MID_FEM = _D.RESULTS / "fem/mid-vs-network.csv"
 
 
 def mid_fem_correction(f, theta):
@@ -112,7 +113,7 @@ def mid_fem_correction(f, theta):
 def mid_section(cfg: Config, f=F, theta=0.0):
     m = cfg.mid
     net, r = _solved("mid", cfg, f)
-    rear = m.rear_volume_litres
+    rear = cfg.kick.mid_rear_litres if cfg.kick.shell > 0 else m.rear_volume_litres   # hollow body = mid rear chamber
     s = couple(cfg.mid_driver, r, rear_litres=rear)
     p = far_field(f, s["u_mouth"], m.mouth_diameter / 2, theta, wavefront_radius=m.wavefront_radius) * _bs(cfg, f)
     if cfg.use_mid_fem and MID_FEM.exists():
@@ -120,7 +121,7 @@ def mid_section(cfg: Config, f=F, theta=0.0):
     return p, s
 
 
-HF_FEM = ROOT / "results/fem/hf-in-mid.csv"
+HF_FEM = _D.RESULTS / "fem/hf-in-mid.csv"
 
 
 def _smooth_log(f, y, octave=1 / 6):  # noqa: D103
@@ -137,7 +138,7 @@ def tweeter_section(cfg: Config, f=F, theta=0.0, use_fem=True):
     horn (relative to a free piston of the same mouth, smoothed to 1/6 octave) when that FEM exists for this
     design. Without it: a piston of the HF horn mouth, or the datasheet's own angles for bullets."""
     mr = cfg.mid.hf_mouth_radius if cfg.tw.kind == "compression" else None
-    if not (use_fem and HF_FEM.exists() and getattr(cfg, "use_hf_fem", False)):
+    if cfg.tw.kind == "bullet" or not (use_fem and HF_FEM.exists() and getattr(cfg, "use_hf_fem", False)):
         return TW.response(cfg.tweeter, f, theta, mouth_radius=mr) * _bs(cfg, f), None
     d = pd.read_csv(HF_FEM)
     col = f"fem_rel_{int(theta)}deg_db"
@@ -352,5 +353,5 @@ def run(out: Path):
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("--output", type=Path, default=ROOT / "results/planewave")
+    ap.add_argument("--output", type=Path, default=_D.RESULTS / "planewave")
     run(ap.parse_args().output)

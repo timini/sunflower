@@ -1,0 +1,43 @@
+{
+  "tweeter": "bc-de111",
+  "mid": {
+    "driver_id": "beyma-8mi100",
+    "geometry": {
+      "law": "os",
+      "compression": 2.0,
+      "mouth_diameter": 0.28,
+      "length": 0.24,
+      "hf_mouth_ratio": 2.4,
+      "gap_override": 0.0045000000000000005,
+      "hf_law": "os",
+      "hf_half_angle_deg": 25.0,
+      "hf_mount": "bullet",
+      "plug_cover": 0.0
+    }
+  },
+  "kick": {
+    "driver_id": "bc-12cl76",
+    "geometry": {
+      "compression": 1.6,
+      "law": "hypex",
+      "half_angle_deg": 3.0,
+      "protrusion": 0.0,
+      "chamber_depth": 0.042,
+      "wedge_chamber": false,
+      "throat_width": 0.406
+    }
+  },
+  "crossover_hz": [
+    250.0,
+    2500.0
+  ],
+  "scores": {
+    "system": 9.048609409137839,
+    "score": 7.098609409137838,
+    "rms_on_db": 2.4762628714416905,
+    "spread_30_db": 5.380757298455185,
+    "f3_hz": 128.6393577693711,
+    "sensitivity_db": 103.0005853237434
+  },
+  "rule": "lowest system score; among designs within 0.25 of it, the cheapest"
+}

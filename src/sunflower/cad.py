@@ -17,6 +17,12 @@ is the horn law. The shroud over the reversed kick cone is sized the same way
 from cylinder slices through the cone and the basket. The assembled model is
 then sliced again and the plugs corrected until each slab matches its law.
 
+The kick centre body is a printed shell (Kick.shell thick) with radial rib frames every 45 degrees and two ring
+ribs. A sealed wall at Kick.motor_front divides it: behind, the cover over the kick motor; in front, the mid's rear
+chamber, which is the whole shell interior outside the mid horn wall. The mid driver screws to a mounting ring
+inside it. With a bullet tweeter (MidHorn.is_bullet) the bullet is a slim holder for the tweeter body at the mid
+mouth instead of a bullet with an HF horn bore.
+
 Outputs:
   cad/step/<part>.step, cad/stl/<part>.stl   one file per part, in place
   cad/print/<part>-<n>[-s<k>].stl             printable pieces (z slab n, sector k), each fits a 250 mm bed
@@ -47,7 +53,7 @@ import numpy as np
 import trimesh
 from scipy.interpolate import PchipInterpolator
 from scipy.optimize import brentq
-from shapely.geometry import Point
+from shapely.geometry import Point, Polygon
 from shapely.ops import unary_union
 
 from sunflower import design as D
@@ -55,8 +61,8 @@ from sunflower import slicer as SL
 from sunflower.geometry import array_layout
 
 ROOT = D.ROOT
-OUT = ROOT / "cad"
-RES = ROOT / "results" / "cad"
+OUT = D.CAD_DIR
+RES = D.RESULTS / "cad"
 TMP = OUT / ".tmp"
 MM = 1000.0
 BED = 250.0          # printer bed, mm
@@ -113,18 +119,45 @@ R_STANDOFF = KD.frame_od / 2 * MM + 12             # just outside the kick flang
 SOCKET = 25.0                                      # standoff depth into the shroud
 VANE_T, VANE_CHORD = 6.0, 60.0
 Z_VANE = Z_M - 100.0
-# Bullet vanes: in front of the HF unit, where the bullet has room to slim down for them. At the HF body
-# (s = 5 to 51 mm) the bullet cannot give up their area and still hold the body cylinder.
-BV_T, BV_S0, BV_S1 = 4.0, 0.058, 0.090             # thickness mm, s range m
+# Bullet vanes. With a compression driver they sit just in front of the HF unit, before the OS waveguide opens
+# up: at the HF body the bullet cannot give up their area and still hold the body cylinder. With a bullet tweeter
+# they sit on the slim nose. Their root follows the bullet and their tip follows the mid horn wall.
+BV_T = 4.0                                         # thickness, mm
+BV_SLOT = 2.0                                      # depth of the vane root slot in the bullet, mm
+if M.throat_mounted:                               # vanes from the big throat plug to the mid wall
+    BV_S0 = 0.004
+    BV_S1 = max(BV_S0 + 0.012, min(BV_S0 + 0.032, M.s_face - 0.008))
+elif M.is_bullet:
+    BV_S0, BV_S1 = 0.058, 0.090
+else:
+    BV_S0 = M.s_exit + 0.008
+    BV_S1 = BV_S0 + 0.032
 BV_AZ = [math.radians(45 + 120 * k) for k in range(3)]
 S_HF_CABLE = 0.5 * (BV_S0 + BV_S1)
-R_CABLE_B = round(0.5 * (M.plug_radius + M.hf_horn_radius(S_HF_CABLE) + M.hf_wall) * MM, 1)   # HF cable bore in the
-                                                   # bullet wall, midway between the HF horn wall and the bullet;
-                                                   # runs back to the HF cavity
-assert BV_S0 > M.s_exit + 0.005, "bullet vanes must sit in front of the HF unit"
-R_HF_CH = R_POD + 20                               # HF cable channel radius in the body
-Z_CAB = Z_MOTOR + 30                               # duct channel enters the pod here
+R_HB = TW.body_diameter / 2 * MM + 0.3            # pocket for the HF body cylinder
+if M.throat_mounted:
+    R_CABLE_B = R_HB + 2.5                         # HF cable bore beside the body pocket, from the terminals to a vane
+    S_CUP = M.s_face - TW.body_depth
+elif M.is_bullet:
+    R_CABLE_B = 0.0                                # HF cable on the axis of the nose, from the vane to the tweeter cup
+    S_CUP = M.s_tip - TW.body_depth                # back of the tweeter body (its cup floor)
+else:
+    R_CABLE_B = round((M.hf_horn_radius(S_HF_CABLE) + M.hf_wall + 0.002) * MM, 1)  # HF cable bore in the bullet wall,
+    # just outside the HF horn wall so the bullet can still slim down for the vanes; runs back to the HF cavity
+    assert BV_S0 > M.s_exit + 0.005, "bullet vanes must sit in front of the HF unit"
+R_CONDUIT = 2.5                                    # HF cable conduit radius in a bullet-tweeter nose, mm
+R_TERM = 10.0                                      # terminal pocket behind a bullet tweeter's body, mm
 SPIGOT_H = 6.0
+
+# hollow centre body (mm)
+T_SH = K.shell * MM                                # printed shell
+T_MW = M.wall * MM                                 # mid horn wall
+RIB_T = 6.0                                        # radial rib thickness
+RIB_W = 12.0                                       # radial rib frame width along the walls of each void
+RING_T, RING_D = 6.0, 16.0                         # ring ribs on the inside of the outer skin: thickness, depth
+FLANGE_H, FLANGE_D = 8.0, 16.0                     # joint flange each side of a joint: height, depth from the skin
+R_MOUNT = MD.frame_od / 2 * MM + 10                # mid driver mounting ring, outside radius
+H_MOUNT = 12.0                                     # mid driver mounting ring, thickness in front of the flange face
 WEDGE_RIBS = (-0.6, 0.0, 0.6)                      # rib positions as a fraction of the baffle half-width
 
 DZ_SOLVE = 2.5                                     # plug solve station spacing, mm
@@ -353,11 +386,19 @@ def mesh_write(path, size=12.0, curv=120, smin=0.5):
 
 def save(name, material, category, explode=(0, 0, 0), group="", note="", printable=False, qty=1, curv=120,
          smin=0.5, size=12.0):
+    occ.synchronize()
+    vols = gmsh.model.getEntities(3)
+    if len(vols) > 1:                             # slivers left by cuts along a coincident face
+        stray = [v for v in vols if occ.getMass(*v) < 50.0]
+        if stray and len(stray) < len(vols):
+            occ.remove(stray, recursive=True)
     clean()
     gmsh.model.removePhysicalGroups()
     quiet_write(OUT / "step" / f"{name}.step")
     vol = sum(occ.getMass(*d) for d in gmsh.model.getEntities(3))
     xyz = mesh_write(OUT / "stl" / f"{name}.stl", size=size, curv=curv, smin=smin)
+    if category == "print":
+        vol = mesh_volume(OUT / "stl" / f"{name}.stl")
     bb = [*xyz.min(0), *xyz.max(0)]
     rec = dict(name=name, material=material, category=category, qty=qty, explode_mm=[float(v) for v in explode],
                group=group, volume_cm3=round(vol / 1000, 1), bbox_mm=[round(float(v), 1) for v in bb], note=note)
@@ -372,6 +413,29 @@ def save(name, material, category, explode=(0, 0, 0), group="", note="", printab
     print(f"  {name}: {rec['volume_cm3']} cm3" + (f", {len(rec['print_files'])} print pieces"
                                                   if rec.get("print_files") else ""), flush=True)
     return rec
+
+
+def mesh_volume(path, dz=1.0):
+    """Volume (mm3) of a part from its mesh: plane sections every dz, nested loops by the even-odd rule. OCC's own
+    mass integration overstates revolved spline solids by a few per cent, and gmsh does not orient STL normals."""
+    m = trimesh.load_mesh(path, process=True)
+    z0, z1 = m.bounds[:, 2]
+    hs = np.arange(z0 + dz / 2, z1, dz)
+    secs = m.section_multiplane(plane_origin=[0, 0, 0], plane_normal=[0, 0, 1], heights=hs)
+    total = 0.0
+    for sec in secs:
+        if sec is None:
+            continue
+        region = None
+        for loop in sec.discrete:
+            if len(loop) < 4:
+                continue
+            q = Polygon(loop).buffer(0)
+            if q.is_empty:
+                continue
+            region = q if region is None else region.symmetric_difference(q)
+        total += region.area if region is not None else 0.0
+    return float(total * dz)
 
 
 def _fits(xyz):
@@ -668,179 +732,405 @@ def body_outer(z):
     return body_r(min(z, Z_M))
 
 
-def body_inner(z):
-    """Largest cavity or bore radius at z (mm)."""
-    if z < j1():
-        return R_CS
-    if z < Z_MOTOR - WALL_B:
-        return R_MC
-    if z < Z_MOTOR:
-        return 0.0
-    if z <= Z_MT:
-        return R_POD
-    return M.radius(min(s_of(z), M.length)) * MM
-
-
 def ring_z(r):
     """Underside of the lead-in ring over the outer mid cone (r in m), absolute z in mm."""
     return zs(float(M.s_cone(r)) + M.gap)
 
 
-def body_profile():
-    d, m = KD, M
+# The centre body is a printed shell. In the (r, z) half plane it is built from shapely regions:
+#   Env    everything inside the body's outside surface and outside its bores (mid horn, kick motor cavity,
+#          the cone air under the shroud) and the mid driver bay;
+#   walls  the skin (T_SH thick on the outside, T_MW on the mid horn bore), the sealed wall at Kick.motor_front,
+#          the lead-in and mounting ring of the mid driver, the joint flanges and the ring ribs;
+#   voids  Env less the walls: the sealed space round the kick motor (behind the wall) and the mid's rear chamber
+#          (in front of it, joined to the driver bay).
+# The solid is revolved. The radial ribs are frames RIB_W wide along the walls of each void (with struts across the
+# rear chamber at the mounting ring and the joints), cut by thin slabs through the axis.
+def body_curves():
+    """Outside of the centre body, mid horn bore and closure, as (r, z) mm polylines."""
+    m = M
     J1 = j1()
-    segs = []
-    rr = np.linspace(R_CS, d.rim_r * MM, 40)
-    segs.append(("spline", [(r, shroud_z(r)) for r in rr]))
-    zr = shroud_z(d.rim_r * MM)
-    lip = [(d.rim_r * MM, zr)]
+    rim = KD.rim_r * MM
+    o = [(R_MC, Z_MOTOR - WALL_B), (R_MC, J1), (R_CS, J1)]
+    o += [(r, shroud_z(r)) for r in np.linspace(R_CS, rim, 40)]
+    zr = shroud_z(rim)
     if Z_TURN - zr > 0.1:
-        lip.append((d.rim_r * MM, Z_TURN))
+        o.append((rim, Z_TURN))
     elif zr > Z_TURN + 0.1:
         warnings.append(f"shroud at the rim ({zr:.1f} mm) is above the turn plane ({Z_TURN:.1f} mm)")
-    lip.append((body_outer(Z_TURN), Z_TURN))
-    segs.append(("line", lip))
+    o.append((body_outer(Z_TURN), Z_TURN))
     rho, arc = mouth_round()
-    zz = np.r_[P["body"].x[P["body"].x < arc[0][1] - 0.3]]
-    segs.append(("spline", [(body_r(z), z) for z in zz] + [arc[0]]))
-    segs.append(("spline", arc))
+    zz = P["body"].x[(P["body"].x > Z_TURN + 0.3) & (P["body"].x < arc[0][1] - 0.3)]
+    body = [(body_outer(Z_TURN), Z_TURN)] + [(body_r(z), z) for z in zz] + list(arc)
+    o += body[1:]
     s_w = s_of(arc[-1][1])
     sb = np.r_[np.arange(math.floor(s_w * MM / 2.5) * 2.5 / MM, 0, -0.0025), 0.0]
     sb = sb[sb < s_w - 2e-4]
-    segs.append(("spline", [arc[-1]] + [(m.radius(s) * MM, zs(s)) for s in sb]))
+    bore = [arc[-1]] + [(m.radius(s) * MM, zs(s)) for s in sb]
     r_ot = m.radius(0.0)
     md_rim = MD.rim_r
-    rr = np.linspace(r_ot, md_rim, 20)
-    segs.append(("line", [(r_ot * MM, Z_MT), (r_ot * MM, ring_z(r_ot))]))
-    segs.append(("spline", [(r * MM, ring_z(r)) for r in rr]))
     r_fl = MD.frame_od / 2 * MM - 12
     z_sur = Z_MF + M.gap * MM          # over the surround: the cone gap above a surround flush with the flange face
-    segs.append(("line", [(md_rim * MM, ring_z(md_rim)), (md_rim * MM + 2, z_sur), (r_fl, z_sur), (r_fl, Z_MF),
-                          (R_POD, Z_MF), (R_POD, Z_MOTOR), (0, Z_MOTOR), (0, Z_MOTOR - WALL_B),
-                          (R_MC, Z_MOTOR - WALL_B), (R_MC, J1), (R_CS, J1)]))
-    return segs
+    lead = [(r_ot * MM, ring_z(r_ot))] + [(r * MM, ring_z(r)) for r in np.linspace(r_ot, md_rim, 20)][1:] + \
+           [(md_rim * MM + 2, z_sur), (r_fl, z_sur), (r_fl, Z_MF)]
+    closure = lead + [(R_POD, Z_MF), (R_POD, Z_MOTOR), (0.0, Z_MOTOR), (0.0, Z_MOTOR - WALL_B)]
+    return dict(outer=_dedupe(o), body=_dedupe(body), bore=_dedupe(bore), lead=lead, closure=closure, rho=rho)
+
+
+def mid_joints():
+    """Joints in the mid rear chamber: each printed module at most SLAB tall, clear of the vanes, the mounting ring
+    and the HF cable boss. Glued flanged joints."""
+    a, b = Z_MOTOR, Z_M + 1
+    n = max(1, math.ceil((b - a) / SLAB))
+    bad = [(Z_VANE - VANE_CHORD / 2 - 15, Z_VANE + VANE_CHORD / 2 + 15),
+           (zs(BV_S0) - 15, zs(BV_S1) + 15), (Z_MF - 10, Z_MF + H_MOUNT + 12), (b - 40, b + 1)]
+    out = []
+    prev = a
+    for k in range(1, n):
+        target = a + (b - a) * k / n
+        best = None
+        for z in np.arange(prev + 30, b - 30, 1.0):
+            if any(lo <= z <= hi for lo, hi in bad):
+                continue
+            if z - prev > SLAB or (b - z) > SLAB * (n - k):
+                continue
+            if best is None or abs(z - target) < abs(best - target):
+                best = float(z)
+        if best is None:
+            warnings.append("no mid chamber joint clear of the vanes; using the midpoint")
+            best = target
+        out.append(best)
+        prev = best
+    return out
+
+
+def ring_rib_z(joints):
+    """Two ring ribs on the inside of the outer skin of the rear chamber, in the longest spans between joints."""
+    lo, hi = Z_MOTOR + 20, Z_M - 50
+    edges = [lo] + [j for j in joints if lo < j < hi] + [hi]
+    spans = sorted(((edges[i + 1] - edges[i], i) for i in range(len(edges) - 1)), reverse=True)
+    out = []
+    if len(spans) == 1:
+        out = [lo + (hi - lo) / 3, lo + 2 * (hi - lo) / 3]
+    else:
+        for _, i in spans[:2]:
+            out.append(0.5 * (edges[i] + edges[i + 1]))
+    return sorted(out)
+
+
+def body_regions():
+    """Shapely regions of the hollow centre body in the (r, z) half plane, mm."""
+    from shapely.geometry import LineString, Polygon, box
+    c = body_curves()
+    big = 5000.0
+    env = Polygon(c["outer"] + c["bore"][1:] + c["closure"]).buffer(0)
+    body_line = LineString(c["body"])
+    skin = env.intersection(LineString(c["outer"]).buffer(T_SH, cap_style="flat", join_style="mitre"))
+    bore = env.intersection(LineString(c["bore"]).buffer(T_MW, cap_style="flat", join_style="mitre"))
+    plate = env.intersection(box(0, Z_MOTOR - T_SH, big, Z_MOTOR))
+    sH = (Z_MF + H_MOUNT - Z_MT) / MM
+    ss = np.linspace(max(sH, 0.0), 0.0, 6)
+    ring_pts = [(M.radius(0.0) * MM, Z_MT)] + c["lead"] + [(R_MOUNT, Z_MF), (R_MOUNT, Z_MF + H_MOUNT)] + \
+               [(M.outer(s) * MM, zs(s)) for s in ss]
+    ring_ = env.intersection(Polygon(_dedupe(ring_pts)).buffer(0))
+    joints = mid_joints()
+    flanges = [env.intersection(box(0, Z_MOTOR, big, Z_MOTOR + FLANGE_H)).intersection(
+        body_line.buffer(T_SH + FLANGE_D))]
+    for zj in joints:
+        band = env.intersection(box(0, zj - FLANGE_H, big, zj + FLANGE_H))
+        flanges.append(band.intersection(unary_union([body_line.buffer(T_SH + FLANGE_D),
+                                                      LineString(c["bore"]).buffer(T_MW + FLANGE_D)])))
+    rings = [env.intersection(box(0, zr - RING_T / 2, big, zr + RING_T / 2)).intersection(
+        body_line.buffer(T_SH + RING_D)) for zr in ring_rib_z(joints)]
+    walls = unary_union([skin, bore, plate, ring_] + flanges + rings)
+    voids = env.difference(walls)
+    voids = [p for p in getattr(voids, "geoms", [voids]) if p.area > 50.0]
+    solid = env.difference(unary_union(voids)).buffer(0)
+    motor = [p for p in voids if p.centroid.y < Z_MOTOR]
+    chamber = [p for p in voids if p.centroid.y >= Z_MOTOR]
+    ch = unary_union(chamber)
+    keep_out = box(0, Z_MF - MD.depth * MM - 6, MD.frame_od / 2 * MM + 6, Z_MF + 0.5)
+    struts = unary_union([box(R_MOUNT - 1, Z_MF, big, Z_MF + H_MOUNT)] +
+                         [box(0, zj - FLANGE_H, big, zj + FLANGE_H) for zj in joints])
+    frame = ch.intersection(walls.buffer(RIB_W)).union(ch.intersection(struts)).difference(keep_out).buffer(0)
+    mframe = unary_union(motor).intersection(walls.buffer(RIB_W)).buffer(0) if motor else None
+    return dict(env=env, solid=solid, motor=motor, chamber=chamber, frame=frame, mframe=mframe, joints=joints,
+                rings=ring_rib_z(joints), rho=c["rho"], curves=c)
+
+
+def _corners(pts, deg=8.0):
+    n = len(pts)
+    out = []
+    for i in range(n):
+        a, b, c = np.array(pts[i - 1]), np.array(pts[i]), np.array(pts[(i + 1) % n])
+        u, v = b - a, c - b
+        ang = math.degrees(math.atan2(u[0] * v[1] - u[1] * v[0], u @ v))
+        on_axis = abs(b[0]) < 1e-6
+        if abs(ang) > deg or on_axis:
+            out.append(i)
+    return out or [0]
+
+
+def _loop(coords, tags):
+    pts = _dedupe([(float(r), float(z)) for r, z in list(coords)[:-1]])
+    if math.hypot(pts[0][0] - pts[-1][0], pts[0][1] - pts[-1][1]) < 1e-3:
+        pts = pts[:-1]
+    pts = [(0.0 if r < 1e-4 else r, z) for r, z in pts]
+
+    def Pt(p):
+        if p not in tags:
+            tags[p] = occ.addPoint(p[0], 0, p[1])
+        return tags[p]
+    cs = _corners(pts)
+    n = len(pts)
+    curves = []
+    for k, i0 in enumerate(cs):
+        i1 = cs[(k + 1) % len(cs)]
+        idx = [i0]
+        j = i0
+        while j != i1:
+            j = (j + 1) % n
+            idx.append(j)
+        run = [pts[j] for j in idx]
+        ids = [Pt(p) for p in run]
+        if len(ids) > 2 and not all(p[0] == 0.0 for p in run):
+            curves.append(occ.addSpline(ids))
+        else:
+            curves += [occ.addLine(ids[q], ids[q + 1]) for q in range(len(ids) - 1) if ids[q] != ids[q + 1]]
+    return occ.addCurveLoop(curves)
+
+
+def revolve_poly(poly):
+    """Revolve a shapely polygon (with holes) in the (r, z) half plane about the z axis. Each loop is revolved on its
+    own and the holes are cut out."""
+    out = []
+    for p in getattr(poly, "geoms", [poly]):
+        if p.area < 1.0:
+            continue
+
+        def rev(coords):
+            surf = occ.addPlaneSurface([_loop(coords, {})])
+            return [e for e in occ.revolve([(2, surf)], 0, 0, 0, 0, 0, 1, 2 * math.pi) if e[0] == 3]
+        v = rev(p.exterior.coords)
+        holes = [e for h in p.interiors if Polygon(h).area > 1.0 for e in rev(h.coords)]
+        if holes:
+            v, _ = occ.cut(v, holes)
+        out += v
+    return out
+
+
+def pappus_litres(polys):
+    return sum(2 * math.pi * p.area * p.centroid.x for p in polys) / 1e6
+
+
+def rib_slabs(z0, z1, n=4):
+    """n thin boxes through the axis: 2 n radial ribs."""
+    out = []
+    for k in range(n):
+        b = [(3, occ.addBox(-2000, -RIB_T / 2, z0, 4000, RIB_T, z1 - z0))]
+        occ.rotate(b, 0, 0, 0, 0, 0, 1, math.pi * k / n)
+        out += b
+    return out
+
+
+def _local_box(az, r0, length, half_t, half_chord, zc):
+    """Box along the radius at azimuth az: thickness 2 half_t, chord 2 half_chord (along z), from r0 outwards."""
+    b = [(3, occ.addBox(-half_t, -half_chord, 0, 2 * half_t, 2 * half_chord, length))]
+    occ.affineTransform(b, [0, 0, 1, r0, 1, 0, 0, 0, 0, 1, 0, zc])
+    occ.rotate(b, 0, 0, 0, 0, 0, 1, az)
+    return b
+
+
+def body_bosses():
+    """Solid pads inside the shell where features need depth: standoff sockets, the cable duct, the kick vane slots,
+    the HF cable hole through the mid horn wall, the inserts under the motor wall. Trimmed to Env by the caller."""
+    out = []
+    for az in STANDOFF_AZ:
+        out.append(cyl_at(R_STANDOFF, az, Z_TURN - 1, Z_TURN + SOCKET + 5, STANDOFF_R + 5))
+    out.append(cyl_at(R_STANDOFF, STANDOFF_AZ[DUCT], Z_TURN + SOCKET, Z_MOTOR - T_SH + 0.5, 6.0 + 4))
+    zz = np.linspace(Z_VANE - VANE_CHORD / 2, Z_VANE + VANE_CHORD / 2, 13)
+    r0 = min(body_r(z) for z in zz) - 15
+    for az in [math.radians(45 + 90 * k) for k in range(4)]:
+        out += _local_box(az, r0 - 8, 80, VANE_T / 2 + 6, VANE_CHORD / 2 + 6, Z_VANE)
+    z_h = zs(S_HF_CABLE)
+    out += [radial_hole(BV_AZ[0], M.radius(S_HF_CABLE) * MM, M.outer(S_HF_CABLE) * MM + 8, z_h, 7.0)]
+    for rb, az in flange_bolts():
+        out.append(cyl_at(rb, az, Z_MOTOR - T_SH - 10, Z_MOTOR - T_SH + 0.5, 7.0))
+    return out
+
+
+def flange_bolts():
+    """M5 bolts at the motor wall joint: through the rear chamber's bottom flange into inserts under the wall."""
+    rb = body_r(Z_MOTOR) - T_SH - FLANGE_D / 2
+    return [(rb, math.radians(22.5 + 45 * k)) for k in range(8)]
 
 
 def body_features(body):
-    """Standoff sockets, cable channels and vane slots cut from the whole body."""
+    """Standoff sockets, cable duct, HF cable hole, vane slots, joint bolts and mid driver inserts."""
     tools = []
     for az in STANDOFF_AZ:
         tools.append(cyl_at(R_STANDOFF, az, Z_TURN - 1, Z_TURN + SOCKET, STANDOFF_R + 0.25))
     az = STANDOFF_AZ[DUCT]
-    tools.append(cyl_at(R_STANDOFF, az, Z_TURN + SOCKET - 2, Z_CAB, 6.0))
-    tools.append(radial_hole(az, R_POD - 5, R_STANDOFF, Z_CAB, 6.0))
-    # HF and mid cables: pod -> forward in the wall -> radially into the bore at a bullet vane
+    tools.append(cyl_at(R_STANDOFF, az, Z_TURN + SOCKET - 2, Z_MOTOR + 1, 6.0))      # duct into the rear chamber
     z_h = zs(S_HF_CABLE)
-    z_p = Z_MF - 30
-    tools.append(cyl_at(R_HF_CH, BV_AZ[0], z_p, z_h, 4.0))
-    tools.append(radial_hole(BV_AZ[0], R_POD - 5, R_HF_CH, z_p, 4.0))
-    tools.append(radial_hole(BV_AZ[0], M.radius(S_HF_CABLE) * MM - 3, R_HF_CH, z_h, 4.0))
+    tools.append(radial_hole(BV_AZ[0], M.radius(S_HF_CABLE) * MM - 3, M.outer(S_HF_CABLE) * MM + 10, z_h, 1.6))
+    for rb, a in flange_bolts():
+        tools.append(cyl_at(rb, a, Z_MOTOR - 0.1, Z_MOTOR + FLANGE_H + 1, 2.75))
+        tools.append(cyl_at(rb, a, Z_MOTOR - T_SH - 8, Z_MOTOR + 0.1, 3.2))
+    for k in range(8):                                    # mid driver screws: inserts in the mounting ring
+        tools.append(cyl_at(MD.frame_od / 2 * MM - 6, math.radians(22.5 + 45 * k), Z_MF - 0.1, Z_MF + 9, 2.5))
     tools += kick_vanes()
     tools += bullet_vanes(slots=True)
     res, _ = occ.cut(body, tools)
     return res
 
 
+BODY = {}
+
+
+def robust_fuse(body, tools):
+    """Fuse the ribs and bosses into the shell. OCC's general fuse sometimes fails on the spline shell; then fuse them
+    in groups, then one at a time with a small boolean tolerance, and report any that will not go."""
+    try:
+        out, _ = occ.fuse(body, tools)
+        return out
+    except Exception:
+        pass
+    gmsh.option.setNumber("Geometry.ToleranceBoolean", 1e-3)
+    try:
+        for t in tools:
+            try:
+                body, _ = occ.fuse(body, [t])
+            except Exception:
+                warnings.append(f"centre body: one rib or boss would not fuse (dim tag {t})")
+    finally:
+        gmsh.option.setNumber("Geometry.ToleranceBoolean", 0.0)
+    return body
+
+
 def build_body():
     start("body_full")
-    body = revolve(body_profile())
+    reg = body_regions()
+    body = revolve_poly(reg["solid"])
+    zlo = min(y for p in reg["motor"] for _, y in p.exterior.coords) - 1 if reg["motor"] else Z_TURN
+    ribs = []
+    if reg["motor"]:
+        mv = revolve_poly(reg["mframe"])
+        r_, _ = occ.intersect(mv, rib_slabs(zlo, Z_MOTOR + 1))
+        ribs += r_
+    fr = revolve_poly(reg["frame"])
+    r_, _ = occ.intersect(fr, rib_slabs(Z_MOTOR - 1, Z_M + 2))
+    ribs += r_
+    env = revolve_poly(reg["env"])
+    bos, _ = occ.intersect(body_bosses(), env)
+    body = robust_fuse(body, ribs + bos)
     body_features(body)
     clean()
     TMP.mkdir(exist_ok=True)
     quiet_write(TMP / "body_full.step")
     v = sum(occ.getMass(*e) for e in gmsh.model.getEntities(3))
+    BODY.update(reg=reg, volume=v)
     if not FINAL:
         mesh_write(TMP / "body_full.stl", size=12.0, curv=120)
+    else:
+        BODY["chamber"] = chamber_volume(reg)
     return v
 
 
-def joint_ring(zj):
-    lo, hi = zj - 25, zj + 25
-    zz = np.linspace(lo, hi, 21)
-    r_in = max(body_inner(z) for z in zz)
-    r_out = min(body_outer(z) for z in zz)
-    if zj <= Z_MOTOR + 1e-6 and zj >= Z_MOTOR - 1e-6:
-        r_in = max(r_in, R_POD)
-    return r_in, r_out
+def chamber_volume(reg):
+    """Mid rear chamber air from the built body: the voids in front of the motor wall and the driver bay, less the
+    plastic inside them (ribs, bosses) and the mid driver (the same allowance as Kick.mid_rear_litres)."""
+    start("chamber")
+    body = occ.importShapes(str(TMP / "body_full.step"))
+    void = revolve_poly(unary_union(reg["chamber"]))
+    bay = [(3, occ.addCylinder(0, 0, Z_MOTOR, 0, 0, Z_MF - Z_MOTOR, R_POD))]
+    void, _ = occ.fuse(void, bay)
+    v_void = pappus_litres(reg["chamber"]) * 1e6 + math.pi * R_POD ** 2 * (Z_MF - Z_MOTOR)   # exact, from the profile
+    inside, _ = occ.intersect(occ.copy(void), body)
+    v_plastic = sum(occ.getMass(*e) for e in inside if e[0] == 3)
+    d = MD
+    displaced = (math.pi * d.motor_r ** 2 * d.motor_h + 0.25 * math.pi * (d.frame_od / 2) ** 2 * (d.depth - d.motor_h)) * 1e9
+    motor = pappus_litres(reg["motor"])
+    return dict(void_litres=round(v_void / 1e6, 2), plastic_inside_litres=round(v_plastic / 1e6, 2),
+                driver_litres=round(displaced / 1e6, 2), litres=round((v_void - v_plastic - displaced) / 1e6, 2),
+                geometry_litres=round(K.mid_rear_litres, 2), motor_void_litres=round(motor, 2))
 
 
-def module(name, z0, z1, joints_lo, joints_hi, explode, note):
+def module(name, z0, z1, explode, note):
     start(name)
     src = occ.importShapes(str(TMP / "body_full.step"))
-    res, _ = occ.intersect(src, slab(z0, z1))
-    body = res
-    for zj in joints_hi:            # spigot on top
-        r_in, r_out = joint_ring(zj)
-        if r_out - r_in < 25:
-            warnings.append(f"{name}: wall only {r_out - r_in:.0f} mm at the joint z = {zj:.0f}")
-            continue
-        sp = ring(zj - 0.5, zj + SPIGOT_H, r_in + 5, r_in + 11)
-        body, _ = occ.fuse(body, sp)
-    tools = []
-    for zj in joints_lo:            # recess underneath
-        r_in, r_out = joint_ring(zj)
-        if r_out - r_in < 25:
-            continue
-        tools += ring(zj - 1, zj + SPIGOT_H + 0.3, r_in + 4.8, r_in + 11.2)
-    for zj in joints_lo + joints_hi:
-        r_in, r_out = joint_ring(zj)
-        if r_out - r_in < 25:
-            continue
-        rb = 0.5 * (r_in + 11 + r_out)
-        for k in range(6):
-            tools.append(cyl_at(rb, math.radians(60 * k), zj - 25, zj + 25, 2.75))
-    if tools:
-        body, _ = occ.cut(body, tools)
+    occ.intersect(src, slab(z0, z1))
     return save(name, "print_black", "print", explode=explode, group="centre body", printable=True, note=note)
 
 
 def centre_body():
     vol = build_body()
+    reg = BODY["reg"]
     if not FINAL:
         return dict(volume_cm3=round(vol / 1000, 1))
-    J1 = j1()
-    zbot = Z_TURN - 1
-    # mid horn joint: the first z behind the kick mouth where the wall is 40 mm thick over the bolt length,
-    # clear of the kick vanes and the bullet vane slots
-    j4 = None
-    for z in np.arange(Z_M - 5, Z_MT + 30, -2.0):
-        r_in, r_out = joint_ring(z)
-        if r_out - r_in >= 40 and abs(z - Z_VANE) > VANE_CHORD / 2 + 30 and not zs(BV_S0) - 30 < z < zs(BV_S1) + 30:
-            j4 = float(z)
-            break
-    j4 = j4 or (Z_MT + Z_M) / 2
-    rho, _ = mouth_round()
-    mods = [
-        ("kick_shroud", zbot, J1, "underside follows the kick cone, sized from cylinder slices; lip; standoff sockets"),
-        ("motor_fairing", J1, Z_MOTOR, f"covers the kick motor with {K.motor_clear*MM:.0f} mm clearance"),
-        ("mid_pod", Z_MOTOR, Z_MF, f"sealed rear volume of the mid, {M.rear_volume_litres:.1f} L"),
-        ("mid_horn_rear", Z_MF, j4, "lead-in ring over the mid cone, mid horn bore, vane slots; mid driver screws to its back face"),
-        ("mid_horn_front", j4, Z_M + 1, f"mid horn to the mouth, flush with the kick mouth, {rho:.1f} mm rounded edge"),
-    ]
-    joints = [J1, Z_MOTOR, Z_MF, j4]
+    zbot = min(Z_TURN, float(P["shroud"].y.min())) - 1
+    joints = reg["joints"]
+    rho = reg["rho"]
+    ch = BODY["chamber"]
+    mods = [("kick_shroud", zbot, Z_MOTOR,
+             f"shroud over the kick cone (sized from cylinder slices), lip, standoff sockets, the kick motor cover and "
+             f"the sealed wall at the motor front; {T_SH:.0f} mm shell with radial rib frames every 45 deg; "
+             f"8 M5 inserts in bosses under the wall")]
+    edges = [Z_MOTOR] + joints + [Z_M + 1]
+    names = ["mid_chamber_rear", "mid_chamber_front"] if len(joints) == 1 else \
+        [f"mid_chamber_{k + 1}" for k in range(len(edges) - 1)]
+    for k in range(len(edges) - 1):
+        a, b = edges[k], edges[k + 1]
+        bits = []
+        if a <= Z_MF < b:
+            bits.append("mid driver mounting ring and lead-in ring over the mid cone (8 inserts for the driver screws)")
+        if k == 0:
+            bits.append("bottom flange bolts to the motor wall (8 M5)")
+        if b > Z_M:
+            bits.append(f"mid horn to the mouth, flush with the kick mouth, {rho:.1f} mm rounded edge")
+        if k < len(edges) - 2:
+            bits.append(f"glued flange joint at z = {b:.0f}")
+        mods.append((names[k], a, b, f"rear chamber of the mid ({ch['litres']:.1f} L in all): {T_SH:.0f} mm outer skin, "
+                                     f"{T_MW:.0f} mm mid horn wall, radial rib frames every 45 deg; " + "; ".join(bits)))
     for i, (name, a, b, note) in enumerate(mods):
-        lo = [a] if a in joints else []
-        hi = [b] if b in joints else []
-        module(name, a, b, lo, hi, explode=(0, 0, 120 + 90 * i), note=note)
-    return dict(joints_mm=[round(z, 1) for z in joints], volume_cm3=round(vol / 1000, 1), mouth_edge_radius_mm=round(rho, 2))
+        module(name, a, b, explode=(0, 0, 120 + 110 * i), note=note)
+    plastic = sum(p["volume_cm3"] for p in parts if p["group"] == "centre body") / 1000
+    return dict(joints_mm=[round(Z_MOTOR, 1)] + [round(z, 1) for z in joints], volume_cm3=round(vol / 1000, 1),
+                plastic_litres=round(plastic, 2), shell_mm=T_SH, rib_mm=RIB_T, radial_ribs=8,
+                ring_ribs_z_mm=[round(z, 1) for z in reg["rings"]], mid_rear_chamber=ch,
+                mouth_edge_radius_mm=round(rho, 2),
+                note="Printed shell. The sealed wall at Kick.motor_front divides the kick motor cover (behind) from "
+                     "the mid's rear chamber (in front). The rear chamber is the shell interior in front of that wall, "
+                     "outside the mid horn wall, joined to the driver bay; the radial ribs there are frames along "
+                     "the walls with struts at the mounting ring and the joints, so the chamber is one volume. The "
+                     "motor wall joint is bolted; the joints in the chamber are glued, so the mid driver goes in "
+                     "before the front module is closed.")
 
 
 # ---------------------------------------------------------------- bullet
 def bullet_vanes(slots=False):
+    """Three vanes from a BV_SLOT deep slot in the bullet to 3 mm into the mid horn wall. Root and tip follow the
+    bullet and the wall, so the slots are the same depth all along the chord."""
     out = []
     s0, s1 = BV_S0, BV_S1
-    r0 = min(bullet_r(s) for s in np.linspace(s0, s1, 9)) - 2
-    r1 = max(M.radius(s) for s in np.linspace(s0, s1, 5)) * MM + 3
+    e = 0.2 if slots else 0.0
+    ss = np.linspace(s0 - 0.003, s1 + 0.003, 17)
+    r_in = [bullet_r(s) - BV_SLOT - e for s in ss]
+    r_out = [M.radius(s) * MM + 3 + e for s in ss]
+    band = revolve([("spline", [(r, zs(s)) for r, s in zip(r_in, ss)]),
+                    ("spline", [(r, zs(s)) for r, s in zip(r_out[::-1], ss[::-1])])])
+    r0, r1 = min(r_in) - 1, max(r_out) + 1
+    chord = (s1 - s0) * MM
+    t = BV_T + (0.4 if slots else 0.0)
+    vs = []
     for az in BV_AZ:
-        chord = (s1 - s0) * MM
-        t = BV_T + (0.4 if slots else 0.0)
-        rc = occ.addRectangle(-t / 2, -chord / 2 - (0.2 if slots else 0), 0, t, chord + (0.4 if slots else 0),
-                              roundedRadius=t / 2 - 0.01)
+        rc = occ.addRectangle(-t / 2, -chord / 2 - e, 0, t, chord + 2 * e, roundedRadius=t / 2 - 0.01)
         ex = occ.extrude([(2, rc)], 0, 0, r1 - r0)
-        v = [e for e in ex if e[0] == 3]
+        v = [x for x in ex if x[0] == 3]
         occ.affineTransform(v, [0, 0, 1, r0, 1, 0, 0, 0, 0, 1, 0, zs((s0 + s1) / 2)])
         occ.rotate(v, 0, 0, 0, 0, 0, 1, az)
-        out += v
+        vs += v
+    out, _ = occ.intersect(vs, band)
     return out
 
 
@@ -865,15 +1155,23 @@ def bullet_profile():
 FELT = 3.0
 
 
-def felt_shape():
-    """Felt disc on the nose underside: its face is the designed nose surface, recessed FELT mm into the bullet."""
-    rr = np.linspace(0, bullet_r(0.0) / MM - 0.002, 20)
-    face = [(r * MM, zs(float(M.nose(r)))) for r in rr]
-    back = [(r, z + FELT) for r, z in face[::-1]]
+def felt_shape(over=0.0):
+    """Felt on the nose underside: its face is the designed nose surface, recessed FELT mm into the bullet. With a
+    throat-mounted HF unit it is a ring outside the terminal pocket."""
+    r_in = (R_TERM + 4) / MM if M.throat_mounted else 0.0
+    rr = np.linspace(r_in, bullet_r(0.0) / MM - 0.002, 20)
+    face = [(r * MM, zs(float(M.nose(r))) - over) for r in rr]
+    back = [(r, z + FELT + over) for r, z in face[::-1]]
+    if r_in > 0:
+        return revolve([("spline", face), ("line", [face[-1], back[0]]), ("spline", back), ("line", [back[-1], face[0]])])
     return revolve([("spline", face), ("line", [face[-1], back[0]]), ("spline", back)])
 
 
 def bullet():
+    if M.throat_mounted:
+        return throat_plug()
+    if M.is_bullet:
+        return tweeter_holder()
     segs, s_cav = bullet_profile()
     z_split = zs(s_cav)
     z_lo = min(p[1] for p in segs[0][1]) - 1
@@ -884,15 +1182,11 @@ def bullet():
     b, _ = occ.intersect(b, slab(z_lo, z_split))
     sp = ring(z_split - 0.5, z_split + 3, r_hb - 3.2, r_hb - 0.3)
     b, _ = occ.fuse(b, sp)
-    occ.cut(b, felt_shape())
+    occ.cut(b, felt_shape(over=0.3))
     save("bullet_nose", "print_orange", "print", explode=(0, 0, 640), group="bullet", printable=True,
          note=f"bullet nose: follows the mid cone at the gap; closes the HF cavity; 3 mm spigot; "
               f"{FELT:.0f} mm recess for the felt")
-    start("felt")
-    felt_shape()
-    save("felt", "driver_cone", "felt", explode=(0, 0, 600), group="bullet", curv=48,
-         note=f"{FELT:.0f} mm wool felt on the bullet nose underside, set into a recess so its face is at the "
-              f"designed gap from the mid cone (MidHorn.felt_loss models its damping)")
+    felt()
     start("bullet")
     b = revolve(segs)
     b, _ = occ.intersect(b, slab(z_split, zs(M.s_tip) + 1))
@@ -903,16 +1197,119 @@ def bullet():
              (3, occ.addCylinder(R_CABLE_B * c, R_CABLE_B * s_, zs(M.s_exit) - 1, 0, 0, zh - zs(M.s_exit) + 1, 1.5))]
     slots = bullet_vanes(slots=True)
     occ.cut(b, holes + slots)
+    law = f"{M.hf_half_angle_deg:.0f} deg OS waveguide" if M.hf_law == "os" else "exponential HF horn"
     save("bullet", "print_orange", "print", explode=(0, 0, 700), group="bullet", printable=True,
-         note=f"bullet round the {TW.model} body cylinder, outside sized from slices of the mid horn, printed HF "
-              f"horn {M.hf_exit_diameter*MM:.1f} to {2*M.hf_mouth_radius*MM:.0f} mm over {M.hf_len*MM:.0f} mm; "
-              f"3 mm HF cable bore from the vane back to the HF cavity")
+         note=f"bullet round the {TW.model} body cylinder, outside sized from slices of the mid horn; printed {law} "
+              f"{M.hf_exit_diameter*MM:.1f} to {2*M.hf_mouth_radius*MM:.0f} mm over {M.hf_len*MM:.0f} mm, the bullet "
+              f"following its outside; 3 mm HF cable bore from the vane back to the HF cavity")
+    vanes_part()
+
+
+def felt():
+    start("felt")
+    felt_shape()
+    save("felt", "driver_cone", "felt", explode=(0, 0, 600), group="bullet", curv=48,
+         note=f"{FELT:.0f} mm wool felt on the bullet nose underside, set into a recess so its face is at the "
+              f"designed gap from the mid cone (MidHorn.felt_loss models its damping)")
+
+
+def vanes_part():
     start("bullet_vanes")
     v = bullet_vanes()
-    occ.cut(v, [radial_hole(BV_AZ[0], bullet_r(S_HF_CABLE) - 2, M.radius(S_HF_CABLE) * MM + 4, zh, 1.5)])
+    zh = zs(S_HF_CABLE)
+    occ.cut(v, [radial_hole(BV_AZ[0], bullet_r(S_HF_CABLE) - BV_SLOT - 1, M.radius(S_HF_CABLE) * MM + 4, zh, 1.5)])
     save("bullet_vanes", "print_orange", "print", explode=(0, 0, 560), group="bullet", printable=True, curv=48,
          note=f"three {BV_T:.0f} mm vanes hold the bullet in the mid horn, {BV_S0*MM:.0f} to {BV_S1*MM:.0f} mm past "
               f"the throat; one carries the HF cable in a 3 mm bore")
+
+
+def holder_profile():
+    """Bullet-tweeter holder: the nose follows the mid cone at the gap, rises from the slim conduit to hold the
+    tweeter body at the mid mouth, and ends in a cup for the body with the tweeter's phase plug facing out."""
+    m = M
+    r_hb = TW.body_diameter / 2 * MM + 0.3
+    r0 = bullet_r(0.0) / MM
+    rr = np.linspace(0, r0, 20)
+    nose = [(r * MM, zs(float(m.nose(r)))) for r in rr]
+    segs = [("spline", nose), ("line", [nose[-1], (r0 * MM, Z_MT)])]
+    ss = P["bullet"].x
+    segs.append(("spline", [(bullet_r(s / MM), zs(s / MM)) for s in ss]))
+    z_term = zs(m.s_tip - m.hf_depth) - 1.0                   # pocket for the terminals behind the body
+    segs.append(("line", [(bullet_r(m.s_tip), zs(m.s_tip)), (r_hb, zs(m.s_tip)), (r_hb, zs(S_CUP)),
+                          (R_TERM, zs(S_CUP)), (R_TERM, z_term), (0, z_term)]))
+    return segs
+
+
+def throat_plug_profile():
+    """Throat mount: a big plug over the mid cone at the gap, holding the HF body in a pocket with its face at
+    s_face and a lip to s_tip; the mid horn is its waveguide."""
+    m = M
+    r0 = bullet_r(0.0) / MM
+    rr = np.linspace(0, r0, 24)
+    nose = [(r * MM, zs(float(m.nose(r)))) for r in rr]
+    segs = [("spline", nose), ("line", [nose[-1], (r0 * MM, Z_MT)])]
+    ss = P["bullet"].x
+    segs.append(("spline", [(bullet_r(s / MM), zs(s / MM)) for s in ss]))
+    r_ex = m.hf_horn_radius(m.s_tip) * MM
+    z_term = zs(m.s_face - m.hf_depth) - 1.0
+    segs.append(("line", [(bullet_r(m.s_tip), zs(m.s_tip)), (r_ex, zs(m.s_tip)), (r_ex, zs(m.s_face)),
+                          (R_HB, zs(m.s_face)), (R_HB, zs(S_CUP)), (R_TERM, zs(S_CUP)), (R_TERM, z_term),
+                          (0, z_term)]))
+    return segs, z_term
+
+
+def throat_plug():
+    segs, z_term = throat_plug_profile()
+    start("bullet")
+    b = revolve(segs)
+    az = BV_AZ[0]
+    c, s_ = math.cos(az), math.sin(az)
+    zh = zs(S_HF_CABLE)
+    zc = z_term + 3.0
+    tools = [radial_hole(az, 0.0, R_CABLE_B, zc, 1.5),
+             (3, occ.addCylinder(R_CABLE_B * c, R_CABLE_B * s_, zc, 0, 0, zh - zc, 1.5)),
+             radial_hole(az, R_CABLE_B, bullet_r(S_HF_CABLE) + 1, zh, 1.5)]
+    tools += felt_shape(over=0.3)
+    tools += bullet_vanes(slots=True)
+    occ.cut(b, tools)
+    save("bullet", "print_orange", "print", explode=(0, 0, 640), group="bullet", printable=True,
+         note=f"throat plug over the mid cone at the gap, {2*bullet_r(0.0):.0f} mm across, holding the {TW.model} "
+              f"body with its face {M.s_face*MM:.0f} mm past the mid throat, firing down the mid horn; terminal "
+              f"pocket behind; 3 mm HF cable bore from the terminals beside the body pocket out through a vane; "
+              f"{FELT:.0f} mm recess for a felt ring")
+    felt()
+    vanes_part()
+
+
+def tweeter_holder():
+    segs = holder_profile()
+    z_lo = min(p[1] for p in segs[0][1]) - 1
+    z_split = zs(min(0.04, BV_S0 - 0.012))
+    rs = (R_CONDUIT + 1.0, R_CONDUIT + 5.5)
+    start("bullet_nose")
+    b = revolve(segs)
+    b, _ = occ.intersect(b, slab(z_lo, z_split))
+    b, _ = occ.fuse(b, ring(z_split - 0.5, z_split + 3, *rs))
+    occ.cut(b, felt_shape(over=0.3))
+    save("bullet_nose", "print_orange", "print", explode=(0, 0, 640), group="bullet", printable=True,
+         note=f"nose of the tweeter holder: follows the mid cone at the gap; 3 mm spigot; {FELT:.0f} mm recess for "
+              f"the felt")
+    felt()
+    start("bullet")
+    b = revolve(segs)
+    b, _ = occ.intersect(b, slab(z_split, zs(M.s_tip) + 1))
+    zh = zs(S_HF_CABLE)
+    tools = ring(z_split - 1, z_split + 3.3, rs[0] - 0.2, rs[1] + 0.2)
+    z_term = zs(M.s_tip - M.hf_depth) - 1.0
+    tools.append((3, occ.addCylinder(0, 0, zh - R_CONDUIT, 0, 0, z_term - zh + R_CONDUIT + 1, R_CONDUIT)))
+    tools.append(radial_hole(BV_AZ[0], 0.0, bullet_r(S_HF_CABLE) + 1, zh, 1.5))
+    tools += bullet_vanes(slots=True)
+    occ.cut(b, tools)
+    save("bullet", "print_orange", "print", explode=(0, 0, 700), group="bullet", printable=True,
+         note=f"holder for the {TW.model} bullet tweeter: a {2*M.NOSE*MM:.0f} mm nose rising to hold the "
+              f"{TW.body_diameter*MM:.0f} mm body in a cup at the mid mouth, its phase plug facing out; outside sized "
+              f"from slices of the mid horn; {2*R_CONDUIT:.0f} mm cable conduit through the nose to a vane")
+    vanes_part()
 
 
 # ---------------------------------------------------------------- drivers (proxies)
@@ -1011,6 +1408,8 @@ def drivers():
     occ.cut(body, [(3, occ.addCylinder(0, 0, se - 10, 0, 0, 11, M.hf_exit_diameter / 2 * MM))])
     if M.hf_depth - TW.body_depth > 0.001:            # terminals behind the body
         occ.addBox(-8, -4, se - M.hf_depth * MM, 16, 8, (M.hf_depth - TW.body_depth) * MM + 0.5)
+    if M.is_bullet and TW.bullet_base > 0:            # the tweeter's own phase plug, facing out of the mid mouth
+        occ.addCone(0, 0, se - 10.5, 0, 0, 10.5 + max(TW.horn_depth * MM - 10, 4.0), TW.bullet_base / 2 * MM, 0.5)
     save("drv_hf", "driver_metal", "driver", explode=(0, 0, 760), group="bullet", **kw,
          note=f"{TW.model}: {TW.body_diameter*MM:.0f} mm body cylinder, {TW.body_depth*MM:.1f} mm deep, flange removed")
 
@@ -1035,21 +1434,38 @@ def envelope_mm(z):
     """Smallest centre body radius that still holds what is inside it at z, with the cable and socket features."""
     e = K.envelope(z / MM) * MM
     if z <= Z_TURN + SOCKET + 3:
-        e = max(e, R_STANDOFF + STANDOFF_R + 4)
-    if z <= Z_CAB + 8:
-        e = max(e, R_STANDOFF + 6 + 4)
-    if zs(0) - 30 <= z <= zs(S_HF_CABLE) + 5:
-        e = max(e, R_HF_CH + 4 + 4)
+        e = max(e, R_STANDOFF + STANDOFF_R + T_SH)
+    if z <= Z_MOTOR + 8:
+        e = max(e, R_STANDOFF + 6 + 4 + T_SH)
     return e
 
 
 def hold_mm(s):
-    """Smallest bullet radius that still holds the HF body cylinder (with its sleeve) or the HF horn and its wall."""
+    """Smallest bullet radius that still holds the HF body cylinder (with its sleeve) or the HF horn and its wall,
+    and keeps the HF horn wall whole under the vane slots. A bullet-tweeter nose only has to hold its conduit."""
+    if M.throat_mounted:
+        if s > M.s_face + 1e-6:
+            return (M.hf_horn_radius(s) + M.hf_wall) * MM
+        h = M.plug_radius * MM
+        if s <= S_HF_CABLE + 0.002:
+            h = max(h, R_CABLE_B + 1.5 + 1.5)
+        if BV_S0 - 0.002 <= s <= BV_S1 + 0.002:
+            h += BV_SLOT
+        return h
+    if M.is_bullet:
+        if s >= M.s_tip - M.hf_depth - 0.002:
+            return M.plug_radius * MM
+        h = R_CONDUIT + 3.5
+        if BV_S0 - 0.002 <= s <= BV_S1 + 0.002:
+            h += BV_SLOT
+        return h
     if s <= M.s_exit + 0.002:
         return M.plug_radius * MM
     h = (M.hf_horn_radius(s) + M.hf_wall) * MM
     if s <= S_HF_CABLE + 0.002:
         h = max(h, R_CABLE_B + 1.5 + 1.5)
+    if BV_S0 - 0.002 <= s <= BV_S1 + 0.002:
+        h += BV_SLOT
     return h
 
 
@@ -1137,7 +1553,9 @@ def cone_channel(with_shroud, radii=None):
         open_ = None
         if with_shroud:
             air, _ = occ.cut(occ.copy(sh), occ.copy(frame + cone + shroud))
-            open_ = sum(occ.getMass(*e) for e in air if e[0] == 3 and occ.getBoundingBox(*e)[2] > cone_bot + 0.5) / dr
+            # the channel: air from the cone up to the shroud (not the air under the cone, nor the shell's void)
+            open_ = sum(occ.getMass(*e) for e in air if e[0] == 3 and cone_bot + 0.5 < occ.getBoundingBox(*e)[2]
+                        < cone_top + 1.0) / dr
             occ.remove(air, recursive=True)
         occ.remove(sh, recursive=True)
         rm = r + dr / 2
@@ -1398,7 +1816,7 @@ OBSTRUCTIONS = None
 def model_meshes():
     """Every built part, plus the whole centre body, for slicing (the body modules are only cut on the final pass)."""
     names = [p["name"] for p in parts if p["category"] != "print" or p["name"].startswith("bullet")]
-    names = [n for n in names if not n.startswith(("kick_shroud", "motor_fairing", "mid_pod", "mid_horn"))]
+    names = [n for n in names if not n.startswith(("kick_shroud", "mid_chamber"))]
     return load_meshes(names, extra={"centre_body": TMP / "body_full.stl"})
 
 
@@ -1684,6 +2102,11 @@ def main():
                                                    corner_mismatch_mm=arr["max_corner_mismatch_mm"],
                                                    overlap_cm3=arr["max_overlap_cm3_occ"]),
                           external_mm=ext, pieces=sum(len(p.get("print_files", [])) for p in parts),
+                          centre_body=dict(plastic_litres=body["plastic_litres"], joints_mm=body["joints_mm"],
+                                           mid_rear_chamber=body["mid_rear_chamber"]),
+                          printed_litres={g: round(sum(p["volume_cm3"] for p in parts if p["group"] == g and
+                                                       p["category"] == "print") / 1000, 2)
+                                          for g in ("centre body", "bullet")},
                           warnings=warnings), indent=1))
     print(f"done in {time.time() - t0:.0f} s")
 

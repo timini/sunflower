@@ -5,26 +5,31 @@
     "geometry": {
       "law": "os",
       "compression": 2.0,
-      "mouth_diameter": 0.36,
-      "length": 0.28,
+      "mouth_diameter": 0.32,
+      "length": 0.2,
       "hf_mouth_ratio": 2.4,
-      "gap_override": 0.0045000000000000005
+      "gap_override": 0.0045000000000000005,
+      "hf_law": "os",
+      "hf_half_angle_deg": 25.0,
+      "hf_mount": "bullet",
+      "plug_cover": 0.0
     }
   },
   "kick": {
     "driver_id": "18sound-15w700",
     "geometry": {
       "compression": 1.6,
-      "law": "conical",
-      "half_angle_deg": 15.0,
+      "law": "exponential",
+      "half_angle_deg": 9.0,
       "protrusion": 0.0,
-      "chamber_depth": 0.076,
-      "wedge_chamber": false
+      "chamber_depth": 0.055,
+      "wedge_chamber": false,
+      "throat_width": 0.48
     }
   },
   "crossover_hz": [
     250.0,
-    3500.0
+    4000.0
   ],
   "scores": {
     "system": 6.280684042789565,
@@ -35,12 +40,13 @@
     "sensitivity_db": 104.4896551972026
   },
   "rule": "lowest system score; among designs within 0.25 of it, the cheapest",
-  "hf_note": "HF changed from the ND1030 to the B&C DE111 after FEM: 60 mm body instead of 65 (bullet 66 mm against 72), rated from 1.2 kHz instead of 1.8 kHz, and cheaper. Mid compression re-picked on FEM: 2.0. The mid top end is set by the cone depth: -6 dB at about 3.3 kHz either way.",
+  "hf_note": "HF changed from the ND1030 to the B&C DE111 after FEM: 60 mm body instead of 65 (bullet 66 mm against 72), rated from 1.2 kHz instead of 1.8 kHz, and cheaper. Mid compression re-picked on FEM: 2.0. The mid top end is set by the cone depth: -6 dB at about 3.3 kHz either way. The HF horn is a 30 degree OS waveguide (266 mm mouth) after a FEM coverage study: the old exponential tube swung from 120 to 25 degrees.",
   "f2_after_fem": {
-    "2500": 6.412,
-    "3000": 6.144,
-    "3500": 5.592,
-    "4000": 6.029
+    "2500": 5.533,
+    "3000": 5.408,
+    "3500": 5.165,
+    "4000": 5.299
   },
-  "crossover_note": "The network model alone picks a higher crossover. The FEM shows the mid falling 8 to 12 dB from 3 to 6 kHz (a radial cavity mode over the cone that the network lumps away), so f2 is re-picked with that correction: the highest of 2.5 to 4 kHz scoring within 0.15 of the best."
+  "crossover_note": "The network model alone picks a higher crossover. The FEM shows the mid falling 8 to 12 dB from 3 to 6 kHz (a radial cavity mode over the cone that the network lumps away), so f2 is re-picked with that correction: the highest of 2.5 to 4 kHz scoring within 0.15 of the best.",
+  "size_note": "Box limited to 600 mm deep and 700 mm across (owner's choice from the size sweep): 675 x 675 x 600 mm."
 }

@@ -23,7 +23,7 @@ LOGO = """<svg viewBox="0 0 32 32" aria-hidden="true"><g fill="none" stroke-widt
 <rect x="3" y="3" width="26" height="26" rx="4" stroke="#d38a0c"/><circle cx="16" cy="16" r="8" stroke="#eb6834"/>
 <circle cx="16" cy="16" r="3.2" fill="#1baf7a" stroke="none"/></g></svg>"""
 
-PAGES = [("index.html", "Product"), ("design.html", "Design"), ("simulation.html", "Simulation"), ("validation.html", "Validation"),
+PAGES = [("index.html", "Product"), ("design.html", "Design"), ("simulation.html", "Simulation"), ("range.html", "Range"), ("validation.html", "Validation"),
          ("build.html", "Build"), ("downloads.html", "Downloads")]
 
 
@@ -84,12 +84,24 @@ def load():
         n_kick=len(pd.read_csv(R / "optimise/kick-search.csv", usecols=[0])),
         summary=D.summary(),
     )
+    K = D.KICK
+    ex = data["cut"]["external_mm"]
+    data["cad_stale"] = abs(ex["width"] - K.external_mouth * 1000) > 5
+    ex.update(width=K.external_mouth * 1000, height_front=K.external_height * 1000, depth=K.depth * 1000)
     s = data["system"]
     f = s.frequency_hz.values
     on = s.sum_0deg_spl_db.values
     ref = on[(f >= 200) & (f <= 2000)].mean()
     data["kpi"] = dict(sensitivity=float(data["dsp"]["target_db"]), f6=float(f[np.argmax(on > ref - 6)]))
     return data
+
+
+def stale_note(d):
+    if not d.get("cad_stale"):
+        return ""
+    return ('<div class="note"><p><b>Being rebuilt.</b> The design on this site is the current one, '
+            f'{d["cut"]["external_mm"]["width"]:.0f} mm square and {d["cut"]["external_mm"]["depth"]:.0f} mm deep. The renders, '
+            'videos, CAD files, cut list and slice figure still show the previous, larger box and are being rebuilt.</p></div>')
 
 
 def video(name, caption):
@@ -135,6 +147,7 @@ horn's centre body, and its mouth sits inside the kick mouth.</p>
 <div><b>{f1:.0f} Hz / {f2/1000:.0f} kHz</b><span>crossovers: kick, vocal-range mid, HF</span></div>
 <div><b>{ex['width']:.0f} x {ex['height_front']:.0f} x {ex['depth']:.0f}</b><span>mm, width x height x depth</span></div>
 </div>
+{stale_note(d)}
 <div class="note"><p><b>Status.</b> Simulated, not built or measured. The cone and basket shapes of the drivers are
 estimated from datasheet drawings, and the phase plugs must be checked against real drivers before printing. The
 <a href="simulation.html#limits">limits</a> section lists what the models leave out.</p></div>
@@ -149,6 +162,39 @@ exactly: three columns fanned {K.splay_deg:.0f} degrees apart, each a straight s
 {fig("img/renders/front-dims.jpg", "Into the mouth, mm. Completely square at the mouth; the corner fillers make the throat an octagon.", "render")}
 {fig("img/renders/section-side-dims.jpg", "Side section, mm.", "render")}
 </div>
+<h2>Why coaxial</h2>
+<p>A conventional three-way top puts its kick horn, mid horn and HF horn side by side or one above another. Sunflower
+nests them on one axis, and that changes four things.</p>
+<div class="grid2">
+<div class="card"><h3>One acoustic centre</h3><p>The kick, mid and HF all radiate from the same axis. There is no
+spacing between separate horns, so the sections do not interfere with each other off axis at the crossovers, and a
+single delay per section aligns them at every angle round the box, not only straight ahead.</p></div>
+<div class="card"><h3>The same pattern every way</h3><p>Because the horns are round and nested, the coverage is
+the same horizontally and vertically. A box can be used on its side, in a column or in a block without its pattern
+changing.</p></div>
+<div class="card"><h3>No wasted space</h3><p>In front of a horn-loaded 15 inch is a large volume of horn air. Here the
+mid driver, its sealed pod, the mid horn and the HF unit all live inside the kick's centre body, in that volume, and the
+centre body doubles as the kick's phase plug. Every inner part is subtracted from the horn it sits in.</p></div>
+<div class="card"><h3>Boxes that tile</h3><p>The angled sides and flat top and bottom let nine identical boxes form a
+curved array with every joint flush, so a cluster is one continuous wavefront rather than a stack of separate sources.</p></div>
+</div>
+
+<h2>Compared with a Funktion-One Res 2</h2>
+<p>The Res 2 is the reference: a 15 inch bass horn up to 250 Hz with an 8 inch cone mid and a 1 inch compression driver
+above. Sunflower keeps that split. The table compares the published Res 2 figures with Sunflower's simulated ones; a Res 2
+is a measured, shipping product and Sunflower has not been built.</p>
+{table(["", "Res 2 (published)", "Sunflower (simulated)"], [
+    ["Layout", "Bass horn, with the mid and HF horns beside it", "Kick, mid and HF nested on one axis"],
+    ["Acoustic centres", "Separate for bass and mid/HF", "One axis for all three"],
+    ["Coverage", "50 x 25 deg (different each way)", "The same horizontally and vertically"],
+    ["Low end", "Rated from 60 Hz (bass horn stated to 35 Hz)", f"-6 dB at {low['f_minus6_hz']:.0f} Hz on the ground; made to run with a sub"],
+    ["Mid to HF crossover", "Not published (about 4 to 6 kHz on its sister boxes)", f"{f2/1000:.1f} kHz"],
+    ["Size (W x H x D)", "484 x 510 x 975 mm", f"{ex['width']:.0f} x {ex['height_front']:.0f} x {ex['depth']:.0f} mm"],
+    ["Arraying", "Radiused grids, set by the grid", "Nine identical boxes tile flush"],
+    ["Status", "Shipping product", "Simulated; not built or measured"]])}
+<p>Where Sunflower gives ground: its front is larger (829 mm square against 484 x 510 mm), its kick is a kick bin that
+needs a sub, and its mid is cone-limited to about {f2/1000:.1f} kHz where Funktion-One's Axhead takes theirs higher.</p>
+
 <h2>Drivers</h2>
 {drivers_table(d)}
 <p>Chosen by an optimiser that tried {d['n_mid']:,} mid and HF combinations and {d['n_kick']:,} kick and cabinet
@@ -210,7 +256,7 @@ over the cone, outside the basket arms. The gap at each radius makes the channel
 that radius divided by {K.compression:.1f}, so every ring of the cone sees the same compression; it never comes closer
 than the basket arms plus 9 mm or the cone's mechanical travel plus 3 mm. The air leaves at the rim, turns under the
 shroud lip and runs forward through a {K.throat_area*1e4:.0f} cm² throat.</p>
-{fig("img/plots/throat-drawing.png", "The reversed cone, the shroud and the gap, mm.")}
+{fig("img/plots/throat-drawing.png", "Half section from the axis to the side wall, mm. The numbers are the gap between cone and shroud, sized so the channel area at each radius is the cone area inside it divided by the compression ratio, never closer than the basket arms allow.")}
 <p>From the throat forward the body's radius is solved from the {law_name(K.law)} law, so the open area between the
 four walls, less the corner fillers, and the body follows it all the way to the square mouth. The body swells to
 {2*K.summary()['max_body_radius_m']*1000:.0f} mm, holds the kick motor, the mid pod and the mid horn, and meets the mid horn's
@@ -334,6 +380,7 @@ def build(d):
              f"the mouth, {fl['length_mm']:.0f} mm long. {fl['note']}"]]
     body = f"""
 <h1>Build</h1>
+{stale_note(d)}
 <p class="lede">A single-ply birch frustum, four tapering corner fillers, a printed centre body in sections, and three
 drivers. Files are on the <a href="downloads.html">downloads</a> page.</p>
 {video("assemble", "Assembly order.")}
@@ -375,6 +422,7 @@ def downloads(d):
            ["Optimiser", '<a href="results/optimise/mid-search.csv">mid</a> · <a href="results/optimise/kick-search.csv">kick</a> · <a href="results/optimise/system-search.csv">finalists</a> · <a href="results/optimise/selected.json">selected</a>']]
     body = f"""
 <h1>Downloads</h1>
+{stale_note(d)}
 <p class="lede">Everything here is generated by the scripts in the repository. Millimetres.</p>
 <p><a href="cad/sunflower-assembly.step">sunflower-assembly.step</a> · <a href="cad/cutlist.json">cutlist.json</a> ·
 <a href="cad/array.json">array.json</a> · <a href="cad/parts.json">parts.json</a> ·
@@ -456,10 +504,90 @@ plugs are sized from these slices, so the measured open area follows each horn's
     return page("validation.html", "Sunflower validation", body, "What the Sunflower models were checked against.")
 
 
+RANGE = [("", "Sunflower 15C", "Flagship kick top: 15 inch kick, 8 inch mid, 1 inch compression HF in a constant-directivity waveguide."),
+         ("15B", "Sunflower 15B", "The same box with a bullet tweeter in a large phase plug at the mid throat, firing down the mid horn. Its figures are the maker's own."),
+         ("12C", "Sunflower 12C", "Compact top: 12 inch kick in a box under 500 mm square; always used with a sub.")]
+
+
+def _variant(v):
+    from sunflower.design_tools import parts_from
+    base = ROOT / (f"results/range/{v}" if v else "results")
+    sel = json.loads(((ROOT / f"results/range/{v}/selected.json") if v else (ROOT / "results/optimise/selected.json")).read_text())
+    krec, mrec, tw, M, K = parts_from(sel)
+    dsp = json.loads((base / "planewave/dsp.json").read_text()) if (base / "planewave/dsp.json").exists() else {}
+    img = f"img/range/{v}" if v else "img"
+    from sunflower.range import body_material
+    env, shell = body_material(K)
+    price = sum(x or 0 for x in (krec.get("price_usd"), mrec.get("price_usd"), tw.price_usd))
+    return dict(sel=sel, krec=krec, mrec=mrec, tw=tw, M=M, K=K, dsp=dsp, img=img, env=env, shell=shell, price=price)
+
+
+def range_page(d):
+    rows, blocks = [], []
+    for v, name, blurb in RANGE:
+        x = _variant(v)
+        K, M, dsp = x["K"], x["M"], x["dsp"]
+        le = dsp.get("kick_low_end", {}).get("single_half_space_db", {})
+        f2 = dsp.get("crossover", {}).get("mid_high_hz", x["sel"]["crossover_hz"][1])
+        rows.append([f"<b>{name}</b>", D.label(x["krec"]), D.label(x["mrec"]), x["tw"].model, f"{f2/1000:.1f} kHz",
+                     f"{le.get('f_minus6_hz', float('nan')):.0f} Hz", f"{dsp.get('target_db', float('nan')):.0f} dB",
+                     f"{K.external_mouth*1000:.0f} x {K.external_height*1000:.0f} x {K.depth*1000:.0f}",
+                     f"{K.splay_deg:.0f} deg", f"{x['shell']:.0f} L", f"${x['price']:.0f}"])
+        figs = []
+        for f, cap in ((f"{x['img']}/renders/hero.jpg", "Render"), (f"{x['img']}/plots/kick-drawing.png", "Section, mm"),
+                       (f"{x['img']}/plots/full-range.png", "Each section and the sum"), (f"{x['img']}/plots/slices.png",
+                       "The model sliced every 1 cm")):
+            if (DOCS / f).exists():
+                figs.append(fig(f, cap, "render" if f.endswith(".jpg") else "plot"))
+        blocks.append(f'<h2 id="{name.split()[-1]}">{name}</h2>\n<p>{blurb}</p>\n<div class="grid2">\n' + "\n".join(figs) + "\n</div>")
+    body = f"""
+<h1>The range</h1>
+<p class="lede">Three line-ups built to the same rules and checked the same way: the mid sits inside the kick mouth, the
+mouth is square, the top and bottom are flat so nine boxes tile, the phase plugs are sized from slices of the real model,
+and the mid's top end comes from FEM. Every centre body is a ribbed 6 mm printed shell whose inside is the mid's sealed
+rear chamber.</p>
+{table(["Model", "Kick", "Mid", "HF", "Mid to HF", "Kick -6 dB (ground)", "Sensitivity", "Outside W x H x D (mm)",
+        "Splay", "Body plastic", "Drivers"], rows)}
+<p>Drivers are per box at the prices found when the design was made. All three are simulated, not built or measured.</p>
+{"".join(blocks)}
+
+<h2 id="hex">Hex 12: a two-way for small rooms (concept)</h2>
+<p>For a cafe or bar that wants something striking but not large: the mid and HF sections on their own, with no kick
+horn. A 12 inch cone in a hexagonal horn, with a 1 inch compression driver on its waveguide inside the yellow phase
+plug. About 460 mm across the flats and 300 mm deep. Hexagons tile a flat wall, so several can hang as a honeycomb.</p>
+<div class="grid2">
+{fig("img/range/concepts/hex2way-single.jpg", "Hex 12, one box.", "render")}
+{fig("img/range/concepts/hex2way-wall.jpg", "Three on a wall.", "render")}
+</div>
+<div class="note"><p><b>Concept only.</b> The shapes here are drawn for the look; the horn, plug and waveguide have not
+been sized or simulated yet.</p></div>
+
+<h2 id="clusters">Festival clusters (concepts)</h2>
+<p>For festivals, the boxes fly as a cluster: one centre box ringed by five, every mouth aimed out from one point.
+Five round a centre on a curved surface means the centre is a pentagon and its neighbours hexagons, the pattern of a
+football, so the joints between boxes are flush with no gaps. The pentagon is the smaller tile, so the centre box is the
+smaller driver. Inside each box are the Sunflower internals scaled to fit: the kick centre body, the yellow mid horn and the
+phase plug that holds the HF waveguide. The flown frame hangs above.</p>
+{table(["Cluster", "Centre box", "Ring", "Boxes"], [
+    ["<b>Cluster 15/18</b>", "15 inch box, pentagonal mouth", "Five 18 inch boxes, hexagonal mouths", "6"],
+    ["<b>Cluster 12/15</b>", "12 inch box, pentagonal mouth", "Five 15 inch boxes, hexagonal mouths", "6"]])}
+<div class="grid2">
+{fig("img/range/concepts/cluster-15-18-front.jpg", "Cluster 15/18, from the front: the smaller pentagonal box in the middle.", "render")}
+{fig("img/range/concepts/cluster-15-18-three-quarter.jpg", "Cluster 15/18, three-quarter view.", "render")}
+{fig("img/range/concepts/cluster-12-15-front.jpg", "Cluster 12/15, from the front.", "render")}
+{fig("img/range/concepts/cluster-12-15-three-quarter.jpg", "Cluster 12/15, three-quarter view.", "render")}
+</div>
+<div class="note"><p><b>Concept only.</b> These renders show the arrangement. The pentagonal and hexagonal boxes have
+not been designed or simulated: each needs its own horn, sized from the inside out and checked like the boxes above.
+Neighbours sit about 37 degrees apart, so a cluster covers a wide area from one flying point.</p></div>
+"""
+    return page("range.html", "Sunflower range", body, "The Sunflower range: 15C, 15B, 12C and the festival clusters.")
+
+
 def main():
     d = load()
     for name, fn in (("index.html", index), ("design.html", design),
-                     ("simulation.html", simulation), ("validation.html", validation), ("build.html", build),
+                     ("simulation.html", simulation), ("range.html", range_page), ("validation.html", validation), ("build.html", build),
                      ("downloads.html", downloads)):
         (DOCS / name).write_text(fn(d))
     (DOCS / ".nojekyll").write_text("")

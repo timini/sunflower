@@ -21,10 +21,13 @@ from shapely.geometry import Point, Polygon
 from shapely.ops import unary_union
 
 ROOT = Path(__file__).resolve().parents[2]
-CAD = ROOT / "cad"
+CAD = None  # set from design at run time
 
 
 def load_parts():
+    from sunflower import design as D
+    global CAD
+    CAD = D.CAD_DIR
     parts = json.loads((CAD / "parts.json").read_text())
     meshes = {}
     for p in parts:
@@ -109,7 +112,11 @@ def air_at(meshes, z, mid_radius, plug_radius=0.0):
             kind.append((piece, "hf"))
         elif mid_radius and rc < mid_radius and piece.intersects(Point(0, 0).buffer(mid_radius).difference(
                 Point(0, 0).buffer(plug_radius))):
-            mid += piece.area
+            # only the air inside the mid horn wall is mid horn: a cable hole can join the bore to the rear
+            # chamber in the hollow body, and that chamber is sealed air
+            inner = piece.intersection(Point(0, 0).buffer(mid_radius + 0.5, quad_segs=256))
+            mid += inner.area
+            sealed += piece.area - inner.area
             kind.append((piece, "mid"))
         else:
             sealed += piece.area
@@ -148,7 +155,7 @@ def run(dz=10.0, z0=None, z1=None, meshes=None, write=True):
     df["kick_diff_pct"] = 100 * (df.kick_cm2 / df.kick_model_cm2 - 1)
     df["mid_diff_pct"] = 100 * (df.mid_cm2 / df.mid_model_cm2 - 1)
     if write:
-        out = ROOT / "results/cad"
+        out = D.RESULTS / "cad"
         out.mkdir(parents=True, exist_ok=True)
         df.to_csv(out / "slices.csv", index=False, float_format="%.4g")
     return df, meshes
@@ -195,7 +202,7 @@ def figure(df, meshes):
              "Green: the HF horn inside the bullet. Grey: sealed cavities. Black: solid parts (walls, fillers, centre body, "
              "bullet, vanes, drivers).", fontsize=9, color="#52514e")
     fig.tight_layout(rect=(0, 0.03, 1, 1))
-    fig.savefig(ROOT / "docs/img/plots/slices.png", dpi=100)
+    fig.savefig(D.IMG / "plots/slices.png", dpi=100)
 
 
 if __name__ == "__main__":

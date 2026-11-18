@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt  # noqa: E402
 from sunflower import design as D  # noqa: E402
 
 ROOT = D.ROOT
-REN = ROOT / "docs/img/renders"
+REN = D.IMG / "renders"
 INK = "#111111"
 ACCENT = "#b04a00"
 
@@ -63,7 +63,7 @@ def _arc(ax, P, centre, r, t0, t1, color=ACCENT):
 
 def front():
     """Square mouth, inside and outside, with the mid and HF mouths."""
-    cut = json.loads((ROOT / "cad/cutlist.json").read_text())
+    cut = json.loads((D.CAD_DIR / "cutlist.json").read_text())
     m, k = D.MID, D.KICK
     fig, ax, px = _setup("front")
     ex = cut["external_mm"]
@@ -89,7 +89,7 @@ def front():
 
 def section_side():
     """Depth, the equal front and back heights, and the splay of the wedge faces."""
-    cut = json.loads((ROOT / "cad/cutlist.json").read_text())
+    cut = json.loads((D.CAD_DIR / "cutlist.json").read_text())
     st = cut["stations_mm"]
     ex = cut["external_mm"]
     wd = cut["wedges"]
@@ -124,12 +124,12 @@ def stack_side():
     cams = json.loads((REN / "cameras.json").read_text())
     if "stack-side" not in cams or not (REN / "stack-side.jpg").exists():
         return
-    arr = json.loads((ROOT / "cad/array.json").read_text())
-    ex = json.loads((ROOT / "cad/cutlist.json").read_text())["external_mm"]
+    arr = json.loads((D.CAD_DIR / "array.json").read_text())
+    ex = json.loads((D.CAD_DIR / "cutlist.json").read_text())["external_mm"]
     fig, ax, px = _setup("stack-side")
     P = lambda z, y: px(-z, y)  # noqa: E731
     pitch = arr["row_pitch_mm"]
-    z_m = json.loads((ROOT / "cad/cutlist.json").read_text())["stations_mm"]["mouth"]
+    z_m = json.loads((D.CAD_DIR / "cutlist.json").read_text())["stations_mm"]["mouth"]
     for j in (-1, 0, 1):
         _dim(ax, P(z_m + 60, j * pitch - ex["height_front"] / 2), P(z_m + 60, j * pitch + ex["height_front"] / 2),
              f"{ex['height_front']:.0f}", off=(-36, 0))
@@ -146,8 +146,8 @@ def stack_top():
     cams = json.loads((REN / "cameras.json").read_text())
     if "stack-top" not in cams or not (REN / "stack-top.jpg").exists():
         return
-    arr = json.loads((ROOT / "cad/array.json").read_text())
-    st = json.loads((ROOT / "cad/cutlist.json").read_text())["stations_mm"]
+    arr = json.loads((D.CAD_DIR / "array.json").read_text())
+    st = json.loads((D.CAD_DIR / "cutlist.json").read_text())["stations_mm"]
     fig, ax, px = _setup("stack-top")
     P = lambda x, z: px(x, -z)  # noqa: E731   plan, mouths at the bottom
     apex_z = -arr["apex_behind_baffle_mm"]

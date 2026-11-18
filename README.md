@@ -8,9 +8,9 @@ Designed from the inside out:
 
 1. **HF:** B&C DE111, 60 mm body cylinder, on a printed horn inside the mid phase plug.
 2. **Mid phase plug:** one smooth bullet. Its nose follows the mid cone, it holds the HF body, and it tapers to the HF mouth. Felt under the nose damps the cavity between it and the cone.
-3. **Mid:** Beyma 8MI100 in a 360 mm OS horn, 2.0:1 compression, the bullet always subtracted. Its mouth sits in the kick mouth plane.
-4. **Kick:** a reversed 18 Sound 15W700 under a shroud that follows the cone at a constant-compression gap. A centre body solved from the conical law runs inside a single-ply square frustum, with corner fillers that make the throat an octagon and vanish at the square mouth.
-5. **Cabinet:** 829 mm square at the mouth, 700 mm deep, single-ply birch. The sides are angled and the top and bottom are flat with sealed wedges inside, so nine identical boxes tile exactly as three columns fanned 30 degrees apart.
+3. **Mid:** Beyma 8MI100 in a 320 mm OS horn, 2.0:1 compression, the bullet always subtracted. Its mouth sits in the kick mouth plane.
+4. **Kick:** a reversed 18 Sound 15W700 under a shroud that follows the cone at a constant-compression gap. A centre body solved from the exponential law runs inside a single-ply square frustum, with corner fillers that make the throat an octagon and vanish at the square mouth.
+5. **Cabinet:** 675 mm square at the mouth, 600 mm deep, single-ply birch. The sides are angled and the top and bottom are flat with sealed wedges inside, so nine identical boxes tile exactly as three columns fanned 18 degrees apart.
 
 Site with renders, videos, each horn's plots, the full-range response and build instructions: **https://timini.github.io/sunflower/**
 
@@ -20,11 +20,11 @@ Site with renders, videos, each horn's plots, the full-range response and build 
 |---|---|
 | Sensitivity | 105 dB, 2.83 V, 1 m |
 | Kick low end | -6 dB at 96 Hz on the ground; use with a sub |
-| No-sub shelf | -6 dB at 79 Hz, kick limited to about 83 W |
-| Crossovers | LR4 at 250 Hz and 3500 Hz |
+| No-sub shelf | -6 dB at 79 Hz, kick limited to about 123 W |
+| Crossovers | LR4 at 250 Hz and 4000 Hz |
 | Drivers | about $451 per box |
 
-The horns are sized from the inside out, and the phase plugs are solved from 1 cm slices of the assembled CAD model, so every vane, filler and basket arm is counted. Acoustics: a plane-wave network with the cone as a distributed source, checked against axisymmetric FEM with the cone moving (kick within 0.6 dB RMS from 40 to 250 Hz), against the separate horn-simulation FEM, and against the published HD-15. The FEM, not the network, sets how high the mid goes: about 3.5 kHz on this 8 inch. See the validation page.
+The horns are sized from the inside out, and the phase plugs are solved from 1 cm slices of the assembled CAD model, so every vane, filler and basket arm is counted. Acoustics: a plane-wave network with the cone as a distributed source, checked against axisymmetric FEM with the cone moving (kick within 0.5 dB RMS from 40 to 250 Hz), against the separate horn-simulation FEM, and against the published HD-15. The FEM, not the network, sets how high the mid goes: about 4.0 kHz on this 8 inch. See the validation page.
 
 Nothing has been built or measured. Driver cone and basket shapes are estimated from datasheet drawings and must be checked before printing.
 

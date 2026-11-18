@@ -1,0 +1,532 @@
+{
+  "design": {
+    "kick_driver": "bc-12cl76",
+    "mid_driver": "beyma-8mi100",
+    "tweeter": "bc-de111",
+    "crossover_hz": [
+      250.0,
+      2500.0
+    ],
+    "geometry": {
+      "mid_gap_vertical_mm": 4.500000000000001,
+      "mid_gap_normal_min_mm": 1.332323328133909,
+      "mid_gap_normal_min_at_r_mm": 25.3531828344921,
+      "mid_xmech_mm": 9.000000000000002,
+      "mid_surround_width_mm": 11.00000000000001,
+      "kick_channel_gap_mm": [
+        32.148983308530816,
+        41.86867745374533
+      ],
+      "kick_passage_min_mm": 21.156493772635287,
+      "kick_lip_height_over_flange_mm": 43.08251733314512,
+      "kick_cavity_litres_fem": 0.47915799749520344,
+      "kick_trapped_litres_network": 0.47917109578851147,
+      "kick_cone_above_roof_inside_r_mm": 48.29512534108587,
+      "kick_dust_cap_area_not_driven_m2": 0.004536459791783661,
+      "kick_sd_m2": 0.0522
+    }
+  },
+  "tube": {
+    "power_balance_max_rel_error": 0.0008207931992384776,
+    "mesh": {
+      "cells": 4089,
+      "p2_dofs": 8444,
+      "h_min_mm": 3.141494708494374,
+      "h_max_mm": 37.06416087863043,
+      "outline_points": 5
+    },
+    "case": {
+      "a": 0.05,
+      "L": 0.3
+    },
+    "n_freqs": 25,
+    "max_relative_impedance_error": 0.15184231768424963,
+    "median": 0.03235095998960892,
+    "farfield_max_abs_db": 1.1032214708130268,
+    "farfield_max_phase_deg": 6.023659959476395,
+    "runtime_s": 2.4
+  },
+  "mid": {
+    "power_balance_max_rel_error": null,
+    "mesh": {
+      "cells": 37350,
+      "p2_dofs": 75663,
+      "h_min_mm": 0.3319614930434904,
+      "h_max_mm": 9.356027583719067,
+      "outline_points": 436
+    },
+    "case": {
+      "baffle_s": 0.24,
+      "baffle": "mid mouth plane",
+      "protrusion_m": 0.0,
+      "exterior_reach_m": 0.1634329353334631,
+      "kh_radius_m": 0.4567164676667316,
+      "fmax": 8000.0,
+      "hf_cavity": true,
+      "felt_loss": 0.3
+    },
+    "n_freqs": 90,
+    "power_balance_max_rel_error_nofelt": 0.0042269397806632735,
+    "power_balance_max_rel_error_flush_nohf_nofelt": 0.0018720872305545764,
+    "passband": {
+      "spl_0deg": {
+        "band_hz": [
+          250.0,
+          2500.0
+        ],
+        "max_abs_db": 13.21215088770984,
+        "rms_db": 3.2631273478481666,
+        "mean_db": 0.2890813220964013
+      },
+      "zrad_magnitude": {
+        "band_hz": [
+          250.0,
+          2500.0
+        ],
+        "max_abs_db": 25.364368906913178,
+        "rms_db": 5.33941802632242,
+        "mean_db": 0.4460989944843833
+      },
+      "spl_15deg": {
+        "band_hz": [
+          250.0,
+          2500.0
+        ],
+        "max_abs_db": 14.071653145597452,
+        "rms_db": 3.4119868057907397,
+        "mean_db": -0.26327379135898965
+      },
+      "spl_30deg": {
+        "band_hz": [
+          250.0,
+          2500.0
+        ],
+        "max_abs_db": 28.998335637215547,
+        "rms_db": 6.419204298049378,
+        "mean_db": -2.462475807024621
+      },
+      "spl_45deg": {
+        "band_hz": [
+          250.0,
+          2500.0
+        ],
+        "max_abs_db": 28.33189482459713,
+        "rms_db": 8.28197603108589,
+        "mean_db": -0.217209983062586
+      },
+      "spl_60deg": {
+        "band_hz": [
+          250.0,
+          2500.0
+        ],
+        "max_abs_db": 26.008454171135412,
+        "rms_db": 7.9063552768202445,
+        "mean_db": 0.6461453583045013
+      },
+      "variant_flush": {
+        "spl_0deg": {
+          "band_hz": [
+            250.0,
+            2500.0
+          ],
+          "max_abs_db": 13.21215088770984,
+          "rms_db": 3.2631273478481666,
+          "mean_db": 0.2890813220964013
+        },
+        "zrad_magnitude": {
+          "band_hz": [
+            250.0,
+            2500.0
+          ],
+          "max_abs_db": 25.364368906913178,
+          "rms_db": 5.33941802632242,
+          "mean_db": 0.4460989944843833
+        },
+        "spl_30deg": {
+          "band_hz": [
+            250.0,
+            2500.0
+          ],
+          "max_abs_db": 28.998335637215547,
+          "rms_db": 6.419204298049378,
+          "mean_db": -2.462475807024621
+        }
+      },
+      "variant_flush_nohf": {
+        "spl_0deg": {
+          "band_hz": [
+            250.0,
+            2500.0
+          ],
+          "max_abs_db": 5.383693907829965,
+          "rms_db": 1.914561396312473,
+          "mean_db": 0.9299844700117919
+        },
+        "zrad_magnitude": {
+          "band_hz": [
+            250.0,
+            2500.0
+          ],
+          "max_abs_db": 7.538988149296431,
+          "rms_db": 3.251487673812105,
+          "mean_db": 0.5241950446126221
+        },
+        "spl_30deg": {
+          "band_hz": [
+            250.0,
+            2500.0
+          ],
+          "max_abs_db": 17.648993235463394,
+          "rms_db": 5.184643162077722,
+          "mean_db": -1.777132500332833
+        }
+      },
+      "variant_nofelt": {
+        "spl_0deg": {
+          "band_hz": [
+            250.0,
+            2500.0
+          ],
+          "max_abs_db": 13.254839201161175,
+          "rms_db": 3.3461319405604635,
+          "mean_db": 0.5152733888834703
+        },
+        "zrad_magnitude": {
+          "band_hz": [
+            250.0,
+            2500.0
+          ],
+          "max_abs_db": 27.14006870991447,
+          "rms_db": 5.71399299518332,
+          "mean_db": 0.6114761321669758
+        }
+      },
+      "variant_flush_nohf_nofelt": {
+        "spl_0deg": {
+          "band_hz": [
+            250.0,
+            2500.0
+          ],
+          "max_abs_db": 5.448899514244175,
+          "rms_db": 2.0360706335068515,
+          "mean_db": 1.1558695481180303
+        },
+        "zrad_magnitude": {
+          "band_hz": [
+            250.0,
+            2500.0
+          ],
+          "max_abs_db": 7.884633437008436,
+          "rms_db": 3.570263793364761,
+          "mean_db": 0.7077570590911654
+        }
+      }
+    },
+    "full": {
+      "spl_0deg": {
+        "band_hz": [
+          150.0,
+          8000.0
+        ],
+        "max_abs_db": 18.579390929255396,
+        "rms_db": 6.43931857432706,
+        "mean_db": -2.5608644974946833
+      },
+      "zrad_magnitude": {
+        "band_hz": [
+          150.0,
+          8000.0
+        ],
+        "max_abs_db": 25.364368906913178,
+        "rms_db": 6.446442529010118,
+        "mean_db": -1.1772970707204742
+      },
+      "spl_15deg": {
+        "band_hz": [
+          150.0,
+          8000.0
+        ],
+        "max_abs_db": 21.762497896733535,
+        "rms_db": 6.103727093148428,
+        "mean_db": -2.053617917541656
+      },
+      "spl_30deg": {
+        "band_hz": [
+          150.0,
+          8000.0
+        ],
+        "max_abs_db": 28.998335637215547,
+        "rms_db": 7.084800065906909,
+        "mean_db": -0.41826422376873174
+      },
+      "spl_45deg": {
+        "band_hz": [
+          150.0,
+          8000.0
+        ],
+        "max_abs_db": 28.33189482459713,
+        "rms_db": 7.249699525418384,
+        "mean_db": 0.48794031845286295
+      },
+      "spl_60deg": {
+        "band_hz": [
+          150.0,
+          8000.0
+        ],
+        "max_abs_db": 26.008454171135412,
+        "rms_db": 7.740024184931526,
+        "mean_db": 0.9337480446690669
+      },
+      "variant_flush": {
+        "spl_0deg": {
+          "band_hz": [
+            150.0,
+            8000.0
+          ],
+          "max_abs_db": 18.579390929255396,
+          "rms_db": 6.43931857432706,
+          "mean_db": -2.5608644974946833
+        },
+        "zrad_magnitude": {
+          "band_hz": [
+            150.0,
+            8000.0
+          ],
+          "max_abs_db": 25.364368906913178,
+          "rms_db": 6.446442529010118,
+          "mean_db": -1.1772970707204742
+        },
+        "spl_30deg": {
+          "band_hz": [
+            150.0,
+            8000.0
+          ],
+          "max_abs_db": 28.998335637215547,
+          "rms_db": 7.084800065906909,
+          "mean_db": -0.41826422376873174
+        }
+      },
+      "variant_flush_nohf": {
+        "spl_0deg": {
+          "band_hz": [
+            150.0,
+            8000.0
+          ],
+          "max_abs_db": 18.2468250246653,
+          "rms_db": 6.0739333433997125,
+          "mean_db": -2.1944044582091022
+        },
+        "zrad_magnitude": {
+          "band_hz": [
+            150.0,
+            8000.0
+          ],
+          "max_abs_db": 18.661203228651797,
+          "rms_db": 5.5972637050011445,
+          "mean_db": -1.1347783508262947
+        },
+        "spl_30deg": {
+          "band_hz": [
+            150.0,
+            8000.0
+          ],
+          "max_abs_db": 27.742996090414664,
+          "rms_db": 6.48333257467999,
+          "mean_db": 0.0006268633516892269
+        }
+      },
+      "variant_nofelt": {
+        "spl_0deg": {
+          "band_hz": [
+            150.0,
+            8000.0
+          ],
+          "max_abs_db": 30.689153195854686,
+          "rms_db": 7.917372043262617,
+          "mean_db": -2.6677053849035812
+        },
+        "zrad_magnitude": {
+          "band_hz": [
+            150.0,
+            8000.0
+          ],
+          "max_abs_db": 27.14006870991447,
+          "rms_db": 6.827867961504252,
+          "mean_db": -1.033218981030288
+        }
+      },
+      "variant_flush_nohf_nofelt": {
+        "spl_0deg": {
+          "band_hz": [
+            150.0,
+            8000.0
+          ],
+          "max_abs_db": 30.51165335265604,
+          "rms_db": 7.631187723700494,
+          "mean_db": -2.298721967253239
+        },
+        "zrad_magnitude": {
+          "band_hz": [
+            150.0,
+            8000.0
+          ],
+          "max_abs_db": 17.870442913823464,
+          "rms_db": 5.949400429132701,
+          "mean_db": -0.9814194088979359
+        }
+      }
+    },
+    "max_abs_difference_db": 13.21215088770984,
+    "mean_difference_db": 0.2890813220964013,
+    "rms_difference_db": 3.2631273478481666,
+    "felt_sweep": {
+      "note": "centre-cavity dip: deepest on-axis point 3.2 to 4.3 kHz, depth below the 2.5 to 6 kHz median, coupled SPL",
+      "rows": [
+        {
+          "eta": 0.0,
+          "fem_null_hz": 3606.3013673282535,
+          "fem_null_depth_db": 30.205693476268046,
+          "network_null_hz": 4091.909510088994,
+          "network_null_depth_db": 26.76324011207791
+        },
+        {
+          "eta": 0.05,
+          "fem_null_hz": 3644.4669562307054,
+          "fem_null_depth_db": 7.805880857834779,
+          "network_null_hz": 4135.2143036381185,
+          "network_null_depth_db": 6.834924378680924
+        },
+        {
+          "eta": 0.1,
+          "fem_null_hz": 3722.014131105678,
+          "fem_null_depth_db": 4.065824087681534,
+          "network_null_hz": 4135.2143036381185,
+          "network_null_depth_db": 3.874873181185137
+        },
+        {
+          "eta": 0.2,
+          "fem_null_hz": 4267.897911342375,
+          "fem_null_depth_db": 3.3463755317619643,
+          "network_null_hz": 4049.0582130231514,
+          "network_null_depth_db": 2.5561103150635205
+        },
+        {
+          "eta": 0.3,
+          "fem_null_hz": 4267.897911342375,
+          "fem_null_depth_db": 3.0470727694103914,
+          "network_null_hz": 4049.0582130231514,
+          "network_null_depth_db": 2.2831733612811007
+        },
+        {
+          "eta": 0.5,
+          "fem_null_hz": 4267.897911342375,
+          "fem_null_depth_db": 2.603526440295383,
+          "network_null_hz": 4049.0582130231514,
+          "network_null_depth_db": 1.9051636129266711
+        },
+        {
+          "eta": 0.8,
+          "fem_null_hz": 3280.3033931045006,
+          "fem_null_depth_db": 2.8073257146435964,
+          "network_null_hz": 4049.0582130231514,
+          "network_null_depth_db": 1.6900405839543424
+        }
+      ]
+    },
+    "runtime_s": 140.8
+  },
+  "kick": {
+    "power_balance_max_rel_error": 0.0020673436663719664,
+    "mesh": {
+      "cells": 7745,
+      "p2_dofs": 16060,
+      "h_min_mm": 0.4826945089980512,
+      "h_max_mm": 73.15537342893869,
+      "outline_points": 385
+    },
+    "case": {
+      "exterior_reach_m": 0.1934279113465853,
+      "kh_radius_m": 1.1,
+      "fmax": 1000.0
+    },
+    "n_freqs": 80,
+    "passband": {
+      "spl_0deg": {
+        "band_hz": [
+          40.0,
+          250.0
+        ],
+        "max_abs_db": 1.053471459765987,
+        "rms_db": 0.7893770897732132,
+        "mean_db": -0.5425832945675075
+      },
+      "zrad_magnitude": {
+        "band_hz": [
+          40.0,
+          250.0
+        ],
+        "max_abs_db": 3.3879599834162146,
+        "rms_db": 1.9503488015127466,
+        "mean_db": -1.801580363751821
+      }
+    },
+    "full": {
+      "spl_0deg": {
+        "band_hz": [
+          40.0,
+          1000.0
+        ],
+        "max_abs_db": 4.941755641176044,
+        "rms_db": 1.3375329895761021,
+        "mean_db": -0.5277870274915607
+      },
+      "zrad_magnitude": {
+        "band_hz": [
+          40.0,
+          1000.0
+        ],
+        "max_abs_db": 9.398809067146633,
+        "rms_db": 2.8967497082678926,
+        "mean_db": -2.1489207550098244
+      }
+    },
+    "max_abs_difference_db": 1.053471459765987,
+    "mean_difference_db": -0.5425832945675075,
+    "rms_difference_db": 0.7893770897732132,
+    "runtime_s": 3.2
+  },
+  "low": {
+    "note": "alias of kick for site.py",
+    "max_abs_difference_db": 1.053471459765987
+  },
+  "hf": {
+    "power_balance_max_rel_error": 0.0017866997911793758,
+    "mesh": {
+      "cells": 66005,
+      "p2_dofs": 133148,
+      "h_min_mm": 0.3319614930434612,
+      "h_max_mm": 4.773925417063996,
+      "outline_points": 436
+    },
+    "case": {
+      "baffle_s": 0.24,
+      "baffle": "mid mouth plane",
+      "protrusion_m": 0.0,
+      "exterior_reach_m": 0.1634329353334631,
+      "kh_radius_m": 0.3567164676667316,
+      "fmax": 16000.0,
+      "hf_cavity": true,
+      "felt_loss": 0.0
+    },
+    "n_freqs": 40,
+    "band_hz": [
+      2500.0,
+      16000
+    ],
+    "onaxis_change_db_mean": 13.426985695309428,
+    "rel_30deg_fem_mean_db": -12.626101742849805,
+    "rel_30deg_piston_mean_db": -22.575503002980245,
+    "runtime_s": 10.4
+  },
+  "total_runtime_s": 156.8
+}

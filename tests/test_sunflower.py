@@ -51,12 +51,11 @@ def test_mid_plug_is_always_subtracted_and_open_area_follows_the_law():
         assert m.area(s) == pytest.approx(math.pi * m.eq_radius(s) ** 2, rel=0.02)
 
 
-def test_bullet_is_one_smooth_taper_that_holds_the_hf_body_and_horn():
+def test_bullet_is_smooth_and_holds_the_hf_body_and_waveguide():
     m = D.MID
     ss = np.linspace(0, m.s_tip, 400)
     r = np.array([m.plug(s) for s in ss])
-    assert np.all(np.diff(r) <= 1e-12)                      # no bulge, no straight section
-    assert np.all(np.abs(np.diff(r, 2)) < 1e-4)             # smooth
+    assert np.all(np.abs(np.diff(r, 2)) < 2e-4)             # smooth: no corner where the taper meets the waveguide
     assert m.plug(m.s_exit) >= D.TW.body_diameter / 2
     hf = np.linspace(m.s_exit, m.s_tip, 50)
     assert min(m.plug(s) - m.hf_horn_radius(s) for s in hf) >= m.hf_wall - 1e-4

@@ -21,8 +21,8 @@ from sunflower.geometry import law_name  # noqa: E402
 from sunflower.acoustics import C  # noqa: E402
 
 ROOT = D.ROOT
-RES = ROOT / "results"
-OUT = ROOT / "docs/img/plots"
+RES = D.RESULTS
+OUT = D.IMG / "plots"
 COL = dict(low="#2a78d6", mid="#eb6834", tweeter="#1baf7a", sum="#0b0b0b")
 INK, MUTED, GRID = "#0b0b0b", "#52514e", "#e4e3df"
 WOOD, PRINT, PLUG = "#c9a77c", "#2b2b2b", "#e3a21a"
@@ -292,42 +292,71 @@ def kick_drawing():
 
 
 def throat_drawing():
-    """The reversed 15 inch: cone, basket envelope, shroud gap and the turn into the horn."""
+    """The reversed 15 inch throat as a labelled half section: parts named, air shaded, the air path drawn."""
     k, drv = D.KICK, D.KICK.drv
-    fig, ax = plt.subplots(figsize=(12, 6.2), layout="constrained")
-    r = np.linspace(drv.vc_r, drv.rim_r, 120)
-    ax.plot(r * 1000, drv.cone_z(r) * 1000, color=COL["low"], lw=3, label="Cone (estimated profile)")
-    rs = np.linspace(k.channel_start, drv.rim_r, 80)
-    sz = k.shroud_z(rs)
+    mm = 1000
+    fig, ax = plt.subplots(figsize=(12, 7.2), layout="constrained")
+    req = lambda z: math.sqrt(k.wall_area(max(z, 0.0)) / math.pi) * mm   # wall as the circle of equal area  # noqa: E731
+    zmax = (k.motor_front + 0.04) * mm
+    W2 = req(zmax / mm)
+    AIR, CONE, SHROUD, METAL = "#d6e8fb", COL["low"], "#2b2b2b", "#8a8f96"
+    # horn air inside the wall, then solids on top
+    zw = np.linspace(0, zmax / mm, 60)
+    ax.fill_betweenx(zw * mm, 0, [req(z) for z in zw], color=AIR, lw=0, zorder=0)
     body = _body_outline()
-    keep = body[:, 0] < 230
-    ax.fill_between(body[keep, 1], body[keep, 0], 230, color=PRINT, lw=0, zorder=1)
-    ax.fill_betweenx([k.shroud_z(k.channel_start) * 1000, 230], 0, k.motor_body_radius * 1000, color=PRINT, lw=0, zorder=1)
-    ax.fill_betweenx([drv.top_plate_z * 1000, (drv.top_plate_z + drv.motor_h) * 1000], 0, drv.motor_r * 1000,
-                     color="#55595e", zorder=2, label="Motor")
+    keep = body[:, 0] <= zmax
+    ax.fill_between(body[keep, 1], body[keep, 0], zmax, color=SHROUD, lw=0, zorder=2)
+    ax.fill_betweenx([float(k.shroud_z(k.channel_start)) * mm, zmax], 0, k.motor_body_radius * mm, color=SHROUD, lw=0, zorder=2)
+    ax.fill_betweenx([drv.top_plate_z * mm, (drv.top_plate_z + drv.motor_h) * mm], 0, drv.motor_r * mm, color=METAL, lw=0, zorder=3)
+    r = np.linspace(drv.vc_r, drv.rim_r, 120)
+    cz = drv.cone_z(r) * mm
+    ax.fill_between(r * mm, -k.baffle * mm, cz, color="#f3efe6", lw=0, zorder=1)          # behind the cone: sealed chamber side
+    ax.plot(r * mm, cz, color=CONE, lw=4, zorder=4, solid_capstyle="round")
+    ax.fill_between([drv.rim_r * mm + 12, drv.frame_od / 2 * mm], 0, drv.flange_t * mm, color=METAL, lw=0, zorder=3)
+    ax.fill_between([drv.frame_od / 2 * mm - 17, req(0) + 18], -k.baffle * mm, 0, color=WOOD, lw=0, zorder=3)
+    ax.fill_betweenx(zw * mm, [req(z) for z in zw], [req(z) + 18 for z in zw], color=WOOD, lw=0, zorder=3)
+    rs = np.linspace(k.channel_start, drv.rim_r, 60)
     arm = drv.cone_z(rs) + k.arm / np.cos(np.arctan(drv.cone_slope(rs)))
-    ax.plot(rs * 1000, arm * 1000, color=MUTED, ls="--", lw=1.4, label="Basket arms (estimated)")
-    ax.fill_between([drv.rim_r * 1000 + 12, drv.frame_od * 500], 0, drv.flange_t * 1000, color="#55595e", lw=0)
-    ax.fill_between([0, k.half_width(0) * 1000], -k.baffle * 1000, 0, color=WOOD, lw=0)
-    ax.fill_between([0, (drv.frame_od / 2 - 0.017) * 1000], -k.baffle * 1000, 0, color="white", lw=0)
-    for rv in (k.channel_start + 0.008, 0.5 * (k.channel_start + drv.rim_r), drv.rim_r - 0.006):
+    ax.plot(rs * mm, arm * mm, color=METAL, ls=(0, (6, 3)), lw=1.8, zorder=4)
+    # air path
+    rgap = lambda z: 0.5 * (k.body_radius(z) * mm + req(z))  # noqa: E731
+    path_r = [k.channel_start * mm + 6, drv.rim_r * mm - 8, (drv.rim_r + 0.02) * mm, rgap(k.turn_z + 0.01), rgap(zmax / mm - 0.01)]
+    path_z = [float(drv.cone_z(k.channel_start) + 0.5 * k.gap(k.channel_start)) * mm,
+              float(drv.cone_z(drv.rim_r - 0.008) + 0.5 * k.gap(drv.rim_r - 0.008)) * mm,
+              (k.turn_z * mm + drv.flange_t * mm) / 2, (k.turn_z * mm + drv.flange_t * mm) / 2, zmax - 10]
+    for i in range(len(path_r) - 1):
+        ax.annotate("", xy=(path_r[i + 1], path_z[i + 1]), xytext=(path_r[i], path_z[i]),
+                    arrowprops=dict(arrowstyle="-|>", color="#0b5cad", lw=2.2, mutation_scale=16), zorder=6)
+    # gap dimensions normal to the cone
+    for rv in (k.channel_start + 0.01, 0.5 * (k.channel_start + drv.rim_r), drv.rim_r - 0.01):
         z0 = float(drv.cone_z(rv))
-        n = np.array([-float(drv.cone_slope(rv)), 1.0])
-        n /= np.linalg.norm(n)
+        n = np.array([-float(drv.cone_slope(rv)), 1.0]); n /= np.linalg.norm(n)
         g = float(k.gap(rv))
-        p0 = np.array([rv, z0]) * 1000
-        p1 = p0 + n * g * 1000
-        dim(ax, tuple(p0), tuple(p1), f"{g*1000:.0f}", off=(10, 0), fs=8)
-    W2 = k.half_width(0) * 1000
-    ax.axvline(W2, color=WOOD, lw=4)
-    ax.text(W2 + 4, 140, "wall flat", rotation=90, fontsize=8, color=MUTED)
-    ax.text(drv.rim_r * 1000 + 10, k.turn_z * 1000 - 14, "turn under the lip", fontsize=8, color=INK)
-    ax.text(10, -k.baffle * 1000 - 18, f"Channel area at each radius = cone area inside it / {k.compression:.1f}, less {k.blockage*100:.0f}% "
-            "for the basket arms;\nnever closer to the cone than the arms plus 9 mm or the mechanical travel plus 3 mm. "
-            f"Throat {k.throat_area*1e4:.0f} cm² at the rim.", fontsize=8, color=MUTED, va="top")
-    ax.set(aspect="equal", xlim=(0, W2 + 30), ylim=(-k.baffle * 1000 - 45, 230), xlabel="radius (mm)",
-           ylabel="z (mm from the baffle front)", title="Reversed 15 inch throat: cone, shroud and gap, mm")
-    ax.legend(loc="center right", fontsize=8)
+        p0 = np.array([rv, z0]) * mm
+        p1 = p0 + n * g * mm
+        ax.annotate("", xy=tuple(p1), xytext=tuple(p0), arrowprops=dict(arrowstyle="<->", color=INK, lw=1), zorder=7)
+        ax.text(*(0.5 * (p0 + p1) + np.array([9, -4])), f"{g*mm:.0f}", fontsize=9, zorder=7,
+                bbox=dict(boxstyle="round,pad=0.12", fc="white", ec="none"))
+    X = W2 + 70                                     # label column to the right of the section
+    def call(xy, txt, y):
+        ax.annotate(txt, xy=xy, xytext=(X, y), fontsize=10, color=INK, zorder=8, va="center",
+                    arrowprops=dict(arrowstyle="-", color=MUTED, lw=0.9, shrinkB=2),
+                    bbox=dict(boxstyle="round,pad=0.3", fc="white", ec=GRID))
+    rm = 0.5 * (k.channel_start + drv.rim_r)
+    call((40, (drv.top_plate_z + drv.motor_h / 2) * mm), "Kick motor, inside the centre body", zmax - 15)
+    call(((k.channel_start + 0.02) * mm, float(k.shroud_z(k.channel_start + 0.02)) * mm + 6),
+         "Shroud: the underside of the centre body", zmax - 55)
+    call((rs[40] * mm, arm[40] * mm), "Basket arms (dashed)", zmax - 95)
+    call((rm * mm, float(drv.cone_z(rm)) * mm), "15 inch cone, reversed: its back faces the horn", 40)
+    call(((drv.frame_od / 2 - 0.008) * mm, drv.flange_t * mm / 2), "Driver flange, on the front of the baffle", 5)
+    call((req(0.12) + 9, 120), "Horn wall, drawn as the circle of the same area\n(the real throat is an octagon)", zmax - 135)
+    call((60, -k.baffle * mm / 2), "Sealed chamber side, behind the cone", -k.baffle * mm - 20)
+    ax.text(path_r[-1] + 6, zmax - 45, "air into\nthe kick\nhorn", fontsize=10, color="#0b5cad", fontweight="bold", zorder=8)
+    ax.set(aspect="equal", xlim=(0, W2 + 330), ylim=(-k.baffle * mm - 45, zmax), xlabel="distance from the axis (mm)",
+           ylabel="distance from the baffle front (mm)",
+           title="Reversed 15 inch throat, half section: air (light blue) leaves through the gap and turns under the shroud lip")
+    for sp in ("top", "right"):
+        ax.spines[sp].set_visible(False)
     ax.grid(False)
     fig.savefig(OUT / "throat-drawing.png")
     plt.close(fig)
@@ -638,7 +667,12 @@ def fem_compare():
 
 
 def tradeoff():
-    kd = pd.read_csv(RES / "optimise/kick-search.csv")
+    p = RES / "optimise/kick-search.csv"
+    if not p.exists():
+        p = RES / "kick-search.csv"
+    if not p.exists():
+        return
+    kd = pd.read_csv(p)
     sel = D.SELECTED
     palette = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#6250d6", "#7b7f84"]
     fig, ax = plt.subplots(figsize=(12, 5), layout="constrained")

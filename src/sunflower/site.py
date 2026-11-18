@@ -555,7 +555,8 @@ rear chamber.</p>
 <p>For a cafe or bar that wants one striking box per side, not an array: a 350 mm hexagonal cabinet, 350 mm deep, with
 an 8 inch coaxial driver. The compression driver fires through the centre of the woofer and the cone is its horn, so the
 two share one source and one coverage pattern. It is a hybrid: a short hexagonal horn on the front of the cone, and the
-22 litre rear chamber radiating through a slot at the bottom of the horn mouth.</p>
+22 litre rear chamber radiating into that horn through a slot in each of its six walls near the mouth, as in a
+multiple-entry horn.</p>
 {table(["", "Hex 8 (simulated low end)"], [
     ["Driver", "Faital 8HX150 coaxial, about $282"],
     ["Low end, on a wall", "-6 dB at 49 Hz, with a few dB of bass EQ below about 100 Hz"],
@@ -565,7 +566,7 @@ two share one source and one coverage pattern. It is a hybrid: a short hexagonal
 <div class="grid2">
 {fig("img/range/concepts/hex8-single.jpg", "Hex 8: the HF horn stands in the centre of the cone, inside the hexagonal front horn.", "render")}
 {fig("img/range/concepts/hex8-front.jpg", "From the front.", "render")}
-{fig("img/range/concepts/hex8-cafe.jpg", "On a wall. The dark slit under the horn is the rear chamber's slot.", "render")}
+{fig("img/range/concepts/hex8-cafe.jpg", "On a wall. The dark slots in the horn walls are the rear chamber's ports.", "render")}
 </div>
 <div class="note"><p><b>Concept.</b> The low end is simulated (a ported-box model with the driver's datasheet
 parameters). The front horn, the crossover and the top end are not: those figures are the maker's. An alternative

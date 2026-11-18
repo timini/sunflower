@@ -1431,7 +1431,8 @@ def drivers():
     fl, _ = occ.cut(fl, holes)
     arms = basket(d, zk, K.arm * MM, Z_CUT + 4, d.flange_t * MM)
     hous = ring(d.neck_z * MM - 5, d.top_plate_z * MM, d.spider_r * MM + 2, d.spider_r * MM + 5)
-    occ.fuse(fl, arms + hous)
+    # flange, arms and housing are left as overlapping solids: fused, gmsh's mesher hangs on the result for some
+    # frames (the 12CL76)
     save("drv_kick_frame", "driver_metal", "driver", explode=(0, 0, -120), group="kick driver", **kw,
          note=f"proxy of the {D.label(D.KICK_RECORD)} frame, reversed: flange on the baffle front, basket into the horn")
     start("drv_kick_cone")
@@ -1449,6 +1450,7 @@ def drivers():
     fl = ring(Z_MF - md.flange_t * MM, Z_MF, md.frame_od / 2 * MM - 12, md.frame_od / 2 * MM)
     arms = basket(md, zmid, md.xmech * MM + 8, md.frame_od / 2 * MM - 12, Z_MF - md.flange_t * MM)
     hous = ring(zmid(md.top_plate_z * MM), zmid(md.neck_z * MM - 4), md.spider_r * MM + 2, md.spider_r * MM + 5)
+    occ.rotate(hous, 0, 0, 0, 0, 0, 1, math.pi / 4)
     occ.fuse(fl, arms + hous)
     save("drv_mid_frame", "driver_metal", "driver", explode=(0, 0, 330), group="mid driver", **kw,
          note=f"proxy of the {D.label(D.MID_RECORD)} frame")

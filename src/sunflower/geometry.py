@@ -206,14 +206,15 @@ class MidHorn:
     wall: float = 0.006
     throat_offset: float = 0.005      # throat plane in front of the mid flange face
     pod_extra: float = 0.020          # pod length beyond the driver depth
-    lip_radius: float = 0.040         # rolled lip at the mid mouth
+    lip_radius: float = 0.015         # rolled lip at the mid mouth
     felt_loss: float = 0.3            # felt on the bullet underside damps the centre cavity (estimate; measure it)
+    gap_override: float = 0.0         # cone to plug gap, m; 0 = 1.15 Xmax + 3 mm
 
     # ------------------------------------------------ cone and front cavity
     @property
     def gap(self):
         """Cone to plug clearance: 1.15 Xmax + 3 mm (a DSP high-pass and limiter keep the mid inside it)."""
-        return 1.15 * self.drv.xmax + 0.003
+        return self.gap_override or 1.15 * self.drv.xmax + 0.003
 
     def s_cone(self, r):
         """Mid cone surface in horn coordinates (negative: behind the throat plane)."""
@@ -366,6 +367,7 @@ class Kick:
     body_wall: float = 0.004
     arm_offset: float = 0.0           # basket arm surface above the cone; 0 = xmech + 10 mm
     arm_thickness: float = 0.006
+    wedge_chamber: bool = False       # hollow top and bottom wedges vented into the sealed chamber
 
     # ------------------------------------------------ positions along z
     @property
@@ -405,7 +407,7 @@ class Kick:
 
     @property
     def overall_depth(self):
-        return self.depth + self.protrusion + self.mid.lip_radius
+        return self.depth + (self.protrusion + self.mid.lip_radius if self.protrusion > 0 else 0.0)
 
     # ------------------------------------------------ walls
     def half_width(self, z):
@@ -420,12 +422,34 @@ class Kick:
         return self.half_width(z) + self.ply / math.cos(math.radians(self.half_angle_deg))
 
     @property
+    def half_height(self):
+        """Inside half-height of the box: flat top and bottom, level with the square mouth."""
+        return self.mouth_width / 2
+
+    def wedge(self, z):
+        """Thickness of the tapered wedge under the flat top (and over the flat bottom).
+
+        Its sloping face is at half_width(z), so inside the horn is the same square frustum as the
+        side walls, and the wedge vanishes at the square mouth."""
+        return max(self.half_height - self.half_width(z), 0.0) if z >= 0 else 0.0
+
+    @property
     def external_mouth(self):
         return 2 * self.outer_half_width(self.mouth_z)
 
     @property
+    def external_height(self):
+        return 2 * (self.half_height + self.ply)
+
+    @property
     def external_back(self):
         return 2 * self.outer_half_width(-self.baffle - self.chamber_depth - self.ply)
+
+    @property
+    def wedge_litres(self):
+        zz = np.linspace(0, self.mouth_z, 200)
+        inner = np.array([2 * self.half_width(z) * 2 * self.wedge(z) for z in zz])
+        return float(np.trapezoid(inner, zz) * 1000)
 
     def filler(self, z):
         """Corner filler leg: a regular octagon at the throat, nothing at the mouth."""
@@ -522,11 +546,15 @@ class Kick:
     # ------------------------------------------------ chamber
     @property
     def chamber_litres(self):
-        """Sealed chamber: frustum behind the baffle, the baffle cutout, and the cone's concave side."""
+        """Sealed chamber: the box behind the baffle (full flat height), the baffle cutout, the cone's
+        concave side, and the hollow wedges when they are vented into it (less their 18 mm panels)."""
         zz = np.linspace(-self.baffle - self.chamber_depth, -self.baffle, 100)
-        frust = np.trapezoid((2 * self.half_width(zz)) ** 2, zz)
+        box = np.trapezoid(2 * self.half_width(zz) * 2 * self.half_height, zz)
         cut = math.pi * (self.drv.frame_od / 2 - 0.017) ** 2 * self.baffle
-        return float((frust + cut + self.drv.cone_volume) * 1000)
+        v = (box + cut + self.drv.cone_volume) * 1000
+        if self.wedge_chamber:
+            v += 0.8 * self.wedge_litres
+        return float(v)
 
     # ------------------------------------------------ checks
     def check(self):
@@ -549,8 +577,8 @@ class Kick:
             p.append("kick horn shorter than 200 mm")
         if self.mouth_area <= self.throat_area:
             p.append("mouth smaller than throat")
-        if self.depth > 0.60 + 1e-9:
-            p.append(f"cabinet {self.depth*1000:.0f} mm deep (limit 600)")
+        if self.protrusion > 1e-9:
+            p.append("mid horn protrudes past the kick mouth")
         if self.chamber_depth < 0.03:
             p.append("no room behind the baffle")
         return p
@@ -560,6 +588,8 @@ class Kick:
                     compression=self.compression, cone_to_throat=self.drv.sd / self.throat_area,
                     horn_length_m=self.horn_length, mouth_width_m=self.mouth_width,
                     external_mouth_m=self.external_mouth, external_back_m=self.external_back,
+                    external_height_m=self.external_height, wedge_litres=self.wedge_litres,
+                    wedge_chamber=self.wedge_chamber,
                     depth_m=self.depth, overall_depth_m=self.overall_depth, splay_deg=self.splay_deg,
                     chamber_litres=self.chamber_litres, trapped_litres=self.trapped_litres,
                     turn_z_m=self.turn_z, max_body_radius_m=max(self.body_radius(z) for z in
@@ -568,30 +598,22 @@ class Kick:
 
 # ---------------------------------------------------------------- array
 def array_layout(kick: Kick, n=3):
-    """n x n curved point source: box (i, j) yawed i x splay and pitched j x splay about a common apex.
+    """n x n array: n columns fanned by the splay about a common vertical axis, rows stacked flat.
 
-    Returns a list of dicts with yaw, pitch and the 4x4 placement matrix (metres) of each box's
-    local frame (origin at the baffle front face centre, +z forward), plus the apex distance.
-    The apex is where the outer faces of the frustum meet behind the box.
-    """
+    Identical boxes tile exactly: the angled sides meet flush between columns, the flat tops and
+    bottoms meet flush between rows. Matrices map each box's frame (metres; origin at the baffle
+    front face centre, +x right, +y up, +z forward) to the array frame (the centre box's frame)."""
     s = math.radians(kick.splay_deg)
-    a = math.radians(kick.half_angle_deg)
-    apex = (kick.external_mouth / 2) / math.tan(a) - kick.mouth_z   # apex behind the baffle front face
-    out = []
+    apex = (kick.external_mouth / 2) / math.tan(math.radians(kick.half_angle_deg)) - kick.mouth_z
+    h = kick.external_height
     k = (n - 1) // 2
+    out = []
     for j in range(-k, k + 1):
         for i in range(-k, k + 1):
-            # gnomonic aim: equal tangents on both axes, the closest identical-box fit to a sphere
-            d = np.array([math.tan(i * s), -math.tan(j * s), 1.0])
-            zax = d / np.linalg.norm(d)
-            xax = np.cross([0, 1, 0], zax)
-            xax /= np.linalg.norm(xax)
-            yax = np.cross(zax, xax)
-            R = np.column_stack([xax, yax, zax])
+            c, sn = math.cos(i * s), math.sin(i * s)
+            R = np.array([[c, 0, sn], [0, 1, 0], [-sn, 0, c]])
             M = np.eye(4)
             M[:3, :3] = R
-            M[:3, 3] = R @ np.array([0, 0, apex]) - np.array([0, 0, apex])
-            out.append(dict(i=i, j=j, yaw_deg=math.degrees(math.atan(math.tan(i * s))),
-                            pitch_deg=math.degrees(math.atan2(math.tan(j * s), math.hypot(1, math.tan(i * s)))),
-                            matrix=M.round(6).tolist()))
-    return dict(apex_behind_baffle_m=apex, boxes=out)
+            M[:3, 3] = R @ np.array([0, 0, apex]) - np.array([0, 0, apex]) + np.array([0, j * h, 0])
+            out.append(dict(i=i, j=j, yaw_deg=math.degrees(i * s), pitch_deg=0.0, matrix=M.round(6).tolist()))
+    return dict(apex_behind_baffle_m=apex, row_pitch_m=h, splay_deg=kick.splay_deg, boxes=out)

@@ -13,7 +13,7 @@
 <a class="brand" href="index.html"><svg viewBox="0 0 32 32" aria-hidden="true"><g fill="none" stroke-width="2.4">
 <rect x="3" y="3" width="26" height="26" rx="4" stroke="#d38a0c"/><circle cx="16" cy="16" r="8" stroke="#eb6834"/>
 <circle cx="16" cy="16" r="3.2" fill="#1baf7a" stroke="none"/></g></svg>Sunflower</a>
-<nav><a href="index.html">Product</a><a href="design.html" aria-current=page>Design</a><a href="simulation.html">Simulation</a><a href="build.html">Build</a><a href="downloads.html">Downloads</a></nav>
+<nav><a href="index.html">Product</a><a href="design.html" aria-current=page>Design</a><a href="simulation.html">Simulation</a><a href="validation.html">Validation</a><a href="build.html">Build</a><a href="downloads.html">Downloads</a></nav>
 </div></header>
 <main><div class="wrap">
 
@@ -26,13 +26,14 @@ the kick horn. Every inner body is subtracted from its horn's area.</p>
 <p>The Res 2's selling point is a horn-loaded 8 inch cone that carries everything from 250 Hz up to the compression
 driver, so the voice, including the 2 to 4 kHz consonant band, stays on one paper cone. Funktion-One's Res 4 and 5
 run the same 8 inch to 5.7 and 7.5 kHz with their Axhead loading device. Sunflower keeps the 250 Hz low crossover and
-pushes the mid as high as the models allow: 4 kHz (see <a href="#mid">mid</a>).</p>
+pushes the mid as high as the FEM allows: 3.5 kHz with a 66 mm bullet round a B&amp;C DE111 (see
+<a href="#mid">mid</a> and the <a href="validation.html">validation</a> page).</p>
 
 <h2 id="mid">Mid horn and its phase plug</h2>
 <p>Beyma 8MI100 in an oblate spheroidal (OS) horn, 360 mm mouth,
-360 mm long, 2.2:1 compression. The phase plug is one smooth bullet: its nose follows the
-cone 6.5 mm away, it holds the 18 Sound ND1030's 65 mm body, and it tapers to the
-printed HF horn's 61 mm mouth just inside the mid mouth. The wall is solved so the open area
+280 mm long, 2.0:1 compression. The phase plug is one smooth bullet: its nose follows the
+cone 4.5 mm away, it holds the B&C DE111's 60 mm body, and it tapers to the
+printed HF horn's 60 mm mouth just inside the mid mouth. The wall is solved so the open area
 (wall minus bullet) follows the law exactly. The mid sits in a sealed 3.3 litre printed pod,
 separate from the kick motor.</p>
 <figure class="figure"><img class="plot" src="img/plots/mid-drawing.png" alt="Mid horn, bullet and HF horn, section, mm." loading="lazy"><figcaption>Mid horn, bullet and HF horn, section, mm.</figcaption></figure>
@@ -42,34 +43,34 @@ separate from the kick motor.</p>
 bullet radius puts a deep notch near 3.6 kHz, right where the mid hands over. Both the network model and the FEM show
 it. A felt layer on the underside of the nose damps it; the CAD has a 3 mm felt part recessed into the nose so the
 designed gap is kept.</p>
-<div class="table-wrap"><table><thead><tr><th class="num">Felt loss factor</th><th class="num">FEM notch depth (dB)</th><th class="num">Network notch depth (dB)</th></tr></thead><tbody><tr><td class="num">0.00</td><td class="num">24.2</td><td class="num">20.2</td></tr><tr><td class="num">0.05</td><td class="num">9.5</td><td class="num">5.1</td></tr><tr><td class="num">0.10</td><td class="num">4.4</td><td class="num">2.4</td></tr><tr><td class="num">0.20</td><td class="num">0.7</td><td class="num">0.7</td></tr><tr><td class="num">0.30</td><td class="num">0.9</td><td class="num">0.3</td></tr><tr><td class="num">0.50</td><td class="num">1.6</td><td class="num">0.1</td></tr><tr><td class="num">0.80</td><td class="num">1.8</td><td class="num">0.1</td></tr></tbody></table></div>
+<div class="table-wrap"><table><thead><tr><th class="num">Felt loss factor</th><th class="num">FEM notch depth (dB)</th><th class="num">Network notch depth (dB)</th></tr></thead><tbody><tr><td class="num">0.00</td><td class="num">25.9</td><td class="num">43.8</td></tr><tr><td class="num">0.05</td><td class="num">8.0</td><td class="num">5.8</td></tr><tr><td class="num">0.10</td><td class="num">3.1</td><td class="num">2.5</td></tr><tr><td class="num">0.20</td><td class="num">1.0</td><td class="num">1.0</td></tr><tr><td class="num">0.30</td><td class="num">1.7</td><td class="num">0.6</td></tr><tr><td class="num">0.50</td><td class="num">1.9</td><td class="num">0.5</td></tr><tr><td class="num">0.80</td><td class="num">2.0</td><td class="num">0.4</td></tr></tbody></table></div>
 
 <h2 id="kick">Kick horn and the reversed 15 inch</h2>
-<p>18 Sound 15MB700, reversed: the flange sits on the front of the baffle, the motor points into the horn and
-the cone's concave side faces a sealed 15 litre chamber. The centre body's underside is a shroud
+<p>18 Sound 15W700, reversed: the flange sits on the front of the baffle, the motor points into the horn and
+the cone's concave side faces a sealed 32 litre chamber. The centre body's underside is a shroud
 over the cone, outside the basket arms. The gap at each radius makes the channel area equal to the cone area inside
 that radius divided by 1.6, so every ring of the cone sees the same compression; it never comes closer
 than the basket arms plus 9 mm or the cone's mechanical travel plus 3 mm. The air leaves at the rim, turns under the
-shroud lip and runs forward through a 463 cm² throat.</p>
+shroud lip and runs forward through a 490 cm² throat.</p>
 <figure class="figure"><img class="plot" src="img/plots/throat-drawing.png" alt="The reversed cone, the shroud and the gap, mm." loading="lazy"><figcaption>The reversed cone, the shroud and the gap, mm.</figcaption></figure>
-<p>From the throat forward the body's radius is solved from the hyperbolic-exponential (T = 0.6) law, so the open area between the
+<p>From the throat forward the body's radius is solved from the conical law, so the open area between the
 four walls, less the corner fillers, and the body follows it all the way to the square mouth. The body swells to
-572 mm, holds the kick motor, the mid pod and the mid horn, and meets the mid horn's
+511 mm, holds the kick motor, the mid pod and the mid horn, and meets the mid horn's
 outside at the kick mouth.</p>
 <figure class="figure"><img class="plot" src="img/plots/kick-drawing.png" alt="The cabinet in section. Upper half through the wall flats, lower half through a corner filler." loading="lazy"><figcaption>The cabinet in section. Upper half through the wall flats, lower half through a corner filler.</figcaption></figure>
 <figure class="figure"><img class="plot" src="img/plots/low-area.png" alt="Kick areas. Dots: areas sliced from the CAD air volume." loading="lazy"><figcaption>Kick areas. Dots: areas sliced from the CAD air volume.</figcaption></figure>
 <p>The horn profiles are checked against the solid model: the kick's air volume was built in CAD (walls, fillers,
-body, standoffs and vanes) and sliced at 60 planes. It matches the model to 0.001%, the mid to
-0.23% (the worst point is the HF cable hole). The support vanes block at most
-1.9% of the kick horn.</p>
-<div class="note"><p><b>Measure before printing.</b> No maker publishes cone sections. The 18 Sound 15MB700 geometry here
-is estimated from dimensioned drawings: cone rim (from Sd), cone profile and neck position, spider diameter, basket arm envelope. The shroud and the bullet nose must be checked against a real driver.</p></div>
+body, standoffs and vanes) and sliced at 60 planes. It matches the model to 0.208%, the mid to
+0.78% (the worst point is the HF cable hole). The support vanes block at most
+1.8% of the kick horn.</p>
+<div class="note"><p><b>Measure before printing.</b> No maker publishes cone sections. The 18 Sound 15W700 geometry here
+is estimated from dimensioned drawings: cone profile and neck position, spider diameter, basket arm envelope. The shroud and the bullet nose must be checked against a real driver.</p></div>
 
 <h2 id="box">Cabinet and splay</h2>
 <p>Single-ply 18 mm birch. The four horn walls are the outside of the box: four identical trapezoids with compound
-mitres, from a 470 mm square back to a 791 mm
-square mouth, 600 mm deep. The mid horn protrudes 150 mm beyond the kick mouth on a
-rolled lip, which keeps the box within 600 mm and keeps mid sound from diffracting into the kick horn.</p>
+mitres, from a 828 mm square back to a 829 mm
+square mouth, 700 mm deep. The two sides are angled; the top and bottom are flat, with sealed wedges inside
+them so the horn itself is a square frustum. The mid horn ends flush inside the kick mouth.</p>
 <p>The splay between boxes is twice the wall angle, 30 degrees. It was chosen against the mid's coverage:
 about 0.8 of its -6 dB beamwidth from 1 to 4 kHz, the point-source rule Funktion-One also uses when it flies Res tops.</p>
 <figure class="figure"><img class="plot" src="img/plots/array-coverage.png" alt="Coverage of the 3 x 3 cluster (power sum of nine boxes)." loading="lazy"><figcaption>Coverage of the 3 x 3 cluster (power sum of nine boxes).</figcaption></figure>

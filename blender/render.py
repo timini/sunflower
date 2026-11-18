@@ -2,13 +2,15 @@
 
     blender -b -P blender/render.py -- --out docs/img/renders [--shots hero,front] [--samples 160]
 
-Stills: hero, front, section, exploded, detail, rear, array (3 x 3, also written
-as stack.jpg). Animations: turntable, orbit (the array), assemble (exploded and
-back). Animations write PNG frames to --frames/<name>/; the justfile encodes them.
+Stills: hero, front, section, exploded, detail, rear, array (3 x 3: stack.jpg,
+stack-front.jpg, stack-side.jpg and the plan stack-top.jpg). Animations:
+turntable, orbit (the array), assemble (exploded and back). Animations write
+PNG frames to --frames/<name>/; the justfile encodes them.
 
 Reads cad/parts.json for categories and explode vectors and cad/array.json for
-the array. CAD coordinates are millimetres with y up and z towards the
-listener; they map to Blender metres, Z up, front facing -Y.
+the array (nine identical boxes that tile exactly, no spacers). CAD coordinates
+are millimetres with y up and z towards the listener; they map to Blender
+metres, Z up, front facing -Y.
 """
 import argparse
 import json
@@ -33,11 +35,11 @@ MATERIALS = {
     #               base colour (linear)        metallic roughness
     "birch":        ((0.52, 0.36, 0.20, 1),    0.0, 0.45),
     "print_dark":   ((0.010, 0.010, 0.011, 1), 0.0, 0.55),
-    "amber":        ((0.92, 0.36, 0.012, 1),   0.0, 0.32),
+    "print_bullet": ((0.035, 0.036, 0.040, 1), 0.0, 0.40),   # dark too, a shade off the horn so it reads
     "aluminium":    ((0.90, 0.91, 0.92, 1),    1.0, 0.24),
     "driver_metal": ((0.16, 0.16, 0.17, 1),    1.0, 0.38),
     "driver_cone":  ((0.018, 0.018, 0.018, 1), 0.0, 0.85),
-    "felt":         ((0.05, 0.05, 0.05, 1),    0.0, 1.0),
+    "felt":         ((0.075, 0.075, 0.080, 1), 0.0, 1.0),    # dark grey wool
 }
 
 
@@ -58,17 +60,17 @@ def args():
 
 def pick_material(p):
     cat, name = p.get("category", ""), p["name"]
+    if cat == "felt" or "felt" in name:
+        return "felt"
     if cat in ("cabinet", "filler"):
         return "birch"
     if cat == "print":
-        return "amber" if name.startswith("bullet") else "print_dark"
+        return "print_bullet" if name.startswith("bullet") else "print_dark"
     if cat == "support":
         return "aluminium"
     if cat == "driver":
         return "driver_cone" if "cone" in name else "driver_metal"
-    if "felt" in name:
-        return "felt"
-    return {"ply": "birch", "print_orange": "amber", "aluminium": "aluminium",
+    return {"ply": "birch", "print_orange": "print_bullet", "aluminium": "aluminium",
             "driver_cone": "driver_cone"}.get(p.get("material"), "print_dark")
 
 
@@ -144,9 +146,9 @@ def material(name):
         nt.links.new(ramp.outputs["Color"], b.inputs["Base Color"])
         b.inputs["Coat Weight"].default_value = 0.3
         b.inputs["Coat Roughness"].default_value = 0.25
-    elif name == "amber":
-        b.inputs["Coat Weight"].default_value = 0.5
-        b.inputs["Coat Roughness"].default_value = 0.15
+    elif name == "print_bullet":
+        b.inputs["Coat Weight"].default_value = 0.35
+        b.inputs["Coat Roughness"].default_value = 0.2
     elif name == "print_dark":
         b.inputs["Specular IOR Level"].default_value = 0.3
         # faint print layer lines along the axis
@@ -165,8 +167,11 @@ def material(name):
 
 
 def cap_colour(name, col):
-    return {"birch": (0.62, 0.45, 0.27, 1), "print_dark": (0.22, 0.22, 0.24, 1),
-            "aluminium": (0.55, 0.56, 0.58, 1), "driver_metal": (0.25, 0.25, 0.26, 1)}.get(name, col)
+    # cut faces: prints a dark slate, the bullet a bluer slate, drivers steel, so each part reads
+    return {"birch": (0.62, 0.45, 0.27, 1), "print_dark": (0.060, 0.062, 0.068, 1),
+            "print_bullet": (0.050, 0.075, 0.120, 1), "felt": (0.12, 0.12, 0.125, 1),
+            "aluminium": (0.55, 0.56, 0.58, 1), "driver_metal": (0.36, 0.37, 0.40, 1),
+            "driver_cone": (0.015, 0.015, 0.015, 1)}.get(name, col)
 
 
 def add_cut(m, cap):
@@ -447,7 +452,7 @@ def key_interp(kind):
 # ------------------------------------------------------------------ array
 
 def array_setup(box_coll):
-    """Nine collection instances placed by cad/array.json, plus the wedge spacers if the CAD has them."""
+    """Nine collection instances placed by cad/array.json. The boxes tile exactly: no spacers."""
     arr = json.loads((ROOT / "cad/array.json").read_text())
     insts = []
     for b in arr["boxes"]:
@@ -460,15 +465,8 @@ def array_setup(box_coll):
         inst["ij"] = (b["i"], b["j"])
         bpy.context.scene.collection.objects.link(inst)
         insts.append(inst)
-    spacers = sorted((ROOT / "cad/stl").glob("array_spacer_*.stl"))
-    sp_coll = bpy.data.collections.new("spacers")
-    bpy.context.scene.collection.children.link(sp_coll)
-    for f in spacers:
-        ob = import_stl(f, f.stem, sp_coll)
-        ob.data.materials.append(material("print_dark"))
-        smooth(ob, 30)
-    print(f"array: {len(insts)} boxes, {len(spacers)} spacers", flush=True)
-    return arr, insts, sp_coll, len(spacers)
+    print(f"array: {len(insts)} boxes", flush=True)
+    return arr, insts
 
 
 def show_box(box_coll, on):
@@ -498,7 +496,6 @@ def main():
     pts_box = bbox_points(objs.values())
     lo, hi = bounds(pts_box)
     centre = (lo + hi) / 2                          # Blender, middle of the whole assembly
-    ym = -st["mouth"] / 1000                        # Blender y of the kick mouth plane
     floor_z = lo.z - 0.002
     set_floor(floor, floor_z)
     cams = {}
@@ -559,7 +556,8 @@ def main():
     if "section" in shots:
         def f():
             section(objs, True)
-            aim((-1.25, 0.45, -0.5), centre, pts_box, lens=45, margin=1.0, res=res)
+            half = [Vector((min(p.x, 0.0), p.y, p.z)) for p in pts_box]   # fit the half that is left
+            aim((-1.25, 0.45, -0.5), (bounds(half)[0] + bounds(half)[1]) / 2, half, lens=45, margin=1.04, res=res)
             render(out / "section.jpg", a.samples, res)
             s = 1.18 * max(hi.y - lo.y, (hi.z - lo.z) * 1600 / 1200)
             aim((-1, 0, 0), (0, centre.y, 0), pts_box, ortho=s, res=(1600, 1200))
@@ -584,6 +582,7 @@ def main():
                 dist = max(dist, (cam.location - centre).length)
             cam = aim(elev, centre, pts_box, lens=45, res=vres)
             cam.location = centre - elev * dist
+            bpy.context.view_layer.update()            # else the pivot's matrix_world is stale and the camera orbits off centre
             cam.parent = piv
             cam.matrix_parent_inverse = piv.matrix_world.inverted()
             rig.parent = None
@@ -619,10 +618,10 @@ def main():
         timed("assemble", f)
 
     if "array" in shots or "orbit" in shots:
-        arr, insts, sp_coll, n_sp = array_setup(box)
+        arr, insts = array_setup(box)
         show_box(box, False)
         mats = [i.matrix_world.copy() for i in insts]
-        pts = bbox_points(objs.values(), mats) + bbox_points(sp_coll.objects)
+        pts = bbox_points(objs.values(), mats)
         al, ah = bounds(pts)
         ac = (al + ah) / 2
         floor.hide_render = True                 # flown: no floor, the gradient is the backdrop
@@ -633,15 +632,14 @@ def main():
         if "array" in shots:
             def f():
                 fwd = ac - Vector((0, 0.25, 0))          # weight the framing towards the mouths
-                aim((-1.0, 1.6, -0.12), fwd, pts, lens=40, margin=1.12, res=res)
+                aim((-0.62, 1.6, -0.42), fwd, pts, lens=40, margin=1.15, res=res)
                 render(out / "stack.jpg", a.samples, res)
                 aim((0, 1, -0.06), ac, pts, lens=50, margin=1.12, res=res)
                 render(out / "stack-front.jpg", a.samples, res)
-                # the centre column from the side, for the splay annotation
+                # the centre column from the side, cut on its axis: rows stacked flat
                 for i in insts:
                     i.hide_render = i["ij"][0] != 0
-                for o in sp_coll.objects:
-                    o.hide_render = True
+                section(objs, True)
                 cpts = bbox_points(objs.values(), [i.matrix_world for i in insts if i["ij"][0] == 0])
                 cl, ch = bounds(cpts)
                 cc = (cl + ch) / 2
@@ -649,11 +647,19 @@ def main():
                 aim((-1, 0, 0), (0, cc.y, cc.z), cpts, ortho=s, res=(1600, 1400))
                 render(out / "stack-side.jpg", a.samples, (1600, 1400))
                 cams["stack-side"] = dict(res=[1600, 1400], ortho=s, centre_h=cc.y * 1000, centre_v=cc.z * 1000,
-                                          axes="-z,y", spacers=n_sp)
+                                          axes="-z,y")
+                section(objs, False)
                 for i in insts:
                     i.hide_render = False
-                for o in sp_coll.objects:
-                    o.hide_render = False
+                # plan from above, mouths towards the bottom of the frame: the columns fan in this view
+                apex_y = arr["apex_behind_baffle_mm"] / 1000      # Blender y of the fan axis
+                y0, y1 = al.y - 0.12, max(ah.y, apex_y) + 0.22
+                s = 1.08 * max(ah.x - al.x, (y1 - y0) * 1600 / 1400)
+                tc = Vector(((al.x + ah.x) / 2, (y0 + y1) / 2, ac.z))
+                aim((0, 0, -1), tc, pts, ortho=s, res=(1600, 1400))
+                render(out / "stack-top.jpg", a.samples, (1600, 1400))
+                cams["stack-top"] = dict(res=[1600, 1400], ortho=s, centre_h=tc.x * 1000, centre_v=tc.y * 1000,
+                                         axes="x,-z")
             timed("array", f)
         if "orbit" in shots:
             def f():
@@ -670,6 +676,7 @@ def main():
                     dist = max(dist, (cam.location - piv.location).length)
                 cam = aim(base, piv.location, pts, lens=40, res=vres)
                 cam.location = piv.location - base * dist
+                bpy.context.view_layer.update()
                 cam.parent = piv
                 cam.matrix_parent_inverse = piv.matrix_world.inverted()
                 # -60 to +60 and back, eased at both ends; frame N+1 equals frame 1

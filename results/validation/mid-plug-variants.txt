@@ -1,0 +1,6 @@
+26:    raw, meta = FE.run_case("slot-" + "".join(ch for ch in name if ch.isalnum()), FE.case_mid(freqs=f, flush=True, slots=sl), 10)
+open throat (now)      slots -  -6 dB 3131 Hz  3k -3.9  4k -15.2  5k -21.7  level 107.0
+one slot, Sd/3         slots [(40, 63)]  -6 dB 2851 Hz  3k -10.6  4k -16.0  5k -20.6  level 107.5
+two slots, Sd/3        slots [(39, 52), (58, 67)]  -6 dB 3131 Hz  3k -6.9  4k -15.2  5k -14.0  level 107.5
+one slot, Sd/4         slots [(40, 58)]  -6 dB 2595 Hz  3k -12.1  4k -16.6  5k -22.2  level 107.5
+two slots, Sd/4        slots [(38, 48), (59, 66)]  -6 dB 3131 Hz  3k -7.5  4k -17.5  5k -13.6  level 107.4

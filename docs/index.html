@@ -13,41 +13,39 @@
 <a class="brand" href="index.html"><svg viewBox="0 0 32 32" aria-hidden="true"><g fill="none" stroke-width="2.4">
 <rect x="3" y="3" width="26" height="26" rx="4" stroke="#d38a0c"/><circle cx="16" cy="16" r="8" stroke="#eb6834"/>
 <circle cx="16" cy="16" r="3.2" fill="#1baf7a" stroke="none"/></g></svg>Sunflower</a>
-<nav><a href="index.html" aria-current=page>Product</a><a href="design.html">Design</a><a href="simulation.html">Simulation</a><a href="build.html">Build</a><a href="downloads.html">Downloads</a></nav>
+<nav><a href="index.html" aria-current=page>Product</a><a href="design.html">Design</a><a href="simulation.html">Simulation</a><a href="validation.html">Validation</a><a href="build.html">Build</a><a href="downloads.html">Downloads</a></nav>
 </div></header>
 <main><div class="wrap">
 
 <h1>Sunflower</h1>
 <p class="lede">A three-way coaxial horn built on the idea behind the Funktion-One Res 2: a kick horn up to
 250 Hz, a cone mid that carries the voice from 250 Hz to 4 kHz, and a 1 inch compression driver above.
-Here the three are nested on one axis. The HF horn is the mid's phase plug, and the mid horn is the core of the kick
-horn's centre body.</p>
+Here the three are nested on one axis. The HF horn is the mid's phase plug, the mid horn is the core of the kick
+horn's centre body, and its mouth sits inside the kick mouth.</p>
 <figure class="hero"><img src="img/renders/hero.jpg" alt="Rendered Sunflower cabinet"></figure>
 <div class="stat">
-<div><b>104 dB</b><span>2.83 V, 1 m</span></div>
-<div><b>104 Hz</b><span>kick -6 dB on the ground; 92 Hz with the no-sub shelf</span></div>
+<div><b>105 dB</b><span>2.83 V, 1 m</span></div>
+<div><b>96 Hz</b><span>kick -6 dB on the ground; 79 Hz with the no-sub shelf</span></div>
 <div><b>250 Hz / 4 kHz</b><span>crossovers: kick, vocal-range mid, HF</span></div>
-<div><b>791 x 791 x 600</b><span>mm at the mouth; the mid horn stands
-150 mm proud</span></div>
+<div><b>829 x 828 x 700</b><span>mm, width x height x depth</span></div>
 </div>
 <div class="note"><p><b>Status.</b> Simulated, not built or measured. The cone and basket shapes of the drivers are
 estimated from datasheet drawings, and the phase plugs must be checked against real drivers before printing. The
 <a href="simulation.html#limits">limits</a> section lists what the models leave out.</p></div>
 <figure class="figure"><video controls loop muted playsinline preload="none" poster="img/renders/turntable-poster.jpg"><source src="img/renders/turntable.webm" type="video/webm"><source src="img/renders/turntable.mp4" type="video/mp4"></video><figcaption>One box, all the way round.</figcaption></figure>
 <h2>Nine boxes, one point source</h2>
-<p>All four walls are angled at 15 degrees, so neighbouring boxes splay 30 degrees in
-both directions and a 3 x 3 block forms a curved point source. The edge joints close flush. Identical square boxes
-cannot also close at the four corners, so tapered spacers fill those joints (up to
-126 mm thick).</p>
-<figure class="figure"><img class="render" src="img/renders/stack.jpg" alt="Nine boxes as a curved point source, with the corner spacers." loading="lazy"><figcaption>Nine boxes as a curved point source, with the corner spacers.</figcaption></figure>
+<p>The sides are angled at 15 degrees and the top and bottom are flat, so nine identical boxes tile
+exactly: three columns fanned 30 degrees apart, each a straight stack of three, every joint flush.</p>
+<figure class="figure"><img class="render" src="img/renders/stack.jpg" alt="Nine identical boxes: three fanned columns, flat-stacked rows." loading="lazy"><figcaption>Nine identical boxes: three fanned columns, flat-stacked rows.</figcaption></figure>
+<figure class="figure"><img class="render" src="img/renders/stack-top-dims.jpg" alt="From above: the three columns fan about one point behind the array." loading="lazy"><figcaption>From above: the three columns fan about one point behind the array.</figcaption></figure>
 <figure class="figure"><video controls loop muted playsinline preload="none" poster="img/renders/orbit-poster.jpg"><source src="img/renders/orbit.webm" type="video/webm"><source src="img/renders/orbit.mp4" type="video/mp4"></video><figcaption>Around the 3 x 3 cluster.</figcaption></figure>
 <div class="grid2">
 <figure class="figure"><img class="render" src="img/renders/front-dims.jpg" alt="Into the mouth, mm. Completely square at the mouth; the corner fillers make the throat an octagon." loading="lazy"><figcaption>Into the mouth, mm. Completely square at the mouth; the corner fillers make the throat an octagon.</figcaption></figure>
 <figure class="figure"><img class="render" src="img/renders/section-side-dims.jpg" alt="Side section, mm." loading="lazy"><figcaption>Side section, mm.</figcaption></figure>
 </div>
 <h2>Drivers</h2>
-<div class="table-wrap"><table><thead><tr><th class="">Section</th><th class="">Driver</th><th class="">Source</th><th class="num">Price (USD)</th></tr></thead><tbody><tr><td class="">Kick</td><td class="">18 Sound 15MB700, 15 inch, mounted reversed</td><td class=""><a href="https://www.eighteensound.it/en/products/lf-driver/15-0/8/15MB700.pdf">datasheet</a></td><td class="num">$246</td></tr><tr><td class="">Mid</td><td class="">Beyma 8MI100, 8 inch</td><td class=""><a href="https://www.Lautsprechershop.de/pdf/beyma/beyma_8mi100.pdf">datasheet</a></td><td class="num">$113</td></tr><tr><td class="">HF</td><td class="">18 Sound ND1030, 1 inch exit, 65 mm body</td><td class=""><a href="https://www.dibirama.it/images/ingrandimenti/eighteen_sound_nd1030/eighteen_sound_nd1030_spec.pdf">datasheet</a></td><td class="num">$150</td></tr><tr><td class=""></td><td class=""><b>Drivers per box</b></td><td class=""></td><td class="num"><b>$509</b></td></tr></tbody></table></div>
-<p>Chosen by an optimiser that tried 5,112 mid and HF combinations and 784 kick and cabinet
+<div class="table-wrap"><table><thead><tr><th class="">Section</th><th class="">Driver</th><th class="">Source</th><th class="num">Price (USD)</th></tr></thead><tbody><tr><td class="">Kick</td><td class="">18 Sound 15W700, 15 inch, mounted reversed</td><td class=""><a href="https://www.eighteensound.it/en/products/lf-driver/15-0/8/15W700.pdf">datasheet</a></td><td class="num">$233</td></tr><tr><td class="">Mid</td><td class="">Beyma 8MI100, 8 inch</td><td class=""><a href="https://www.Lautsprechershop.de/pdf/beyma/beyma_8mi100.pdf">datasheet</a></td><td class="num">$113</td></tr><tr><td class="">HF</td><td class="">B&C DE111, 1 inch exit, 60 mm body</td><td class=""><a href="https://www.bcspeakers.com/en/print/hf-driver/1-0/8/DE111">datasheet</a></td><td class="num">$105</td></tr><tr><td class=""></td><td class=""><b>Drivers per box</b></td><td class=""></td><td class="num"><b>$451</b></td></tr></tbody></table></div>
+<p>Chosen by an optimiser that tried 19,194 mid and HF combinations and 3,344 kick and cabinet
 variants, then tuned the best through the crossover. See <a href="design.html">design</a>.</p>
 
 </div></main>

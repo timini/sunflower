@@ -2,291 +2,16 @@
  "splay_deg": 30.0,
  "boxes_n": 9,
  "apex_behind_baffle_mm": 965.2,
- "corner_tilt_deg": 44.415,
+ "row_pitch_mm": 827.62,
  "frame": "Each matrix maps a box's own frame (metres; origin at the centre of its baffle front face, +z to the listener, +x right, +y up) to the array frame, which is the centre box's own frame.",
- "method": "Edge boxes hinge on the centre box's mouth front edges at the full splay, so those four joints are flush. Each corner box is tilted towards the diagonal so its axis is the full splay from both edge neighbours; its position is then solved (SLSQP) to bring its mouth front edges as close as possible to the edge boxes' without any overlap. Square frustums cannot also close the four inner vertices: the corner box is twisted against its neighbours, so the edge to corner joints open as a wedge.",
- "optimiser": {
-  "success": true,
-  "message": "Optimization terminated successfully.",
-  "max_mouth_edge_offset_mm": 172.5
- },
- "corner_joint_twist_deg": 7.93,
- "max_gap_mm": 125.8,
- "max_gap_where": "joint (1,0)-(1,1), mouth, inner end",
- "max_penetration_mm": 0.0,
+ "method": "geometry.array_layout: three columns fanned by the splay about the vertical line where the outer side faces of the centre box meet behind it; rows stacked flat at the external height. The angled side faces of neighbouring columns coincide, and the flat tops and bottoms of neighbouring rows coincide, so nine identical boxes tile with no spacers.",
+ "max_gap_mm": 0.0001,
+ "max_penetration_mm": 0.0005,
+ "max_corner_mismatch_mm": 0.0006,
+ "max_overlap_cm3_occ": 0.2332,
  "joints": [
   {
    "a": [
-    0,
-    0
-   ],
-   "b": [
-    1,
-    0
-   ],
-   "vertices": [
-    "back, either end",
-    "back, either end",
-    "mouth, either end",
-    "mouth, either end"
-   ],
-   "gap_mm": [
-    -0.0,
-    -0.0,
-    0.0,
-    0.0
-   ],
-   "penetration_mm": 0.0,
-   "mouth_edge_offset_mm": [
-    0.0,
-    0.0
-   ]
-  },
-  {
-   "a": [
-    0,
-    0
-   ],
-   "b": [
-    0,
-    1
-   ],
-   "vertices": [
-    "back, either end",
-    "back, either end",
-    "mouth, either end",
-    "mouth, either end"
-   ],
-   "gap_mm": [
-    -0.0,
-    -0.0,
-    0.0,
-    0.0
-   ],
-   "penetration_mm": 0.0,
-   "mouth_edge_offset_mm": [
-    0.0,
-    0.0
-   ]
-  },
-  {
-   "a": [
-    1,
-    0
-   ],
-   "b": [
-    1,
-    1
-   ],
-   "vertices": [
-    "back, inner end",
-    "back, outer end",
-    "mouth, inner end",
-    "mouth, outer end"
-   ],
-   "gap_mm": [
-    102.1,
-    37.3,
-    125.8,
-    16.7
-   ],
-   "penetration_mm": 0.0,
-   "mouth_edge_offset_mm": [
-    172.5,
-    121.3
-   ]
-  },
-  {
-   "a": [
-    0,
-    1
-   ],
-   "b": [
-    1,
-    1
-   ],
-   "vertices": [
-    "back, inner end",
-    "back, outer end",
-    "mouth, inner end",
-    "mouth, outer end"
-   ],
-   "gap_mm": [
-    102.1,
-    37.3,
-    125.8,
-    16.7
-   ],
-   "penetration_mm": 0.0,
-   "mouth_edge_offset_mm": [
-    172.5,
-    121.3
-   ]
-  },
-  {
-   "a": [
-    -1,
-    0
-   ],
-   "b": [
-    0,
-    0
-   ],
-   "vertices": [
-    "back, either end",
-    "back, either end",
-    "mouth, either end",
-    "mouth, either end"
-   ],
-   "gap_mm": [
-    -0.0,
-    -0.0,
-    0.0,
-    0.0
-   ],
-   "penetration_mm": 0.0,
-   "mouth_edge_offset_mm": [
-    0.0,
-    0.0
-   ]
-  },
-  {
-   "a": [
-    -1,
-    0
-   ],
-   "b": [
-    -1,
-    1
-   ],
-   "vertices": [
-    "back, outer end",
-    "back, inner end",
-    "mouth, outer end",
-    "mouth, inner end"
-   ],
-   "gap_mm": [
-    37.3,
-    102.1,
-    16.7,
-    125.8
-   ],
-   "penetration_mm": 0.0,
-   "mouth_edge_offset_mm": [
-    121.3,
-    172.5
-   ]
-  },
-  {
-   "a": [
-    0,
-    -1
-   ],
-   "b": [
-    1,
-    -1
-   ],
-   "vertices": [
-    "back, outer end",
-    "back, inner end",
-    "mouth, outer end",
-    "mouth, inner end"
-   ],
-   "gap_mm": [
-    37.3,
-    102.1,
-    16.7,
-    125.8
-   ],
-   "penetration_mm": 0.0,
-   "mouth_edge_offset_mm": [
-    121.3,
-    172.5
-   ]
-  },
-  {
-   "a": [
-    0,
-    -1
-   ],
-   "b": [
-    0,
-    0
-   ],
-   "vertices": [
-    "back, either end",
-    "back, either end",
-    "mouth, either end",
-    "mouth, either end"
-   ],
-   "gap_mm": [
-    -0.0,
-    -0.0,
-    0.0,
-    0.0
-   ],
-   "penetration_mm": 0.0,
-   "mouth_edge_offset_mm": [
-    0.0,
-    0.0
-   ]
-  },
-  {
-   "a": [
-    -1,
-    1
-   ],
-   "b": [
-    0,
-    1
-   ],
-   "vertices": [
-    "back, inner end",
-    "back, outer end",
-    "mouth, inner end",
-    "mouth, outer end"
-   ],
-   "gap_mm": [
-    102.1,
-    37.3,
-    125.8,
-    16.7
-   ],
-   "penetration_mm": 0.0,
-   "mouth_edge_offset_mm": [
-    172.5,
-    121.3
-   ]
-  },
-  {
-   "a": [
-    1,
-    -1
-   ],
-   "b": [
-    1,
-    0
-   ],
-   "vertices": [
-    "back, inner end",
-    "back, outer end",
-    "mouth, inner end",
-    "mouth, outer end"
-   ],
-   "gap_mm": [
-    102.1,
-    37.3,
-    125.8,
-    16.7
-   ],
-   "penetration_mm": 0.0,
-   "mouth_edge_offset_mm": [
-    172.5,
-    121.3
-   ]
-  },
-  {
-   "a": [
     -1,
     -1
    ],
@@ -294,23 +19,10 @@
     0,
     -1
    ],
-   "vertices": [
-    "back, outer end",
-    "back, inner end",
-    "mouth, outer end",
-    "mouth, inner end"
-   ],
-   "gap_mm": [
-    37.3,
-    102.1,
-    16.7,
-    125.8
-   ],
-   "penetration_mm": 0.0,
-   "mouth_edge_offset_mm": [
-    121.3,
-    172.5
-   ]
+   "kind": "column",
+   "max_gap_mm": 0.0,
+   "max_penetration_mm": 0.0005,
+   "corner_mismatch_mm": 0.0006
   },
   {
    "a": [
@@ -321,80 +33,174 @@
     -1,
     0
    ],
-   "vertices": [
-    "back, outer end",
-    "back, inner end",
-    "mouth, outer end",
-    "mouth, inner end"
+   "kind": "row",
+   "max_gap_mm": 0.0001,
+   "max_penetration_mm": 0.0,
+   "corner_mismatch_mm": 0.0001
+  },
+  {
+   "a": [
+    0,
+    -1
    ],
-   "gap_mm": [
-    37.3,
-    102.1,
-    16.7,
-    125.8
+   "b": [
+    1,
+    -1
    ],
-   "penetration_mm": 0.0,
-   "mouth_edge_offset_mm": [
-    121.3,
-    172.5
-   ]
+   "kind": "column",
+   "max_gap_mm": 0.0,
+   "max_penetration_mm": 0.0005,
+   "corner_mismatch_mm": 0.0006
+  },
+  {
+   "a": [
+    0,
+    -1
+   ],
+   "b": [
+    0,
+    0
+   ],
+   "kind": "row",
+   "max_gap_mm": 0.0001,
+   "max_penetration_mm": 0.0,
+   "corner_mismatch_mm": 0.0001
+  },
+  {
+   "a": [
+    1,
+    -1
+   ],
+   "b": [
+    1,
+    0
+   ],
+   "kind": "row",
+   "max_gap_mm": 0.0001,
+   "max_penetration_mm": 0.0,
+   "corner_mismatch_mm": 0.0001
+  },
+  {
+   "a": [
+    -1,
+    0
+   ],
+   "b": [
+    0,
+    0
+   ],
+   "kind": "column",
+   "max_gap_mm": 0.0,
+   "max_penetration_mm": 0.0005,
+   "corner_mismatch_mm": 0.0006
+  },
+  {
+   "a": [
+    -1,
+    0
+   ],
+   "b": [
+    -1,
+    1
+   ],
+   "kind": "row",
+   "max_gap_mm": 0.0001,
+   "max_penetration_mm": 0.0,
+   "corner_mismatch_mm": 0.0001
+  },
+  {
+   "a": [
+    0,
+    0
+   ],
+   "b": [
+    1,
+    0
+   ],
+   "kind": "column",
+   "max_gap_mm": 0.0,
+   "max_penetration_mm": 0.0005,
+   "corner_mismatch_mm": 0.0006
+  },
+  {
+   "a": [
+    0,
+    0
+   ],
+   "b": [
+    0,
+    1
+   ],
+   "kind": "row",
+   "max_gap_mm": 0.0001,
+   "max_penetration_mm": 0.0,
+   "corner_mismatch_mm": 0.0001
+  },
+  {
+   "a": [
+    1,
+    0
+   ],
+   "b": [
+    1,
+    1
+   ],
+   "kind": "row",
+   "max_gap_mm": 0.0001,
+   "max_penetration_mm": 0.0,
+   "corner_mismatch_mm": 0.0001
+  },
+  {
+   "a": [
+    -1,
+    1
+   ],
+   "b": [
+    0,
+    1
+   ],
+   "kind": "column",
+   "max_gap_mm": 0.0,
+   "max_penetration_mm": 0.0005,
+   "corner_mismatch_mm": 0.0006
+  },
+  {
+   "a": [
+    0,
+    1
+   ],
+   "b": [
+    1,
+    1
+   ],
+   "kind": "column",
+   "max_gap_mm": 0.0,
+   "max_penetration_mm": 0.0005,
+   "corner_mismatch_mm": 0.0006
   }
  ],
- "gnomonic": {
-  "note": "geometry.array_layout: same splay at the four edge joints, but the corner boxes sit too close and overlap their edge neighbours",
-  "max_gap_mm": 17.6,
-  "max_penetration_mm": 196.42
- },
  "boxes": [
   {
    "i": -1,
    "j": 1,
+   "yaw_deg": -29.999999999999996,
+   "pitch_deg": 0.0,
    "matrix": [
     [
-     0.857143,
-     0.142857,
-     -0.494872,
-     -0.539311
-    ],
-    [
-     0.142857,
-     0.857143,
-     0.494872,
-     0.539311
-    ],
-    [
-     0.494872,
-     -0.494872,
-     0.714286,
-     -0.306643
-    ],
-    [
-     0.0,
-     0.0,
-     0.0,
-     1.0
-    ]
-   ]
-  },
-  {
-   "i": 0,
-   "j": 1,
-   "matrix": [
-    [
-     1.0,
-     0.0,
-     0.0,
-     0.0
-    ],
-    [
-     0.0,
      0.866025,
-     0.5,
-     0.482619
-    ],
-    [
      0.0,
      -0.5,
+     -0.482619
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     0.827625
+    ],
+    [
+     0.5,
+     0.0,
      0.866025,
      -0.129317
     ],
@@ -407,26 +213,60 @@
    ]
   },
   {
-   "i": 1,
+   "i": 0,
    "j": 1,
+   "yaw_deg": 0.0,
+   "pitch_deg": 0.0,
    "matrix": [
     [
-     0.857143,
-     -0.142857,
-     0.494872,
-     0.539311
+     1.0,
+     0.0,
+     0.0,
+     0.0
     ],
     [
-     -0.142857,
-     0.857143,
-     0.494872,
-     0.539311
+     0.0,
+     1.0,
+     0.0,
+     0.827625
     ],
     [
-     -0.494872,
-     -0.494872,
-     0.714286,
-     -0.306643
+     -0.0,
+     0.0,
+     1.0,
+     0.0
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ]
+  },
+  {
+   "i": 1,
+   "j": 1,
+   "yaw_deg": 29.999999999999996,
+   "pitch_deg": 0.0,
+   "matrix": [
+    [
+     0.866025,
+     0.0,
+     0.5,
+     0.482619
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     0.827625
+    ],
+    [
+     -0.5,
+     0.0,
+     0.866025,
+     -0.129317
     ],
     [
      0.0,
@@ -439,6 +279,8 @@
   {
    "i": -1,
    "j": 0,
+   "yaw_deg": -29.999999999999996,
+   "pitch_deg": 0.0,
    "matrix": [
     [
      0.866025,
@@ -469,6 +311,8 @@
   {
    "i": 0,
    "j": 0,
+   "yaw_deg": 0.0,
+   "pitch_deg": 0.0,
    "matrix": [
     [
      1.0,
@@ -483,7 +327,7 @@
      0.0
     ],
     [
-     0.0,
+     -0.0,
      0.0,
      1.0,
      0.0
@@ -499,6 +343,8 @@
   {
    "i": 1,
    "j": 0,
+   "yaw_deg": 29.999999999999996,
+   "pitch_deg": 0.0,
    "matrix": [
     [
      0.866025,
@@ -529,52 +375,24 @@
   {
    "i": -1,
    "j": -1,
+   "yaw_deg": -29.999999999999996,
+   "pitch_deg": 0.0,
    "matrix": [
     [
-     0.857143,
-     -0.142857,
-     -0.494872,
-     -0.539311
-    ],
-    [
-     -0.142857,
-     0.857143,
-     -0.494872,
-     -0.539311
-    ],
-    [
-     0.494872,
-     0.494872,
-     0.714286,
-     -0.306643
-    ],
-    [
-     0.0,
-     0.0,
-     0.0,
-     1.0
-    ]
-   ]
-  },
-  {
-   "i": 0,
-   "j": -1,
-   "matrix": [
-    [
-     1.0,
-     0.0,
-     0.0,
-     0.0
-    ],
-    [
-     0.0,
      0.866025,
+     0.0,
      -0.5,
      -0.482619
     ],
     [
      0.0,
+     1.0,
+     0.0,
+     -0.827625
+    ],
+    [
      0.5,
+     0.0,
      0.866025,
      -0.129317
     ],
@@ -587,26 +405,60 @@
    ]
   },
   {
-   "i": 1,
+   "i": 0,
    "j": -1,
+   "yaw_deg": 0.0,
+   "pitch_deg": 0.0,
    "matrix": [
     [
-     0.857143,
-     0.142857,
-     0.494872,
-     0.539311
+     1.0,
+     0.0,
+     0.0,
+     0.0
     ],
     [
-     0.142857,
-     0.857143,
-     -0.494872,
-     -0.539311
+     0.0,
+     1.0,
+     0.0,
+     -0.827625
     ],
     [
-     -0.494872,
-     0.494872,
-     0.714286,
-     -0.306643
+     -0.0,
+     0.0,
+     1.0,
+     0.0
+    ],
+    [
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ]
+  },
+  {
+   "i": 1,
+   "j": -1,
+   "yaw_deg": 29.999999999999996,
+   "pitch_deg": 0.0,
+   "matrix": [
+    [
+     0.866025,
+     0.0,
+     0.5,
+     0.482619
+    ],
+    [
+     0.0,
+     1.0,
+     0.0,
+     -0.827625
+    ],
+    [
+     -0.5,
+     0.0,
+     0.866025,
+     -0.129317
     ],
     [
      0.0,
@@ -617,317 +469,9 @@
    ]
   }
  ],
- "max_overlap_cm3_occ": 0.0,
- "spacers": [
-  {
-   "name": "array_spacer_m1_m1__0_m1",
-   "between": [
-    [
-     -1,
-     -1
-    ],
-    [
-     0,
-     -1
-    ]
-   ],
-   "walls": [
-    "+x",
-    "-x"
-   ],
-   "thickness_mm": {
-    "back_outer": 37.3,
-    "back_inner": 102.1,
-    "mouth_outer": 16.7,
-    "mouth_inner": 125.8
-   },
-   "max_thickness_mm": 125.8,
-   "min_thickness_mm": 16.7,
-   "volume_litres": 19.56,
-   "bbox_mm": [
-    -499.8,
-    -1080.3,
-    -322.1,
-    -238.4,
-    -327.6,
-    449.7
-   ],
-   "files": {
-    "step": "step/array_spacer_m1_m1__0_m1.step",
-    "stl": "stl/array_spacer_m1_m1__0_m1.stl"
-   }
-  },
-  {
-   "name": "array_spacer_m1_m1__m1_0",
-   "between": [
-    [
-     -1,
-     -1
-    ],
-    [
-     -1,
-     0
-    ]
-   ],
-   "walls": [
-    "+y",
-    "-y"
-   ],
-   "thickness_mm": {
-    "back_outer": 37.3,
-    "back_inner": 102.1,
-    "mouth_outer": 16.7,
-    "mouth_inner": 125.8
-   },
-   "max_thickness_mm": 125.8,
-   "min_thickness_mm": 16.7,
-   "volume_litres": 19.56,
-   "bbox_mm": [
-    -1080.3,
-    -499.8,
-    -322.1,
-    -327.6,
-    -238.4,
-    449.7
-   ],
-   "files": {
-    "step": "step/array_spacer_m1_m1__m1_0.step",
-    "stl": "stl/array_spacer_m1_m1__m1_0.stl"
-   }
-  },
-  {
-   "name": "array_spacer_m1_0__m1_1",
-   "between": [
-    [
-     -1,
-     0
-    ],
-    [
-     -1,
-     1
-    ]
-   ],
-   "walls": [
-    "+y",
-    "-y"
-   ],
-   "thickness_mm": {
-    "back_outer": 37.3,
-    "back_inner": 102.1,
-    "mouth_outer": 16.7,
-    "mouth_inner": 125.8
-   },
-   "max_thickness_mm": 125.8,
-   "min_thickness_mm": 16.7,
-   "volume_litres": 19.56,
-   "bbox_mm": [
-    -1080.3,
-    238.4,
-    -322.1,
-    -327.6,
-    499.8,
-    449.7
-   ],
-   "files": {
-    "step": "step/array_spacer_m1_0__m1_1.step",
-    "stl": "stl/array_spacer_m1_0__m1_1.stl"
-   }
-  },
-  {
-   "name": "array_spacer_m1_1__0_1",
-   "between": [
-    [
-     -1,
-     1
-    ],
-    [
-     0,
-     1
-    ]
-   ],
-   "walls": [
-    "+x",
-    "-x"
-   ],
-   "thickness_mm": {
-    "back_inner": 102.1,
-    "back_outer": 37.3,
-    "mouth_inner": 125.8,
-    "mouth_outer": 16.7
-   },
-   "max_thickness_mm": 125.8,
-   "min_thickness_mm": 16.7,
-   "volume_litres": 19.56,
-   "bbox_mm": [
-    -499.8,
-    327.6,
-    -322.1,
-    -238.4,
-    1080.3,
-    449.7
-   ],
-   "files": {
-    "step": "step/array_spacer_m1_1__0_1.step",
-    "stl": "stl/array_spacer_m1_1__0_1.stl"
-   }
-  },
-  {
-   "name": "array_spacer_0_m1__1_m1",
-   "between": [
-    [
-     0,
-     -1
-    ],
-    [
-     1,
-     -1
-    ]
-   ],
-   "walls": [
-    "+x",
-    "-x"
-   ],
-   "thickness_mm": {
-    "back_outer": 37.3,
-    "back_inner": 102.1,
-    "mouth_outer": 16.7,
-    "mouth_inner": 125.8
-   },
-   "max_thickness_mm": 125.8,
-   "min_thickness_mm": 16.7,
-   "volume_litres": 19.56,
-   "bbox_mm": [
-    238.4,
-    -1080.3,
-    -322.1,
-    499.8,
-    -327.6,
-    449.7
-   ],
-   "files": {
-    "step": "step/array_spacer_0_m1__1_m1.step",
-    "stl": "stl/array_spacer_0_m1__1_m1.stl"
-   }
-  },
-  {
-   "name": "array_spacer_0_1__1_1",
-   "between": [
-    [
-     0,
-     1
-    ],
-    [
-     1,
-     1
-    ]
-   ],
-   "walls": [
-    "+x",
-    "-x"
-   ],
-   "thickness_mm": {
-    "back_inner": 102.1,
-    "back_outer": 37.3,
-    "mouth_inner": 125.8,
-    "mouth_outer": 16.7
-   },
-   "max_thickness_mm": 125.8,
-   "min_thickness_mm": 16.7,
-   "volume_litres": 19.56,
-   "bbox_mm": [
-    238.4,
-    327.6,
-    -322.1,
-    499.8,
-    1080.3,
-    449.7
-   ],
-   "files": {
-    "step": "step/array_spacer_0_1__1_1.step",
-    "stl": "stl/array_spacer_0_1__1_1.stl"
-   }
-  },
-  {
-   "name": "array_spacer_1_m1__1_0",
-   "between": [
-    [
-     1,
-     -1
-    ],
-    [
-     1,
-     0
-    ]
-   ],
-   "walls": [
-    "+y",
-    "-y"
-   ],
-   "thickness_mm": {
-    "back_inner": 102.1,
-    "back_outer": 37.3,
-    "mouth_inner": 125.8,
-    "mouth_outer": 16.7
-   },
-   "max_thickness_mm": 125.8,
-   "min_thickness_mm": 16.7,
-   "volume_litres": 19.56,
-   "bbox_mm": [
-    327.6,
-    -499.8,
-    -322.1,
-    1080.3,
-    -238.4,
-    449.7
-   ],
-   "files": {
-    "step": "step/array_spacer_1_m1__1_0.step",
-    "stl": "stl/array_spacer_1_m1__1_0.stl"
-   }
-  },
-  {
-   "name": "array_spacer_1_0__1_1",
-   "between": [
-    [
-     1,
-     0
-    ],
-    [
-     1,
-     1
-    ]
-   ],
-   "walls": [
-    "+y",
-    "-y"
-   ],
-   "thickness_mm": {
-    "back_inner": 102.1,
-    "back_outer": 37.3,
-    "mouth_inner": 125.8,
-    "mouth_outer": 16.7
-   },
-   "max_thickness_mm": 125.8,
-   "min_thickness_mm": 16.7,
-   "volume_litres": 19.56,
-   "bbox_mm": [
-    327.6,
-    238.4,
-    -322.1,
-    1080.3,
-    499.8,
-    449.7
-   ],
-   "files": {
-    "step": "step/array_spacer_1_0__1_1.step",
-    "stl": "stl/array_spacer_1_0__1_1.stl"
-   }
-  }
- ],
- "spacer_note": "Tapered wedges, part of the rigging frame, that close the edge to corner joints. Each is the space between the two facing walls where they overlap, so both boxes sit flush on it. Coordinates are the array frame in mm (the centre box's own frame).",
  "preview": {
   "file": "array.stl",
-  "triangles": 201480,
-  "note": "coarse mesh of the cabinet, fillers, supports and printed parts of each box, placed, plus the array spacers"
+  "triangles": 159318,
+  "note": "coarse mesh of the cabinet, wedges, fillers, supports and printed parts of each box, placed"
  }
 }

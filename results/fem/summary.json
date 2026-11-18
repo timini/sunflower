@@ -17,181 +17,181 @@
     "median": 0.03235095998960892,
     "farfield_max_abs_db": 1.1032214708130268,
     "farfield_max_phase_deg": 6.023659959476395,
-    "runtime_s": 0.0
+    "runtime_s": 2.5
   },
   "mid": {
     "power_balance_max_rel_error": null,
     "mesh": {
-      "cells": 46796,
-      "p2_dofs": 94733,
-      "h_min_mm": 0.32484637611805706,
-      "h_max_mm": 9.514132066050323,
-      "outline_points": 527
+      "cells": 37107,
+      "p2_dofs": 75180,
+      "h_min_mm": 0.3825468823547505,
+      "h_max_mm": 9.937218665156637,
+      "outline_points": 435
     },
     "case": {
-      "baffle_s": 0.21000000000000002,
-      "baffle": "kick mouth plane",
-      "protrusion_m": 0.14999999999999997,
-      "exterior_reach_m": 0.30257750158931485,
-      "kh_radius_m": 0.5262887507946574,
+      "baffle_s": 0.28,
+      "baffle": "mid mouth plane",
+      "protrusion_m": 0.0,
+      "exterior_reach_m": 0.18,
+      "kh_radius_m": 0.46499999999999997,
       "fmax": 8000.0,
       "hf_cavity": true,
       "felt_loss": 0.3
     },
     "n_freqs": 90,
-    "power_balance_max_rel_error_nofelt": 0.0007023494967183563,
-    "power_balance_max_rel_error_flush_nohf_nofelt": 0.0011013435548864626,
+    "power_balance_max_rel_error_nofelt": 0.0019181322218563203,
+    "power_balance_max_rel_error_flush_nohf_nofelt": 0.0013025146568713657,
     "passband": {
       "spl_0deg": {
         "band_hz": [
           250.0,
-          4000.0
+          3000.0
         ],
-        "max_abs_db": 13.018818768052626,
-        "rms_db": 4.822839260905766,
-        "mean_db": -0.7904935126083565
+        "max_abs_db": 3.055845727397852,
+        "rms_db": 0.8397638581531047,
+        "mean_db": -0.15415851409727946
       },
       "zrad_magnitude": {
         "band_hz": [
           250.0,
-          4000.0
+          3000.0
         ],
-        "max_abs_db": 12.083529572722902,
-        "rms_db": 3.2132451573787035,
-        "mean_db": -0.37347171834761467
+        "max_abs_db": 7.210777453561081,
+        "rms_db": 1.9157170132163361,
+        "mean_db": 0.7256721779395843
       },
       "spl_15deg": {
         "band_hz": [
           250.0,
-          4000.0
+          3000.0
         ],
-        "max_abs_db": 12.300821739028265,
-        "rms_db": 4.243374889256096,
-        "mean_db": -0.8967062032932709
+        "max_abs_db": 3.517148030209057,
+        "rms_db": 0.8780899018140217,
+        "mean_db": -0.03490818774558565
       },
       "spl_30deg": {
         "band_hz": [
           250.0,
-          4000.0
+          3000.0
         ],
-        "max_abs_db": 10.731370676090293,
-        "rms_db": 4.679480228341496,
-        "mean_db": -0.8266666298594635
+        "max_abs_db": 4.5313067291512255,
+        "rms_db": 1.465635370866404,
+        "mean_db": 0.613498567958082
       },
       "spl_45deg": {
         "band_hz": [
           250.0,
-          4000.0
+          3000.0
         ],
-        "max_abs_db": 12.976464323283153,
-        "rms_db": 4.812884631719628,
-        "mean_db": -1.1822030834471442
+        "max_abs_db": 12.041211477671965,
+        "rms_db": 2.6726368058459373,
+        "mean_db": 1.1396531374729637
       },
       "spl_60deg": {
         "band_hz": [
           250.0,
-          4000.0
+          3000.0
         ],
-        "max_abs_db": 23.380476643344494,
-        "rms_db": 6.297490573807272,
-        "mean_db": -2.096267927556652
+        "max_abs_db": 12.196892036742781,
+        "rms_db": 2.933478542782902,
+        "mean_db": 1.5865884661025849
       },
       "variant_flush": {
         "spl_0deg": {
           "band_hz": [
             250.0,
-            4000.0
+            3000.0
           ],
-          "max_abs_db": 11.006748051237409,
-          "rms_db": 3.453701758204381,
-          "mean_db": -1.422335079215381
+          "max_abs_db": 3.055845727397852,
+          "rms_db": 0.8397638581531047,
+          "mean_db": -0.15415851409727946
         },
         "zrad_magnitude": {
           "band_hz": [
             250.0,
-            4000.0
+            3000.0
           ],
-          "max_abs_db": 15.867574942530178,
-          "rms_db": 2.4715442330356474,
-          "mean_db": -0.25970802984382274
+          "max_abs_db": 7.210777453561081,
+          "rms_db": 1.9157170132163361,
+          "mean_db": 0.7256721779395843
         },
         "spl_30deg": {
           "band_hz": [
             250.0,
-            4000.0
+            3000.0
           ],
-          "max_abs_db": 8.717625401129993,
-          "rms_db": 2.724999806945575,
-          "mean_db": -0.07689110963180854
+          "max_abs_db": 4.5313067291512255,
+          "rms_db": 1.465635370866404,
+          "mean_db": 0.613498567958082
         }
       },
       "variant_flush_nohf": {
         "spl_0deg": {
           "band_hz": [
             250.0,
-            4000.0
+            3000.0
           ],
-          "max_abs_db": 10.946717717377297,
-          "rms_db": 3.1158527074609164,
-          "mean_db": -1.1509342552238597
+          "max_abs_db": 1.9152596316195343,
+          "rms_db": 0.6684999474698079,
+          "mean_db": -0.052874829368997824
         },
         "zrad_magnitude": {
           "band_hz": [
             250.0,
-            4000.0
+            3000.0
           ],
-          "max_abs_db": 3.8859578279896283,
-          "rms_db": 1.0031739673997728,
-          "mean_db": -0.024063161216435702
+          "max_abs_db": 7.201849690029184,
+          "rms_db": 1.537479942125987,
+          "mean_db": 0.6962317064456975
         },
         "spl_30deg": {
           "band_hz": [
             250.0,
-            4000.0
+            3000.0
           ],
-          "max_abs_db": 8.501234559639755,
-          "rms_db": 2.538021253590197,
-          "mean_db": -0.030986925148582832
+          "max_abs_db": 4.983443253746685,
+          "rms_db": 1.4195146817180837,
+          "mean_db": 0.6808331713649183
         }
       },
       "variant_nofelt": {
         "spl_0deg": {
           "band_hz": [
             250.0,
-            4000.0
+            3000.0
           ],
-          "max_abs_db": 35.055293305395196,
-          "rms_db": 6.986406431265071,
-          "mean_db": -0.8497955494032314
+          "max_abs_db": 21.091816137951326,
+          "rms_db": 2.902618442588314,
+          "mean_db": -0.25889103329949975
         },
         "zrad_magnitude": {
           "band_hz": [
             250.0,
-            4000.0
+            3000.0
           ],
-          "max_abs_db": 12.568123842065154,
-          "rms_db": 3.963959354200149,
-          "mean_db": -0.31520845520608415
+          "max_abs_db": 9.180809405843988,
+          "rms_db": 2.4604771282377653,
+          "mean_db": 0.9597574327085336
         }
       },
       "variant_flush_nohf_nofelt": {
         "spl_0deg": {
           "band_hz": [
             250.0,
-            4000.0
+            3000.0
           ],
-          "max_abs_db": 35.19211831757383,
-          "rms_db": 5.9591106039767725,
-          "mean_db": -1.2184666771949195
+          "max_abs_db": 20.942608888686493,
+          "rms_db": 2.885840750579091,
+          "mean_db": -0.1507813364003263
         },
         "zrad_magnitude": {
           "band_hz": [
             250.0,
-            4000.0
+            3000.0
           ],
-          "max_abs_db": 9.239586848294014,
-          "rms_db": 2.2477274900812816,
-          "mean_db": 0.007172627712667027
+          "max_abs_db": 9.843475376726833,
+          "rms_db": 2.2112868703204844,
+          "mean_db": 0.9308402821355243
         }
       }
     },
@@ -201,54 +201,54 @@
           150.0,
           8000.0
         ],
-        "max_abs_db": 18.052472861361693,
-        "rms_db": 6.6856459241538175,
-        "mean_db": -3.0218066969388278
+        "max_abs_db": 35.106035193019096,
+        "rms_db": 6.534110484351213,
+        "mean_db": -2.906467059718802
       },
       "zrad_magnitude": {
         "band_hz": [
           150.0,
           8000.0
         ],
-        "max_abs_db": 18.3490810083591,
-        "rms_db": 5.566180126544029,
-        "mean_db": -2.0173245365068113
+        "max_abs_db": 17.238941749809943,
+        "rms_db": 5.208415555740028,
+        "mean_db": -1.2498807076704719
       },
       "spl_15deg": {
         "band_hz": [
           150.0,
           8000.0
         ],
-        "max_abs_db": 29.559981720646768,
-        "rms_db": 6.7230306131099935,
-        "mean_db": -2.5150460441380553
+        "max_abs_db": 29.122094976510127,
+        "rms_db": 5.867688135362979,
+        "mean_db": -2.3669566770838624
       },
       "spl_30deg": {
         "band_hz": [
           150.0,
           8000.0
         ],
-        "max_abs_db": 26.35734444608677,
-        "rms_db": 5.797158397041768,
-        "mean_db": -0.6694937768829531
+        "max_abs_db": 16.128264942825794,
+        "rms_db": 3.2555933830166515,
+        "mean_db": -0.39296464159517763
       },
       "spl_45deg": {
         "band_hz": [
           150.0,
           8000.0
         ],
-        "max_abs_db": 21.55457429755166,
-        "rms_db": 5.842120374932361,
-        "mean_db": -1.8988888944978948
+        "max_abs_db": 12.041211477671965,
+        "rms_db": 2.930105024771953,
+        "mean_db": 0.14255264023720096
       },
       "spl_60deg": {
         "band_hz": [
           150.0,
           8000.0
         ],
-        "max_abs_db": 23.380476643344494,
-        "rms_db": 7.0231519902544,
-        "mean_db": -2.217166918484485
+        "max_abs_db": 16.052381798246962,
+        "rms_db": 4.84174165281018,
+        "mean_db": -0.5735105007521158
       },
       "variant_flush": {
         "spl_0deg": {
@@ -256,27 +256,27 @@
             150.0,
             8000.0
           ],
-          "max_abs_db": 18.789203881898302,
-          "rms_db": 5.676347438749425,
-          "mean_db": -2.6459672389476854
+          "max_abs_db": 35.106035193019096,
+          "rms_db": 6.534110484351213,
+          "mean_db": -2.906467059718802
         },
         "zrad_magnitude": {
           "band_hz": [
             150.0,
             8000.0
           ],
-          "max_abs_db": 18.067653450210805,
-          "rms_db": 5.235719195971773,
-          "mean_db": -2.000639257291969
+          "max_abs_db": 17.238941749809943,
+          "rms_db": 5.208415555740028,
+          "mean_db": -1.2498807076704719
         },
         "spl_30deg": {
           "band_hz": [
             150.0,
             8000.0
           ],
-          "max_abs_db": 25.220013054462214,
-          "rms_db": 4.542516241272356,
-          "mean_db": 0.29153120324529025
+          "max_abs_db": 16.128264942825794,
+          "rms_db": 3.2555933830166515,
+          "mean_db": -0.39296464159517763
         }
       },
       "variant_flush_nohf": {
@@ -285,27 +285,27 @@
             150.0,
             8000.0
           ],
-          "max_abs_db": 18.77799667722394,
-          "rms_db": 5.538093700560508,
-          "mean_db": -2.472590767902296
+          "max_abs_db": 35.645974998885436,
+          "rms_db": 6.541196793338877,
+          "mean_db": -2.8511891746647606
         },
         "zrad_magnitude": {
           "band_hz": [
             150.0,
             8000.0
           ],
-          "max_abs_db": 18.158875464454187,
-          "rms_db": 4.891089617237144,
-          "mean_db": -1.8396357657699964
+          "max_abs_db": 17.28528479629651,
+          "rms_db": 5.135228221742274,
+          "mean_db": -1.2717471767592763
         },
         "spl_30deg": {
           "band_hz": [
             150.0,
             8000.0
           ],
-          "max_abs_db": 25.111189716309298,
-          "rms_db": 4.461939034515917,
-          "mean_db": 0.3367543065517304
+          "max_abs_db": 15.99465936220335,
+          "rms_db": 3.3046216668929076,
+          "mean_db": -0.3904451439280703
         }
       },
       "variant_nofelt": {
@@ -314,18 +314,18 @@
             150.0,
             8000.0
           ],
-          "max_abs_db": 35.055293305395196,
-          "rms_db": 7.693651116725947,
-          "mean_db": -2.8453031185159317
+          "max_abs_db": 32.44357627615226,
+          "rms_db": 7.4871843856131814,
+          "mean_db": -3.0180886633547455
         },
         "zrad_magnitude": {
           "band_hz": [
             150.0,
             8000.0
           ],
-          "max_abs_db": 19.26890870619139,
-          "rms_db": 5.870084558347028,
-          "mean_db": -1.8709328782961523
+          "max_abs_db": 15.870378803972525,
+          "rms_db": 5.521383122914199,
+          "mean_db": -1.0989546042050005
         }
       },
       "variant_flush_nohf_nofelt": {
@@ -334,173 +334,173 @@
             150.0,
             8000.0
           ],
-          "max_abs_db": 35.19211831757383,
-          "rms_db": 6.73226892604014,
-          "mean_db": -2.2983710301598177
+          "max_abs_db": 32.88661513070029,
+          "rms_db": 7.485222840552584,
+          "mean_db": -2.9560180312437456
         },
         "zrad_magnitude": {
           "band_hz": [
             150.0,
             8000.0
           ],
-          "max_abs_db": 18.996103101924465,
-          "rms_db": 5.1204467648467595,
-          "mean_db": -1.7020750790300654
+          "max_abs_db": 15.963715445330536,
+          "rms_db": 5.464604917479743,
+          "mean_db": -1.1212414657742331
         }
       }
     },
-    "max_abs_difference_db": 13.018818768052626,
-    "mean_difference_db": -0.7904935126083565,
-    "rms_difference_db": 4.822839260905766,
+    "max_abs_difference_db": 3.055845727397852,
+    "mean_difference_db": -0.15415851409727946,
+    "rms_difference_db": 0.8397638581531047,
     "felt_sweep": {
       "note": "centre-cavity dip: deepest on-axis point 3.2 to 4.3 kHz, depth below the 2.5 to 6 kHz median, coupled SPL",
       "rows": [
         {
           "eta": 0.0,
-          "fem_null_hz": 3568.5354561273084,
-          "fem_null_depth_db": 24.242835273599468,
-          "network_null_hz": 3923.1780578112184,
-          "network_null_depth_db": 20.206979115070084
+          "fem_null_hz": 3606.3013673282535,
+          "fem_null_depth_db": 25.874011771334153,
+          "network_null_hz": 4178.977393036579,
+          "network_null_depth_db": 43.77537232978112
         },
         {
           "eta": 0.05,
-          "fem_null_hz": 3568.5354561273084,
-          "fem_null_depth_db": 9.512655682553856,
-          "network_null_hz": 3923.1780578112184,
-          "network_null_depth_db": 5.094719202650765
+          "fem_null_hz": 3606.3013673282535,
+          "fem_null_depth_db": 8.019668687129695,
+          "network_null_hz": 4267.897911342375,
+          "network_null_depth_db": 5.788375111574453
         },
         {
           "eta": 0.1,
-          "fem_null_hz": 3568.5354561273084,
-          "fem_null_depth_db": 4.387497104989038,
-          "network_null_hz": 3964.6971616504125,
-          "network_null_depth_db": 2.385079564074559
+          "fem_null_hz": 3606.3013673282535,
+          "fem_null_depth_db": 3.0573157598275458,
+          "network_null_hz": 4267.897911342375,
+          "network_null_depth_db": 2.5154513818834943
         },
         {
           "eta": 0.2,
-          "fem_null_hz": 3568.5354561273084,
-          "fem_null_depth_db": 0.6576596483642589,
-          "network_null_hz": 4049.0582130231514,
-          "network_null_depth_db": 0.7457769861025696
+          "fem_null_hz": 4267.897911342375,
+          "fem_null_depth_db": 0.9969926304845558,
+          "network_null_hz": 4267.897911342375,
+          "network_null_depth_db": 0.9787393090173993
         },
         {
           "eta": 0.3,
           "fem_null_hz": 4267.897911342375,
-          "fem_null_depth_db": 0.9115826722557756,
+          "fem_null_depth_db": 1.7238004704600485,
           "network_null_hz": 4267.897911342375,
-          "network_null_depth_db": 0.28391358526947386
+          "network_null_depth_db": 0.6315274847072203
         },
         {
           "eta": 0.5,
           "fem_null_hz": 4267.897911342375,
-          "fem_null_depth_db": 1.641232664578311,
+          "fem_null_depth_db": 1.8711906297390044,
           "network_null_hz": 4267.897911342375,
-          "network_null_depth_db": 0.14606310103725662
+          "network_null_depth_db": 0.45554112626838617
         },
         {
           "eta": 0.8,
           "fem_null_hz": 4267.897911342375,
-          "fem_null_depth_db": 1.7838808844261678,
+          "fem_null_depth_db": 1.9928740123966975,
           "network_null_hz": 4267.897911342375,
-          "network_null_depth_db": 0.14884851098126717
+          "network_null_depth_db": 0.40198355309948397
         }
       ]
     },
     "convergence": {
       "scale": 0.5,
-      "fine_cells": 156526,
-      "fine_p2_dofs": 315067,
+      "fine_cells": 144397,
+      "fine_p2_dofs": 290628,
       "points": [
         {
           "frequency_hz": 501.2013377,
-          "zrad_change_pct": 0.009061687245772592,
-          "onaxis_change_db": 0.0004145605435163408,
-          "h30_change_db": 0.00041373231102028075,
-          "coupled_spl_change_db": -5.370294019257926e-05
+          "zrad_change_pct": 0.20645146555867755,
+          "onaxis_change_db": 0.00368578389192032,
+          "h30_change_db": 0.003945845506419908,
+          "coupled_spl_change_db": -0.0006371971318372971
         },
         {
           "frequency_hz": 2002.401234,
-          "zrad_change_pct": 0.04868304959878495,
-          "onaxis_change_db": 0.003697646318013342,
-          "h30_change_db": 0.0025080277688323406,
-          "coupled_spl_change_db": 0.0035887938769150196
+          "zrad_change_pct": 0.08197107004850226,
+          "onaxis_change_db": -0.0029050210586921065,
+          "h30_change_db": -0.004729926034242095,
+          "coupled_spl_change_db": -0.00336993151461229
         },
         {
           "frequency_hz": 8000.0,
-          "zrad_change_pct": 0.07924556096017177,
-          "onaxis_change_db": -0.021623982914380672,
-          "h30_change_db": 0.0009495288464302277,
-          "coupled_spl_change_db": -0.021632172077175937
+          "zrad_change_pct": 0.08580774339368855,
+          "onaxis_change_db": 0.10080301888954102,
+          "h30_change_db": 0.015124319981204526,
+          "coupled_spl_change_db": 0.10075798622794707
         }
       ]
     },
-    "runtime_s": 0.3
+    "runtime_s": 247.2
   },
   "hf": {
-    "power_balance_max_rel_error": 0.0027529038831882817,
+    "power_balance_max_rel_error": 0.003293986742467278,
     "mesh": {
-      "cells": 80016,
-      "p2_dofs": 161593,
-      "h_min_mm": 0.3223614729535838,
-      "h_max_mm": 4.836658503185118,
-      "outline_points": 527
+      "cells": 68489,
+      "p2_dofs": 138168,
+      "h_min_mm": 0.34491498410822824,
+      "h_max_mm": 4.931985125369361,
+      "outline_points": 435
     },
     "case": {
-      "baffle_s": 0.21000000000000002,
-      "baffle": "kick mouth plane",
-      "protrusion_m": 0.14999999999999997,
-      "exterior_reach_m": 0.30257750158931485,
-      "kh_radius_m": 0.42628875079465745,
+      "baffle_s": 0.28,
+      "baffle": "mid mouth plane",
+      "protrusion_m": 0.0,
+      "exterior_reach_m": 0.18,
+      "kh_radius_m": 0.365,
       "fmax": 16000.0,
       "hf_cavity": true,
       "felt_loss": 0.0
     },
     "n_freqs": 40,
     "band_hz": [
-      4000.0,
+      3000.0,
       16000
     ],
-    "onaxis_change_db_mean": 7.875345552889137,
-    "rel_30deg_fem_mean_db": -10.030665613803459,
-    "rel_30deg_piston_mean_db": -10.416439125616098,
+    "onaxis_change_db_mean": 8.685349799716638,
+    "rel_30deg_fem_mean_db": -10.117857721709202,
+    "rel_30deg_piston_mean_db": -8.754970570155079,
     "convergence": {
       "scale": 0.5,
-      "fine_cells": 267478,
-      "fine_p2_dofs": 537651,
+      "fine_cells": 263488,
+      "fine_p2_dofs": 529265,
       "points": [
         {
-          "frequency_hz": 4023.952287,
-          "zrad_change_pct": 0.11217883713993078,
-          "onaxis_change_db": 0.0008946504868281368,
-          "h30_change_db": 0.009791456114008048
+          "frequency_hz": 3961.38117,
+          "zrad_change_pct": 0.08704038435616081,
+          "onaxis_change_db": -0.0035981116315949592,
+          "h30_change_db": -0.001025494249118126
         },
         {
-          "frequency_hz": 7835.212182,
-          "zrad_change_pct": 0.17175841288854182,
-          "onaxis_change_db": -0.010167031315516769,
-          "h30_change_db": -0.004738303773250548
+          "frequency_hz": 8206.598059,
+          "zrad_change_pct": 0.07824650627520999,
+          "onaxis_change_db": 0.021132992086134825,
+          "h30_change_db": 0.0007708136670500568
         },
         {
           "frequency_hz": 16000.0,
-          "zrad_change_pct": 0.19827884870577553,
-          "onaxis_change_db": 0.0029176115715160923,
-          "h30_change_db": -0.020371583062122004
+          "zrad_change_pct": 0.16261030059948733,
+          "onaxis_change_db": -0.02035794787902661,
+          "h30_change_db": 0.042915411704216457
         }
       ]
     },
-    "runtime_s": 0.1
+    "runtime_s": 37.8
   },
   "kick": {
-    "power_balance_max_rel_error": 0.0006049419064226919,
+    "power_balance_max_rel_error": 0.00145977252184873,
     "mesh": {
-      "cells": 11416,
-      "p2_dofs": 23493,
-      "h_min_mm": 0.6551785787868716,
-      "h_max_mm": 67.58636235747448,
-      "outline_points": 461
+      "cells": 10294,
+      "p2_dofs": 21169,
+      "h_min_mm": 0.6951015062785579,
+      "h_max_mm": 69.63962955155482,
+      "outline_points": 385
     },
     "case": {
-      "exterior_reach_m": 0.30257750158931485,
+      "exterior_reach_m": 0.20951631971728812,
       "kh_radius_m": 1.1,
       "fmax": 1000.0
     },
@@ -511,18 +511,18 @@
           40.0,
           250.0
         ],
-        "max_abs_db": 2.537583447700527,
-        "rms_db": 0.9242584448529038,
-        "mean_db": 0.32716313614112635
+        "max_abs_db": 1.1573015490619696,
+        "rms_db": 0.5882973701923455,
+        "mean_db": -0.0010998782067945159
       },
       "zrad_magnitude": {
         "band_hz": [
           40.0,
           250.0
         ],
-        "max_abs_db": 5.091367084876065,
-        "rms_db": 1.8327327338395336,
-        "mean_db": -0.8780167465164547
+        "max_abs_db": 3.234387644628272,
+        "rms_db": 1.1545407715173683,
+        "mean_db": -0.9887192342284947
       }
     },
     "full": {
@@ -531,83 +531,83 @@
           40.0,
           1000.0
         ],
-        "max_abs_db": 11.852744753697792,
-        "rms_db": 3.586857674815966,
-        "mean_db": -0.9874403136369819
+        "max_abs_db": 4.280226712332521,
+        "rms_db": 1.2597251993417444,
+        "mean_db": -0.3168755302257432
       },
       "zrad_magnitude": {
         "band_hz": [
           40.0,
           1000.0
         ],
-        "max_abs_db": 14.841258536188581,
-        "rms_db": 4.354693578866613,
-        "mean_db": -1.2045983544049614
+        "max_abs_db": 6.5964178047692705,
+        "rms_db": 2.3785938184219595,
+        "mean_db": -1.2398082292148023
       }
     },
-    "max_abs_difference_db": 2.537583447700527,
-    "mean_difference_db": 0.32716313614112635,
-    "rms_difference_db": 0.9242584448529038,
+    "max_abs_difference_db": 1.1573015490619696,
+    "mean_difference_db": -0.0010998782067945159,
+    "rms_difference_db": 0.5882973701923455,
     "convergence": {
       "scale": 0.5,
-      "fine_cells": 28454,
-      "fine_p2_dofs": 57917,
+      "fine_cells": 22280,
+      "fine_p2_dofs": 45403,
       "points": [
         {
           "frequency_hz": 60.11937026,
-          "zrad_change_pct": 0.04100128934235574,
-          "onaxis_change_db": 0.0005899457407400344,
-          "h30_change_db": 0.000580760457909823,
-          "coupled_spl_change_db": 0.0010667640624433261
+          "zrad_change_pct": 0.042962593141724306,
+          "onaxis_change_db": 0.00023216509945989756,
+          "h30_change_db": 0.000244781125394151,
+          "coupled_spl_change_db": 0.0008456678480115443
         },
         {
           "frequency_hz": 250.2389638,
-          "zrad_change_pct": 0.051792100926006904,
-          "onaxis_change_db": 0.0014493887941105996,
-          "h30_change_db": 0.0019496171746799795,
-          "coupled_spl_change_db": -0.000519380033182415
+          "zrad_change_pct": 0.08217969717687851,
+          "onaxis_change_db": 0.003838220914988498,
+          "h30_change_db": 0.003353890450683125,
+          "coupled_spl_change_db": 0.00012444901916808249
         },
         {
           "frequency_hz": 1000.0,
-          "zrad_change_pct": 0.043568767652699916,
-          "onaxis_change_db": -0.03757725913007686,
-          "h30_change_db": 6.263527772250909e-05,
-          "coupled_spl_change_db": -0.036674162189981985
+          "zrad_change_pct": 0.38257947275755627,
+          "onaxis_change_db": -0.0070132701964684754,
+          "h30_change_db": 0.0033118152431653486,
+          "coupled_spl_change_db": 0.00810550804486354
         }
       ]
     },
-    "runtime_s": 0.1
+    "runtime_s": 10.2
   },
   "design": {
-    "kick_driver": "18sound-15mb700",
+    "kick_driver": "18sound-15w700",
     "mid_driver": "beyma-8mi100",
-    "tweeter": "18sound-nd1030",
+    "tweeter": "bc-de111",
     "crossover_hz": [
       250.0,
-      4000.0
+      3000.0
     ],
     "geometry": {
-      "mid_gap_vertical_mm": 6.45,
-      "mid_gap_normal_min_mm": 1.9096634369919359,
+      "mid_gap_vertical_mm": 4.500000000000001,
+      "mid_gap_normal_min_mm": 1.332323328133909,
       "mid_gap_normal_min_at_r_mm": 25.3531828344921,
       "mid_xmech_mm": 9.000000000000002,
       "mid_surround_width_mm": 11.00000000000001,
       "kick_channel_gap_mm": [
         40.48295454545455,
-        54.505723033376604
+        56.10795454545454
       ],
-      "kick_passage_min_mm": 28.40780119384481,
-      "kick_lip_height_over_flange_mm": 45.72266077619468,
-      "kick_cavity_litres_fem": 0.9615890521616907,
-      "kick_trapped_litres_network": 0.9616297074337197,
-      "kick_cone_above_roof_inside_r_mm": 57.10552763819096,
+      "kick_passage_min_mm": 30.2129932726799,
+      "kick_lip_height_over_flange_mm": 47.209598066418586,
+      "kick_cavity_litres_fem": 0.9640973374993936,
+      "kick_trapped_litres_network": 0.9641191788497642,
+      "kick_cone_above_roof_inside_r_mm": 55.95226130653266,
       "kick_dust_cap_area_not_driven_m2": 0.004417864669110647,
       "kick_sd_m2": 0.085
     }
   },
   "low": {
     "note": "alias of kick for site.py",
-    "max_abs_difference_db": 2.537583447700527
+    "max_abs_difference_db": 1.1573015490619696
   },
   "kick3d": {
     "passband": {

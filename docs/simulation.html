@@ -13,7 +13,7 @@
 <a class="brand" href="index.html"><svg viewBox="0 0 32 32" aria-hidden="true"><g fill="none" stroke-width="2.4">
 <rect x="3" y="3" width="26" height="26" rx="4" stroke="#d38a0c"/><circle cx="16" cy="16" r="8" stroke="#eb6834"/>
 <circle cx="16" cy="16" r="3.2" fill="#1baf7a" stroke="none"/></g></svg>Sunflower</a>
-<nav><a href="index.html">Product</a><a href="design.html">Design</a><a href="simulation.html" aria-current=page>Simulation</a><a href="build.html">Build</a><a href="downloads.html">Downloads</a></nav>
+<nav><a href="index.html">Product</a><a href="design.html">Design</a><a href="simulation.html" aria-current=page>Simulation</a><a href="validation.html">Validation</a><a href="build.html">Build</a><a href="downloads.html">Downloads</a></nav>
 </div></header>
 <main><div class="wrap">
 
@@ -24,17 +24,17 @@ check of the square kick horn) then validates the chosen one, with the cone as a
 <h2 id="full-range">Full range</h2>
 <figure class="figure"><img class="plot" src="img/plots/full-range.png" alt="Top: each section on its own with the cutoffs that limit it. Bottom: through the crossover." loading="lazy"><figcaption>Top: each section on its own with the cutoffs that limit it. Bottom: through the crossover.</figcaption></figure>
 <figure class="figure"><img class="plot" src="img/plots/full-range-group-delay.png" alt="Group delay of the sum." loading="lazy"><figcaption>Group delay of the sum.</figcaption></figure>
-<div class="table-wrap"><table><thead><tr><th class="">DSP</th><th class="">Setting</th></tr></thead><tbody><tr><td class="">Crossover</td><td class="">Linkwitz-Riley 24 dB/oct at 250 Hz and 4000 Hz</td></tr><tr><td class="">Gains (dB)</td><td class="">low -2.3, mid -5.0, tweeter +0.0</td></tr><tr><td class="">Delays (ms)</td><td class="">low 0.00, mid 1.26, tweeter 0.26</td></tr><tr><td class="">Polarity</td><td class="">low +, mid +, tweeter +</td></tr><tr><td class="">Mid EQ</td><td class="">high shelf +12.0 dB at 2200 Hz</td></tr><tr><td class="">No-sub option</td><td class="">+6 dB low shelf at 124 Hz with a 30 Hz high-pass: -6 dB at 92 Hz, safe to about 163 W</td></tr></tbody></table></div>
+<div class="table-wrap"><table><thead><tr><th class="">DSP</th><th class="">Setting</th></tr></thead><tbody><tr><td class="">Crossover</td><td class="">Linkwitz-Riley 24 dB/oct at 250 Hz and 3500 Hz</td></tr><tr><td class="">Gains (dB)</td><td class="">low -1.5, mid -2.5, tweeter +0.0</td></tr><tr><td class="">Delays (ms)</td><td class="">low 0.00, mid 1.42, tweeter 0.42</td></tr><tr><td class="">Polarity</td><td class="">low +, mid +, tweeter +</td></tr><tr><td class="">Mid EQ</td><td class="">high shelf +7.5 dB at 1925 Hz</td></tr><tr><td class="">No-sub option</td><td class="">+6 dB low shelf at 134 Hz with a 30 Hz high-pass: -6 dB at 79 Hz, safe to about 83 W</td></tr></tbody></table></div>
 <h2 id="low-end">Kick low end</h2>
 <p>The kick is a kick bin, not a sub, and like the HD-15 it is meant to run with one. One box on the ground is down
-6 dB at 104 Hz (109 Hz in free space).
-The small sealed chamber (sealed resonance about 161 Hz) keeps the cone under control
+6 dB at 96 Hz (106 Hz in free space).
+The small sealed chamber (sealed resonance about 108 Hz) keeps the cone under control
 below the horn's range, at the cost of extension. Without a sub, the no-sub shelf takes one box to
-92 Hz, but excursion then limits it to about 163 W.</p>
+79 Hz, but excursion then limits it to about 83 W.</p>
 <figure class="figure"><img class="plot" src="img/plots/kick-low-end.png" alt="Free space, on the ground, and per box in a 3 x 3 cluster." loading="lazy"><figcaption>Free space, on the ground, and per box in a 3 x 3 cluster.</figcaption></figure>
 
 <h2 id="low">Kick</h2>
-<p>Reversed 18 Sound 15MB700, hyperbolic-exponential (T = 0.6) horn, square mouth.</p>
+<p>Reversed 18 Sound 15W700, conical horn, square mouth.</p>
 <figure class="figure"><img class="plot" src="img/plots/low-magnitude.png" alt="Magnitude on axis." loading="lazy"><figcaption>Magnitude on axis.</figcaption></figure>
 <figure class="figure"><img class="plot" src="img/plots/low-phase.png" alt="Phase and group delay." loading="lazy"><figcaption>Phase and group delay.</figcaption></figure>
 <figure class="figure"><img class="plot" src="img/plots/low-polar.png" alt="Off axis." loading="lazy"><figcaption>Off axis.</figcaption></figure>
@@ -50,20 +50,20 @@ below the horn's range, at the cost of extension. Without a sub, the no-sub shel
 <figure class="figure"><img class="plot" src="img/plots/hf-in-mid.png" alt="The HF horn inside the mid horn, FEM." loading="lazy"><figcaption>The HF horn inside the mid horn, FEM.</figcaption></figure>
 
 <h2 id="tweeter">HF</h2>
-<p>18 Sound ND1030: datasheet response on axis, with the off-axis shape from the FEM of its printed horn inside the mid horn.</p>
+<p>B&C DE111: datasheet response on axis, with the off-axis shape from the FEM of its printed horn inside the mid horn.</p>
 <figure class="figure"><img class="plot" src="img/plots/tweeter-magnitude.png" alt="Magnitude on axis." loading="lazy"><figcaption>Magnitude on axis.</figcaption></figure>
 <figure class="figure"><img class="plot" src="img/plots/tweeter-phase.png" alt="Phase and group delay." loading="lazy"><figcaption>Phase and group delay.</figcaption></figure>
 <figure class="figure"><img class="plot" src="img/plots/tweeter-polar.png" alt="Off axis." loading="lazy"><figcaption>Off axis.</figcaption></figure>
 
 
 <h2 id="fem">FEM validation</h2>
-<p><b>Kick.</b> FEM against the network, coupled to the driver, 40 to 250 Hz: 0.9 dB RMS,
-2.5 dB worst. Above about 400 Hz the FEM shows cross modes in the wide passage near the mouth,
+<p><b>Kick.</b> FEM against the network, coupled to the driver, 40 to 250 Hz: 0.6 dB RMS,
+1.2 dB worst. Above about 400 Hz the FEM shows cross modes in the wide passage near the mouth,
 which a plane-wave model cannot; they are well above the 250 Hz crossover.</p>
 <p><b>Mid.</b> Within about 1 dB of the network up to 2.7 kHz. Above that the FEM falls 8 to 12 dB by 3 to 6 kHz:
 the air over the cone behaves as a radial cavity, which the network lumps into one node. So the upper crossover was
 picked again with the FEM correction applied
-(3500 Hz: 5.71, 4000 Hz: 5.82, 4500 Hz: 6.21, 5000 Hz: 6.24, lower is better), and 4 kHz is the highest that
+(2500 Hz: 6.41, 3000 Hz: 6.14, 3500 Hz: 5.59, 4000 Hz: 6.03, lower is better), and 4 kHz is the highest that
 scores within 0.15 of the best. It needs the full 12 dB mid shelf. A two-slot phase plug, as in compression drivers,
 would push this up; that is the main open item for the mid.</p>
 <figure class="figure"><img class="plot" src="img/plots/fem-vs-planewave.png" alt="FEM against the network model." loading="lazy"><figcaption>FEM against the network model.</figcaption></figure>

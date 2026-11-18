@@ -228,31 +228,32 @@ def _driver_section(ax, zc, sgn, drv, colour, reversed_=True, face=0.0):
 
 
 def kick_drawing():
-    """Section through the axis. Upper half: through the wall flats. Lower half: through the corners (fillers)."""
+    """Section through the axis. Upper half: vertical, through the flat top and its wedge. Lower half: horizontal,
+    through an angled side wall."""
     k, m, drv = D.KICK, D.MID, D.KICK.drv
     fig, ax = plt.subplots(figsize=(13.5, 8.8), layout="constrained")
     zb = -(k.baffle + k.chamber_depth)
     t = k.ply / math.cos(math.radians(k.half_angle_deg))
-    zz = np.linspace(zb, k.mouth_z, 60)
+    zz = np.linspace(zb, k.mouth_z, 80)
     hw = np.array([k.half_width(z) for z in zz])
-    fil = np.array([k.filler(z) if z >= 0 else 0.0 for z in zz])
-    diag = SQ2 * hw - fil / SQ2
+    H = k.half_height
     Z = zz * 1000
-    ax.fill_between(Z, hw * 1000, (hw + t) * 1000, color=WOOD, lw=0)
-    ax.fill_between(Z, -diag * 1000, -(SQ2 * (hw + t)) * 1000, color=WOOD, lw=0)
-    ax.fill_between(Z, -SQ2 * hw * 1000, -diag * 1000, where=zz >= 0, color="#b8925f", lw=0)
-    ax.fill_between([zb * 1000 - k.ply * 1000, zb * 1000], [-SQ2 * (hw[0] + t) * 1000] * 2, [(hw[0] + t) * 1000] * 2,
-                    color=WOOD, lw=0)
+    # upper half: flat top panel, sealed wedge from the baffle to the mouth, box behind the baffle full height
+    ax.fill_between(Z, H * 1000, (H + k.ply) * 1000, color=WOOD, lw=0)
+    zw = np.linspace(0, k.mouth_z, 60)
+    ax.fill_between(zw * 1000, [k.half_width(z) * 1000 for z in zw], H * 1000, color="#b8925f", lw=0)
+    # lower half: angled side wall
+    ax.fill_between(Z, -hw * 1000, -(hw + t) * 1000, color=WOOD, lw=0)
+    ax.fill_between([(zb - k.ply) * 1000, zb * 1000], [-(hw[0] + t) * 1000] * 2, [(H + k.ply) * 1000] * 2, color=WOOD, lw=0)
     zc_ = np.linspace(zb, -k.baffle, 10)
-    ax.fill_between(zc_ * 1000, [-SQ2 * k.half_width(z) * 1000 for z in zc_], [k.half_width(z) * 1000 for z in zc_],
-                    color="#ece9e1", lw=0, zorder=0)
+    ax.fill_between(zc_ * 1000, [-k.half_width(z) * 1000 for z in zc_], H * 1000, color="#ece9e1", lw=0, zorder=0)
     rc = drv.frame_od / 2 - 0.017
-    ax.fill_between([-k.baffle * 1000, 0], [rc * 1000] * 2, [k.half_width(0) * 1000] * 2, color=WOOD, lw=0)
-    ax.fill_between([-k.baffle * 1000, 0], [-rc * 1000] * 2, [-SQ2 * k.half_width(0) * 1000] * 2, color=WOOD, lw=0)
+    ax.fill_between([-k.baffle * 1000, 0], [rc * 1000] * 2, [H * 1000] * 2, color=WOOD, lw=0)
+    ax.fill_between([-k.baffle * 1000, 0], [-rc * 1000] * 2, [-k.half_width(0) * 1000] * 2, color=WOOD, lw=0)
     body = _body_outline()
+    keep = body[:, 0] <= k.mouth_z * 1000 + 1e-6
     for sgn in (1, -1):
-        ax.fill_between(body[:, 0], 0, sgn * body[:, 1], color=PRINT, lw=0, zorder=3)
-    # cavities inside the body: motor, mid pod, mid bore
+        ax.fill_between(body[keep, 0], 0, sgn * body[keep, 1], color=PRINT, lw=0, zorder=3)
     mz0 = float(k.shroud_z(k.channel_start)) * 1000
     for sgn in (1, -1):
         ax.fill_between([mz0, (k.motor_front - k.body_wall) * 1000], 0, sgn * (k.motor_body_radius - k.body_wall) * 1000,
@@ -263,34 +264,28 @@ def kick_drawing():
     zs = (k.mid_throat_z + ss) * 1000
     ax.fill_between(zs, [-m.radius(s) * 1000 for s in ss], [m.radius(s) * 1000 for s in ss], color="white", lw=0, zorder=5)
     pr = np.array([m.plug(s) for s in ss]) * 1000
-    ax.fill_between(zs, -pr, pr, where=pr > 0, color=PLUG, lw=0, zorder=6)
+    ax.fill_between(zs, -pr, pr, where=pr > 0, color="#3d3d3d", lw=0, zorder=6)
     for sgn in (1, -1):
         _driver_section(ax, lambda z: z * 1000, sgn, drv, COL["low"])
         _driver_section(ax, lambda z: (k.mid_flange_z - z) * 1000, sgn, m.drv, COL["mid"])
-    zm, W, We = k.mouth_z * 1000, k.mouth_width * 1000, k.external_mouth * 1000
-    top = (k.half_width(k.mouth_z) + t) * 1000
-    xm = (k.mid_mouth_z + m.lip_radius) * 1000
-    ax.plot([zm, xm + 40], [W / 2, W / 2], color=MUTED, lw=0.6, ls=":")
-    dim(ax, (xm + 40, 0), (xm + 40, W / 2), f"mouth {W:.0f}\nsquare,\ninside", off=(44, 0))
-    ax.plot([zm, xm + 40], [-SQ2 * We / 2] * 2, color=MUTED, lw=0.6, ls=":")
-    dim(ax, (xm + 40, -SQ2 * We / 2), (xm + 40, 0), f"outside\n{We:.0f} x {We:.0f}\n(corner\nsection)", off=(44, 0))
+    zm, W = k.mouth_z * 1000, k.mouth_width * 1000
+    top = (H + k.ply) * 1000
+    xm = zm + 40
+    dim(ax, (xm, 0), (xm, W / 2), f"mouth {W:.0f}\nsquare,\ninside", off=(44, 0))
+    dim(ax, (xm, -k.external_mouth * 500), (xm, 0), f"outside\n{k.external_mouth*1000:.0f} wide", off=(44, 0))
     dim(ax, ((zb - k.ply) * 1000, top + 40), (zm, top + 40), f"cabinet depth {k.depth*1000:.0f}")
-    dim(ax, (zm, top + 40), (k.mid_mouth_z * 1000, top + 40), f"mid {k.protrusion*1000:.0f}", off=(0, 14))
-    dim(ax, ((zb - k.ply) * 1000, top + 80), ((k.mid_mouth_z + m.lip_radius) * 1000, top + 80),
-        f"overall {k.overall_depth*1000:.0f}")
-    dim(ax, (zb * 1000, -SQ2 * hw[0] * 1000 - 60), (-k.baffle * 1000, -SQ2 * hw[0] * 1000 - 60),
+    dim(ax, (zb * 1000, -(hw[0] + t) * 1000 - 40), (-k.baffle * 1000, -(hw[0] + t) * 1000 - 40),
         f"chamber {k.chamber_depth*1000:.0f}\n{k.chamber_litres:.0f} L sealed", off=(0, -22))
     dim(ax, (-60, -k.throat_width * 500), (-60, k.throat_width * 500), "", fs=8)
     ax.text(-75, 30, f"throat\n{k.throat_width*1000:.0f}\nacross\nflats", ha="right", fontsize=8)
-    ax.text(zm - 20, top + 8, f"walls {k.half_angle_deg:.1f} deg, splay {k.splay_deg:.0f} deg between boxes", fontsize=8,
-            color=MUTED, ha="right")
-    ax.text((zb - k.ply) * 1000, -SQ2 * (hw[-1] + t) * 1000 - 10,
-            "Upper half: section through the wall flats. Lower half: through a corner, showing the tapering filler.\n"
-            "Black: one-piece printed centre body. Yellow: mid phase plug (bullet) holding the HF horn. Blue: the "
-            "reversed 15 inch cone and motor. Orange: the mid cone.", fontsize=8, color=MUTED, va="top")
-    ax.set(aspect="equal", xlim=((zb - k.ply) * 1000 - 110, (k.mid_mouth_z + m.lip_radius) * 1000 + 200),
-           ylim=(-SQ2 * (hw[-1] + t) * 1000 - 70, top + 110), xlabel="z, mm from the baffle front face",
-           title="Kick cabinet, section through the axis, mm")
+    ax.text(zm - 20, -(hw[-1] + t) * 1000 - 14, f"sides {k.half_angle_deg:.0f} deg: {k.splay_deg:.0f} deg between columns", fontsize=8,
+            color=MUTED, ha="right", va="top")
+    ax.text((zb - k.ply) * 1000, -(hw[-1] + t) * 1000 - 60,
+            "Upper half: vertical section, through the flat top and its sealed wedge (darker). Lower half: horizontal section, "
+            "through an angled side.\nBlack: one-piece printed centre body and the bullet holding the HF horn. Blue: the reversed "
+            "15 inch cone and motor. Orange: the mid cone. The mid mouth sits in the kick mouth plane.", fontsize=8, color=MUTED, va="top")
+    ax.set(aspect="equal", xlim=((zb - k.ply) * 1000 - 110, zm + 200), ylim=(-(hw[-1] + t) * 1000 - 110, top + 80),
+           xlabel="z, mm from the baffle front face", title="Kick cabinet, section through the axis, mm")
     ax.grid(False)
     fig.savefig(OUT / "kick-drawing.png")
     plt.close(fig)
@@ -666,7 +661,8 @@ def tradeoff():
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
     for old in OUT.glob("*.png"):
-        old.unlink()
+        if old.name != "slices.png":          # written by sunflower.slicer from the CAD
+            old.unlink()
     cutoffs()
     for n in ("low", "mid", "tweeter"):
         section_figures(n)

@@ -208,11 +208,13 @@ def lip(m, s0=0.0, h=0.004, n=48):
 
 
 def mid_outline(m, *, s_b, R, hf_drive=False, h_wall, h_far, h_gap_min=0.0007, h_throat=0.003, h_hf=0.004,
-                flush=False, hf_cavity=True):
+                flush=False, hf_cavity=True, slots=None):
     """Mid and HF-in-mid air domain in s coordinates (z = s). Baffle plane at s = s_b.
 
     flush: baffle at the mid mouth plane instead (s_b is ignored, no lip), the network's assumption.
-    hf_cavity: False closes the bullet flat at s_tip (no HF horn bore)."""
+    hf_cavity: False closes the bullet flat at s_tip (no HF horn bore).
+    slots: list of (r_in, r_out) annular slots. The phase plug then fills the cone dish at the gap everywhere
+    and the air reaches the throat plane (s = 0) only through the slots; rings between slots are islands."""
     d = m.drv
     o = Outline()
     g = m.gap
@@ -230,10 +232,18 @@ def mid_outline(m, *, s_b, R, hf_drive=False, h_wall, h_far, h_gap_min=0.0007, h
     s_rim = float(m.s_cone(d.rim_r))
     o.seg([(d.rim_r, s_rim), (d.rim_r + sw, s_rim)], WALL if hf_drive else SURROUND, h_gap_min * 2)
     o.seg([(d.rim_r + sw, s_rim), (d.rim_r + sw, s_rim + g), (d.rim_r, s_rim + g)], WALL, h_gap_min * 2)
-    rr = rc[(rc >= ro) & (rc <= d.rim_r)][::-1]
-    o.seg(np.column_stack([rr, m.s_cone(rr) + g]), WALL, ngap_h(rr))
-    s_ring = float(m.s_cone(ro) + g)
-    o.seg([(ro, s_ring), (ro, 0.0)], WALL, [ngap_h(np.array([ro, ro + 1e-4]))[0], h_throat])
+    if slots:
+        bl = slots[-1][1]
+        rc = np.unique(np.r_[rc, [x for sl in slots for x in sl]])
+        rr = rc[(rc >= bl) & (rc <= d.rim_r)][::-1]
+        o.seg(np.column_stack([rr, m.s_cone(rr) + g]), WALL, ngap_h(rr))
+        o.seg([(bl, float(m.s_cone(bl) + g)), (bl, 0.0)], WALL, [ngap_h(np.array([bl, bl + 1e-4]))[0], h_throat])
+        o.seg([(bl, 0.0), (ro, 0.0)], WALL, h_throat)
+    else:
+        rr = rc[(rc >= ro) & (rc <= d.rim_r)][::-1]
+        o.seg(np.column_stack([rr, m.s_cone(rr) + g]), WALL, ngap_h(rr))
+        s_ring = float(m.s_cone(ro) + g)
+        o.seg([(ro, s_ring), (ro, 0.0)], WALL, [ngap_h(np.array([ro, ro + 1e-4]))[0], h_throat])
     ss = np.linspace(0, m.length, 120)
     o.seg(np.column_stack([[m.radius(s) for s in ss], ss]), WALL,
           np.minimum(h_wall, np.linspace(h_throat, h_wall, len(ss))))
@@ -259,12 +269,26 @@ def mid_outline(m, *, s_b, R, hf_drive=False, h_wall, h_far, h_gap_min=0.0007, h
         o.seg([(0.0, m.s_tip), (m.tip_radius, m.s_tip)], WALL, min(h_hf, 0.0015))
     sp = np.linspace(m.s_tip, 0, 100)
     o.seg(np.column_stack([[m.plug(s) for s in sp], sp]), WALL, np.linspace(h_hf, h_throat, len(sp)))
-    s_nose = float(m.nose(rp))
-    o.seg([(rp, 0.0), (rp, s_nose)], WALL, [h_throat, ngap_h(np.array([rp - 1e-4, rp]))[-1]])
-    rn = rc[rc <= rp][::-1]
+    if slots:
+        a1 = slots[0][0]
+        o.seg([(rp, 0.0), (a1, 0.0)], WALL, h_throat)
+        o.seg([(a1, 0.0), (a1, float(m.nose(a1)))], WALL, [h_throat, ngap_h(np.array([a1 - 1e-4, a1]))[-1]])
+        rn = rc[rc <= a1][::-1]
+    else:
+        s_nose = float(m.nose(rp))
+        o.seg([(rp, 0.0), (rp, s_nose)], WALL, [h_throat, ngap_h(np.array([rp - 1e-4, rp]))[-1]])
+        rn = rc[rc <= rp][::-1]
     o.seg(np.column_stack([rn, m.nose(rn)]), WALL, ngap_h(rn))
     o.seg([(0.0, float(m.nose(0.0))), (0.0, float(m.s_cone(0.0)))], AXIS, h_gap_min * 2)
-    return o.case()
+    out = o.case()
+    if slots and len(slots) > 1:
+        holes = []
+        for (_, b), (a, _) in zip(slots[:-1], slots[1:]):
+            rr = np.linspace(b, a, 12)
+            ring = [(b, 0.0), (a, 0.0)] + [(x, float(m.nose(x))) for x in rr[::-1]]
+            holes.append([[float(r), float(z), float(min(h_throat, g / 3))] for r, z in ring])
+        out["holes"] = holes
+    return out
 
 
 def mid_exterior_reach(m, s_b):
@@ -272,10 +296,12 @@ def mid_exterior_reach(m, s_b):
     return float(np.max(np.hypot(lp[:, 0], lp[:, 1] - s_b)))
 
 
-def case_mid(scale=1.0, freqs=None, hf=False, flush=False, hf_cavity=True, felt=True):
+def case_mid(scale=1.0, freqs=None, hf=False, flush=False, hf_cavity=True, felt=True, slots=None):
     """felt: True uses MidHorn.felt_loss, False none, a number sets the loss factor."""
     m, k = D.MID, D.KICK
     eta = 0.0 if hf or felt is False else (m.felt_loss if felt is True else float(felt))
+    if k.mid_mouth_z - k.mouth_z < 1e-6:
+        flush = True                    # mid mouth in the kick mouth plane: that plane is the baffle
     s_b = m.length if flush else k.mouth_z - k.mid_throat_z
     if hf:
         fmax = 16000.0
@@ -288,7 +314,7 @@ def case_mid(scale=1.0, freqs=None, hf=False, flush=False, hf_cavity=True, felt=
     reach = m.radius(m.length) if flush else mid_exterior_reach(m, s_b)
     Rk = min(0.5 * (reach + R), R - 4 * h_far)
     case = mid_outline(m, s_b=s_b, R=R, hf_drive=hf, h_wall=h_wall, h_far=h_far,
-                       h_hf=min(h_wall, 0.004), flush=flush, hf_cavity=hf_cavity)
+                       h_hf=min(h_wall, 0.004), flush=flush, hf_cavity=hf_cavity, slots=slots)
     drive = {HF_EXIT: 1.0} if hf else {CONE: 1.0, SURROUND: 0.5}
     case.update(drive=drive, far=dict(zb=s_b, R=R), kh=dict(R=Rk, n=1200), h_max=h_far, scale=scale,
                 flux=[0.0, m.radius(m.length - 0.005) - 1e-5, m.length - 0.005],
@@ -331,11 +357,15 @@ def kick_outline(k, *, R, h_far, h_wall=0.015):
     s0 = k.mid_throat_z
     Lz = k.mid_mouth_z
     o.seg([(0.0, k.mouth_z + R), (0.0, Lz)], AXIS, [h_far, h_wall])
-    o.seg([(0.0, Lz), (m.radius(m.length), Lz)], WALL, h_wall)
-    lp, s_j = lip(m, s0=s0)
-    o.seg(lp, WALL, 0.008)
-    so = np.linspace(s_j, k.mouth_z - s0, 30)
-    o.seg(np.column_stack([[m.outer(s) for s in so], so + s0]), WALL, h_wall)
+    if Lz - k.mouth_z < 1e-6:
+        # mid mouth flush in the kick mouth plane: the (rigid, closed) mid horn face lies in the baffle plane
+        o.seg([(0.0, Lz), (k.body_radius(k.mouth_z), Lz)], WALL, h_wall)
+    else:
+        o.seg([(0.0, Lz), (m.radius(m.length), Lz)], WALL, h_wall)
+        lp, s_j = lip(m, s0=s0)
+        o.seg(lp, WALL, 0.008)
+        so = np.linspace(s_j, k.mouth_z - s0, 30)
+        o.seg(np.column_stack([[m.outer(s) for s in so], so + s0]), WALL, h_wall)
     zb_ = np.linspace(k.mouth_z, k.turn_z, 90)
     gapb = np.array([rw(z) - k.body_radius(z) for z in zb_])
     o.seg(np.column_stack([[k.body_radius(z) for z in zb_], zb_]), WALL, np.minimum(gapb / 4, h_wall))

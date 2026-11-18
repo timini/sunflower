@@ -77,7 +77,13 @@ def build_mesh(case):
         ln = geo.addCircleArc(a, cen, b) if tags[i] == FAR else geo.addLine(a, b)
         lines.append(ln)
         by_tag.setdefault(int(tags[i]), []).append(ln)
-    surf = geo.addPlaneSurface([geo.addCurveLoop(lines)])
+    loops = [geo.addCurveLoop(lines)]
+    for hole in case.get("holes") or []:        # rigid islands inside the air (for example a ring between two slots)
+        hid = [geo.addPoint(r, z, 0, h * sc) for r, z, h in hole]
+        hl = [geo.addLine(hid[i], hid[(i + 1) % len(hid)]) for i in range(len(hid))]
+        by_tag.setdefault(WALL, []).extend(hl)
+        loops.append(geo.addCurveLoop(hl))
+    surf = geo.addPlaneSurface(loops)
     geo.synchronize()
     gmsh.model.addPhysicalGroup(2, [surf], 1)
     for t, ls in by_tag.items():

@@ -23,7 +23,7 @@ LOGO = """<svg viewBox="0 0 32 32" aria-hidden="true"><g fill="none" stroke-widt
 <rect x="3" y="3" width="26" height="26" rx="4" stroke="#d38a0c"/><circle cx="16" cy="16" r="8" stroke="#eb6834"/>
 <circle cx="16" cy="16" r="3.2" fill="#1baf7a" stroke="none"/></g></svg>"""
 
-PAGES = [("index.html", "Product"), ("design.html", "Design"), ("simulation.html", "Simulation"),
+PAGES = [("index.html", "Product"), ("design.html", "Design"), ("simulation.html", "Simulation"), ("validation.html", "Validation"),
          ("build.html", "Build"), ("downloads.html", "Downloads")]
 
 
@@ -126,26 +126,24 @@ def index(d):
 <h1>Sunflower</h1>
 <p class="lede">A three-way coaxial horn built on the idea behind the Funktion-One Res 2: a kick horn up to
 {f1:.0f} Hz, a cone mid that carries the voice from {f1:.0f} Hz to {f2/1000:.0f} kHz, and a 1 inch compression driver above.
-Here the three are nested on one axis. The HF horn is the mid's phase plug, and the mid horn is the core of the kick
-horn's centre body.</p>
+Here the three are nested on one axis. The HF horn is the mid's phase plug, the mid horn is the core of the kick
+horn's centre body, and its mouth sits inside the kick mouth.</p>
 <figure class="hero"><img src="img/renders/hero.jpg" alt="Rendered Sunflower cabinet"></figure>
 <div class="stat">
 <div><b>{k['sensitivity']:.0f} dB</b><span>2.83 V, 1 m</span></div>
 <div><b>{low['f_minus6_hz']:.0f} Hz</b><span>kick -6 dB on the ground; {shelf['f_minus6_hz']:.0f} Hz with the no-sub shelf</span></div>
 <div><b>{f1:.0f} Hz / {f2/1000:.0f} kHz</b><span>crossovers: kick, vocal-range mid, HF</span></div>
-<div><b>{ex['width']:.0f} x {ex['height_front']:.0f} x {ex['depth']:.0f}</b><span>mm at the mouth; the mid horn stands
-{K.protrusion*1000:.0f} mm proud</span></div>
+<div><b>{ex['width']:.0f} x {ex['height_front']:.0f} x {ex['depth']:.0f}</b><span>mm, width x height x depth</span></div>
 </div>
 <div class="note"><p><b>Status.</b> Simulated, not built or measured. The cone and basket shapes of the drivers are
 estimated from datasheet drawings, and the phase plugs must be checked against real drivers before printing. The
 <a href="simulation.html#limits">limits</a> section lists what the models leave out.</p></div>
 {video("turntable", "One box, all the way round.")}
 <h2>Nine boxes, one point source</h2>
-<p>All four walls are angled at {K.half_angle_deg:.0f} degrees, so neighbouring boxes splay {K.splay_deg:.0f} degrees in
-both directions and a 3 x 3 block forms a curved point source. The edge joints close flush. Identical square boxes
-cannot also close at the four corners, so tapered spacers fill those joints (up to
-{d['cut']['array_spacers']['max_thickness_mm']:.0f} mm thick).</p>
-{fig("img/renders/stack.jpg", "Nine boxes as a curved point source, with the corner spacers.", "render")}
+<p>The sides are angled at {K.half_angle_deg:.0f} degrees and the top and bottom are flat, so nine identical boxes tile
+exactly: three columns fanned {K.splay_deg:.0f} degrees apart, each a straight stack of three, every joint flush.</p>
+{fig("img/renders/stack.jpg", "Nine identical boxes: three fanned columns, flat-stacked rows.", "render")}
+{fig("img/renders/stack-top-dims.jpg", "From above: the three columns fan about one point behind the array.", "render")}
 {video("orbit", "Around the 3 x 3 cluster.")}
 <div class="grid2">
 {fig("img/renders/front-dims.jpg", "Into the mouth, mm. Completely square at the mouth; the corner fillers make the throat an octagon.", "render")}
@@ -186,7 +184,8 @@ the kick horn. Every inner body is subtracted from its horn's area.</p>
 <p>The Res 2's selling point is a horn-loaded 8 inch cone that carries everything from 250 Hz up to the compression
 driver, so the voice, including the 2 to 4 kHz consonant band, stays on one paper cone. Funktion-One's Res 4 and 5
 run the same 8 inch to 5.7 and 7.5 kHz with their Axhead loading device. Sunflower keeps the 250 Hz low crossover and
-pushes the mid as high as the models allow: {f2/1000:.0f} kHz (see <a href="#mid">mid</a>).</p>
+pushes the mid as high as the FEM allows: {f2/1000:.1f} kHz with a 66 mm bullet round a B&amp;C DE111 (see
+<a href="#mid">mid</a> and the <a href="validation.html">validation</a> page).</p>
 
 <h2 id="mid">Mid horn and its phase plug</h2>
 <p>{D.label(D.MID_RECORD)} in an {law_name(m.law)} horn, {m.mouth_diameter*1000:.0f} mm mouth,
@@ -228,8 +227,8 @@ is estimated from dimensioned drawings: {est}. The shroud and the bullet nose mu
 <h2 id="box">Cabinet and splay</h2>
 <p>Single-ply 18 mm birch. The four horn walls are the outside of the box: four identical trapezoids with compound
 mitres, from a {d['cut']['external_mm']['height_back']:.0f} mm square back to a {d['cut']['external_mm']['width']:.0f} mm
-square mouth, {K.depth*1000:.0f} mm deep. The mid horn protrudes {K.protrusion*1000:.0f} mm beyond the kick mouth on a
-rolled lip, which keeps the box within 600 mm and keeps mid sound from diffracting into the kick horn.</p>
+square mouth, {K.depth*1000:.0f} mm deep. The two sides are angled; the top and bottom are flat, with sealed wedges inside
+them so the horn itself is a square frustum. The mid horn ends flush inside the kick mouth.</p>
 <p>The splay between boxes is twice the wall angle, {K.splay_deg:.0f} degrees. It was chosen against the mid's coverage:
 about 0.8 of its -6 dB beamwidth from 1 to 4 kHz, the point-source rule Funktion-One also uses when it flies Res tops.</p>
 {fig("img/plots/array-coverage.png", "Coverage of the 3 x 3 cluster (power sum of nine boxes).")}
@@ -320,18 +319,19 @@ would push this up; that is the main open item for the mid.</p>
 def build(d):
     cut = d["cut"]
     w, bf, bk, fl = cut["walls"], cut["baffle"], cut["back"], cut["corner_filler"]
-    sp = cut["array_spacers"]
     prints = sorted({p.split("-")[0] for p in cut.get("print_files", [])}) if isinstance(cut.get("print_files"), list) else []
-    rows = [["Walls", f"{w['qty']}", f"18 mm birch trapezoids, outer face {w['outer_face']['back_edge']:.0f} to "
-             f"{w['outer_face']['mouth_edge']:.0f} mm, {w['slant_length_mm']:.0f} mm long. Blade bevel "
-             f"{w['blade_bevel_deg']:.1f} deg on both long edges, ends bevelled {w['end_bevel_deg']:.0f} deg."],
+    tb, wd = cut["top_bottom"], cut["wedges"]
+    rows = [["Side walls", f"{w['qty']}", f"18 mm birch, {w['height_mm']:.0f} mm high, {w['slant_length_mm']:.0f} mm long, "
+             f"angled {D.KICK.half_angle_deg:.0f} deg; ends bevelled {w['end_bevel_deg']:.0f} deg."],
+            ["Top and bottom", f"{tb['qty']}", f"18 mm birch, flat, {tb['length_mm']:.0f} mm long, {tb['back_width_mm']:.0f} mm "
+             f"wide at the back to {tb['mouth_width_mm']:.0f} mm at the mouth."],
+            ["Wedges", f"{wd['qty']}", f"Sloping 18 mm panels under the top and over the bottom, {wd['depth_at_baffle_mm']:.0f} mm "
+             f"deep at the baffle to nothing at the mouth, {wd['ribs_per_wedge']} ribs each, sealed. They make the horn a square frustum."],
             ["Baffle", "1", f"{bf['thickness_mm']:.0f} mm, {bf['front_square_mm']:.0f} mm square at the front, "
              f"{bf['cutout_diameter_mm']:.0f} mm cutout, edges bevelled {bf['edge_bevel_deg']:.0f} deg. {bf['note']}."],
             ["Back", "1", f"{bk['thickness_mm']:.0f} mm, removable: {bk['screws']}; {bk['gasket']}."],
             ["Corner fillers", f"{fl['qty']}", f"{fl['leg_at_baffle_mm']:.0f} mm legs at the baffle, tapering to nothing at "
-             f"the mouth, {fl['length_mm']:.0f} mm long. {fl['note']}"],
-            ["Array spacers", f"{sp['qty']}", f"Tapered, {sp['min_thickness_mm']:.0f} to {sp['max_thickness_mm']:.0f} mm, "
-             "for the 3 x 3 cluster's corner joints."]]
+             f"the mouth, {fl['length_mm']:.0f} mm long. {fl['note']}"]]
     body = f"""
 <h1>Build</h1>
 <p class="lede">A single-ply birch frustum, four tapering corner fillers, a printed centre body in sections, and three
@@ -371,14 +371,16 @@ def downloads(d):
            ["System and no-sub shelf", '<a href="results/planewave/system.csv">system.csv</a> · <a href="results/planewave/array.csv">array.csv</a>'],
            ["DSP settings", '<a href="results/planewave/dsp.json">dsp.json</a>'],
            ["FEM", '<a href="results/fem/summary.json">summary</a> · <a href="results/fem/kick-vs-network.csv">kick</a> · <a href="results/fem/mid-vs-network.csv">mid</a> · <a href="results/fem/hf-in-mid.csv">HF in mid</a>'],
-           ["CAD area check", '<a href="results/cad/area-check.csv">area-check.csv</a>'],
+           ["CAD slices", '<a href="results/cad/slices.csv">slices.csv</a> · <a href="results/cad/cone-channel.csv">cone-channel.csv</a> · <a href="cad/plug_profiles.json">plug_profiles.json</a>'],
            ["Optimiser", '<a href="results/optimise/mid-search.csv">mid</a> · <a href="results/optimise/kick-search.csv">kick</a> · <a href="results/optimise/system-search.csv">finalists</a> · <a href="results/optimise/selected.json">selected</a>']]
     body = f"""
 <h1>Downloads</h1>
 <p class="lede">Everything here is generated by the scripts in the repository. Millimetres.</p>
 <p><a href="cad/sunflower-assembly.step">sunflower-assembly.step</a> · <a href="cad/cutlist.json">cutlist.json</a> ·
 <a href="cad/array.json">array.json</a> · <a href="cad/parts.json">parts.json</a> ·
-<a href="cad/dxf/wall.dxf">wall.dxf</a> · <a href="cad/dxf/baffle.dxf">baffle.dxf</a> · <a href="cad/dxf/back.dxf">back.dxf</a></p>
+DXF: <a href="cad/dxf/side_wall.dxf">side wall</a> · <a href="cad/dxf/top_bottom.dxf">top and bottom</a> ·
+<a href="cad/dxf/wedge_panel.dxf">wedge panel</a> · <a href="cad/dxf/wedge_rib.dxf">wedge rib</a> ·
+<a href="cad/dxf/baffle.dxf">baffle</a> · <a href="cad/dxf/back.dxf">back</a></p>
 <h2>Parts</h2>
 <p>Printable pieces are in <code>cad/print/</code>. Parts named <code>drv_</code> are stand-ins for the drivers.</p>
 {table(["Part", "Kind", "Notes", "Files"], rows)}
@@ -392,10 +394,73 @@ just all</pre>
     return page("downloads.html", "Sunflower downloads", body, "Sunflower CAD and data.")
 
 
+def validation(d):
+    R = ROOT / "results/validation"
+    sizes = pd.read_csv(R / "mid-sizes-fem.csv")
+    srows = [[f"{r['size']}", r.driver, f"{r.length*1000:.0f} mm", f"{r.fem_minus6_hz/1000:.1f} kHz", f"{r.network_minus6_hz/1000:.1f} kHz"]
+             for _, r in sizes.sort_values(["length", "size"]).iterrows()]
+    hm = pd.read_csv(R / "horn-simulation-mid.csv")
+    hk = pd.read_csv(R / "horn-simulation-kick.csv")
+    def zerr(t):
+        a = t.hs_re + 1j * t.hs_im
+        b = t.net_re + 1j * t.net_im
+        e = abs(a - b) / abs(a)
+        return e.median() * 100, e.quantile(0.9) * 100
+    mm, mk = zerr(hm), zerr(hk)
+    fem = d["fem"]
+    kp = fem["kick"]["passband"]["spl_0deg"]
+    body = f"""
+<h1>Validation</h1>
+<p class="lede">What the models were checked against, and where they fall short. Every number on this page comes from
+the files in <code>results/validation/</code> and <code>results/fem/</code>.</p>
+
+<h2>1. A known box: the HD-15</h2>
+<p>The HD-15 (Rog Mogale, Speakerplans, 2001) is a 15 inch kick and bass bin with a published plan and response.
+Modelled with the same plane-wave network Sunflower uses, with the Eminence Kappa 15LF from the plan, it matches the
+published curve within about 1.5 dB from 40 to 130 Hz. Above 200 Hz the model reads 3 to 11 dB higher than the
+published curve, which itself looks like a simulation. Its wedge-shaped front chamber is lumped as one volume in the
+model, which is the likely cause.</p>
+{fig("img/validation/hd15-check.png", "HD-15: the Sunflower network against the published curve, with the uncertain chamber and path varied.")}
+
+<h2>2. An independent solver: horn-simulation</h2>
+<p>The real air volumes of the Sunflower mid and kick horns were exported as STEP and solved in 3D by the separate
+<a href="https://github.com/timini/horn-simulation">horn-simulation</a> FEM pipeline. Its throat impedance agrees with
+the Sunflower network: median difference {mm[0]:.0f}% for the mid horn and {mk[0]:.0f}% for the kick horn
+(90th percentile {mm[1]:.0f}% and {mk[1]:.0f}%).</p>
+{fig("img/validation/horn-simulation-check.png", "Throat impedance of each horn: horn-simulation against the Sunflower network.")}
+
+<h2>3. The whole kick, with the cone moving</h2>
+<p>The axisymmetric FEM with the reversed cone as a vibrating boundary agrees with the network within
+{kp['rms_db']:.1f} dB RMS ({kp['max_abs_db']:.1f} dB worst) from 40 to 250 Hz. A 3D model of the square frustum with
+its corner fillers agrees with the round equal-area model within about 0.7 dB in the same band.</p>
+
+<h2>4. Where the network is wrong: the mid's top end</h2>
+<p>The air between the mid cone and its phase plug behaves as a cavity that the plane-wave network cannot represent.
+The FEM shows the cone's radiation resistance collapsing above about 3 kHz on an 8 inch, and earlier on bigger cones.
+The network overstates the top end by 0.5 to 5 kHz, so mids are ranked on the FEM, not the network.</p>
+{table(["Size", "Driver", "Mid horn", "-6 dB, FEM", "-6 dB, network"], srows)}
+<p>Tried with the FEM on the 8 inch: compression ratio (2.2 is best; more is worse), a tighter gap (helps, limited by
+excursion), one and two annular slots (no gain), closing the HF bore (no change), and felt under the bullet (removes a
+separate centre-cavity notch near 3.6 kHz). The remaining limit is set by the depth of the cone, so the upper crossover
+is 3 kHz. The real cone must be measured: the profile used here is estimated from the datasheet.</p>
+
+<h2>5. The geometry: slicing the real model</h2>
+<p>The assembled model (every part the renders use) is cut every 1 cm. At each cut the inside of the walls, less every
+part (wedges, corner fillers, centre body, phase plug, felt, vanes, standoffs and the drivers), is the air. The phase
+plugs are sized from these slices, so the measured open area follows each horn's law with every obstruction counted.</p>
+{fig("img/plots/slices.png", "The model sliced every 1 cm, with cross-sections looking into the mouth.")}
+
+<h2>6. Box depth</h2>
+{fig("img/validation/depth-comparison.png", "Three depths with the same rules. Extra depth mostly buys a longer mid horn; 700 mm was chosen.")}
+"""
+    return page("validation.html", "Sunflower validation", body, "What the Sunflower models were checked against.")
+
+
 def main():
     d = load()
     for name, fn in (("index.html", index), ("design.html", design),
-                     ("simulation.html", simulation), ("build.html", build), ("downloads.html", downloads)):
+                     ("simulation.html", simulation), ("validation.html", validation), ("build.html", build),
+                     ("downloads.html", downloads)):
         (DOCS / name).write_text(fn(d))
     (DOCS / ".nojekyll").write_text("")
     print("site written to", DOCS)

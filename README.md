@@ -6,11 +6,11 @@ A three-way coaxial horn after the Funktion-One Res 2: a kick horn up to 250 Hz,
 
 Designed from the inside out:
 
-1. **HF:** 18 Sound ND1030, 65 mm body cylinder, on a printed horn inside the mid phase plug.
+1. **HF:** B&C DE111, 60 mm body cylinder, on a printed horn inside the mid phase plug.
 2. **Mid phase plug:** one smooth bullet. Its nose follows the mid cone, it holds the HF body, and it tapers to the HF mouth. Felt under the nose damps the cavity between it and the cone.
-3. **Mid:** Beyma 8MI100 in a 360 mm OS horn, 2.2:1 compression, the bullet always subtracted. It protrudes 150 mm past the kick mouth.
-4. **Kick:** a reversed 18 Sound 15MB700 under a shroud that follows the cone at a constant-compression gap. A centre body solved from the hyperbolic-exponential (T = 0.6) law runs inside a single-ply square frustum, with corner fillers that make the throat an octagon and vanish at the square mouth.
-5. **Cabinet:** 791 mm square at the mouth, 470 mm at the back, 600 mm deep. All four walls splay, so boxes sit 30 degrees apart in both directions; nine make a 3 x 3 curved point source.
+3. **Mid:** Beyma 8MI100 in a 360 mm OS horn, 2.0:1 compression, the bullet always subtracted. Its mouth sits in the kick mouth plane.
+4. **Kick:** a reversed 18 Sound 15W700 under a shroud that follows the cone at a constant-compression gap. A centre body solved from the conical law runs inside a single-ply square frustum, with corner fillers that make the throat an octagon and vanish at the square mouth.
+5. **Cabinet:** 829 mm square at the mouth, 700 mm deep, single-ply birch. The sides are angled and the top and bottom are flat with sealed wedges inside, so nine identical boxes tile exactly as three columns fanned 30 degrees apart.
 
 Site with renders, videos, each horn's plots, the full-range response and build instructions: **https://timini.github.io/sunflower/**
 
@@ -18,13 +18,13 @@ Site with renders, videos, each horn's plots, the full-range response and build 
 
 | | |
 |---|---|
-| Sensitivity | 104 dB, 2.83 V, 1 m |
-| Kick low end | -6 dB at 104 Hz on the ground; use with a sub |
-| No-sub shelf | -6 dB at 92 Hz, kick limited to about 163 W |
-| Crossovers | LR4 at 250 Hz and 4000 Hz |
-| Drivers | about $509 per box |
+| Sensitivity | 105 dB, 2.83 V, 1 m |
+| Kick low end | -6 dB at 96 Hz on the ground; use with a sub |
+| No-sub shelf | -6 dB at 79 Hz, kick limited to about 83 W |
+| Crossovers | LR4 at 250 Hz and 3500 Hz |
+| Drivers | about $451 per box |
 
-Each horn is modelled from its real profile with a plane-wave network in which the cone is a distributed source. The chosen design is checked with axisymmetric FEM, using the cone as a vibrating boundary, and a 3D model of the square kick horn. The kick agrees within 0.9 dB RMS from 40 to 250 Hz. The mid agrees to 2.7 kHz; above that, the FEM shows a cavity loss that set the 4 kHz crossover. The CAD air volumes, sliced, match the horn models' areas.
+The horns are sized from the inside out, and the phase plugs are solved from 1 cm slices of the assembled CAD model, so every vane, filler and basket arm is counted. Acoustics: a plane-wave network with the cone as a distributed source, checked against axisymmetric FEM with the cone moving (kick within 0.6 dB RMS from 40 to 250 Hz), against the separate horn-simulation FEM, and against the published HD-15. The FEM, not the network, sets how high the mid goes: about 3.5 kHz on this 8 inch. See the validation page.
 
 Nothing has been built or measured. Driver cone and basket shapes are estimated from datasheet drawings and must be checked before printing.
 

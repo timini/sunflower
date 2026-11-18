@@ -1,0 +1,38 @@
+{
+  "tweeter": "18sound-nd1030",
+  "mid": {
+    "driver_id": "beyma-8mi100",
+    "geometry": {
+      "law": "os",
+      "compression": 2.2,
+      "mouth_diameter": 0.36,
+      "length": 0.28,
+      "hf_mouth_ratio": 2.4,
+      "gap_override": 0.0045000000000000005
+    }
+  },
+  "kick": {
+    "driver_id": "18sound-15w700",
+    "geometry": {
+      "compression": 1.6,
+      "law": "conical",
+      "half_angle_deg": 15.0,
+      "protrusion": 0.0,
+      "chamber_depth": 0.076,
+      "wedge_chamber": false
+    }
+  },
+  "crossover_hz": [
+    250.0,
+    3000.0
+  ],
+  "scores": {
+    "system": 6.280684042789565,
+    "score": 5.81510462962093,
+    "rms_on_db": 2.104308614524092,
+    "spread_30_db": 3.175014432998274,
+    "f3_hz": 132.46577597195403,
+    "sensitivity_db": 104.4896551972026
+  },
+  "rule": "lowest system score; among designs within 0.25 of it, the cheapest"
+}

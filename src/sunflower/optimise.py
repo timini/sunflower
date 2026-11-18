@@ -22,7 +22,7 @@ takes whatever depth is left. Score:
 - the free-space -6 dB point against 95 Hz (HD-15-like);
 - ripple and output from there to 1.3 f1;
 - excursion at rated power;
-- splay against the mid's coverage (0.8x, the point-source rule);
+- horizontal splay against the mid's coverage (0.8x, the point-source rule);
 - width.
 
 Stage 3, system. The best combinations go through the crossover with tuned
@@ -65,9 +65,10 @@ def _shelf(f, fc, g):
 
 # ------------------------------------------------------------------ stage 1
 def mid_stage(quick=False):
-    mids = {k: r for k, r in load_drivers("mid").items() if k not in EXCLUDED and r["parameters"]["fs_hz"] < F1 / 2}
+    mids = {k: r for k, r in load_drivers("mid").items() if k not in EXCLUDED and r["parameters"]["fs_hz"] < F1 / 2
+            and "discontinued" not in str(r.get("status", "")).lower()}
     hfs = [t for t in TW.all_ids() if TW.load(t).kind == "compression"]
-    grid = dict(compression=(1.5, 1.8, 2.2, 2.7), mouth_diameter=(0.36, 0.40, 0.44), length=(0.24, 0.28, 0.32, 0.36),
+    grid = dict(compression=(1.5, 1.8, 2.2, 2.7), mouth_diameter=(0.36, 0.40, 0.44), length=(0.16, 0.20, 0.24, 0.28, 0.32, 0.36),
                 hf_mouth_ratio=(1.8, 2.4))
     if quick:
         grid = dict(compression=(1.8, 2.2), mouth_diameter=(0.40,), length=(0.28, 0.32), hf_mouth_ratio=(1.8, 2.4))
@@ -121,24 +122,28 @@ def mid_stage(quick=False):
 def kick_stage(mid_rows, quick=False):
     kicks = {k: r for k, r in load_drivers("kick").items() if k not in EXCLUDED}
     grid = dict(compression=(1.6, 2.0, 2.5, 3.0), law=("exponential", "hypex", "conical"),
-                half_angle_deg=(9.0, 11.0, 13.0, 15.0, 17.0), protrusion=(0.10, 0.15, 0.20))
+                half_angle_deg=(9.0, 11.0, 13.0, 15.0, 17.0), protrusion=(0.0,),   # owner's rule: mid mouth inside the kick mouth
+                wedge_chamber=(False, True))
     if quick:
-        grid = dict(compression=(2.0, 2.5), law=("exponential", "hypex"), half_angle_deg=(11.0, 13.0), protrusion=(0.15,))
+        grid = dict(compression=(2.0, 2.5), law=("exponential", "hypex"), half_angle_deg=(11.0, 13.0), protrusion=(0.0,),
+                    wedge_chamber=(False, True))
     rows = []
     mids = load_drivers("mid")
     for _, mr in mid_rows.iterrows():
         tw = TW.load(mr.tweeter)
         mid = make_mid(mids[mr.mid_driver], tw, law="os", compression=mr.compression,
-                       mouth_diameter=mr.mouth_diameter, length=mr.length, hf_mouth_ratio=mr.hf_mouth_ratio)
+                       mouth_diameter=mr.mouth_diameter, length=mr.length, hf_mouth_ratio=mr.hf_mouth_ratio,
+                       gap_override=float(mr.get("gap_override", 0.0) or 0.0))
         for kid, rec in kicks.items():
             drv = Driver.from_record(rec)
-            for cr, law, ha, pr in itertools.product(*grid.values()):
-                k0 = make_kick(rec, mid, compression=cr, law=law, half_angle_deg=ha, protrusion=pr, chamber_depth=0.05)
+            for cr, law, ha, pr, wc in itertools.product(*grid.values()):
+                k0 = make_kick(rec, mid, compression=cr, law=law, half_angle_deg=ha, protrusion=pr, chamber_depth=0.05,
+                               wedge_chamber=wc)
                 lc = MAX_DEPTH - (k0.depth - k0.chamber_depth)
                 if lc < 0.04:
                     continue
                 k = make_kick(rec, mid, compression=cr, law=law, half_angle_deg=ha, protrusion=pr,
-                              chamber_depth=round(min(lc, 0.20), 3))
+                              chamber_depth=round(min(lc, 0.20), 3), wedge_chamber=wc)
                 if k.check():
                     continue
                 net = kick_network(k)
@@ -159,9 +164,9 @@ def kick_stage(mid_rows, quick=False):
                 score = (max(0.0, f6 - 95) / 10 + ripple + 0.1 * abs(fit[0]) - 0.1 * (ref - 100)
                          + 3 * abs(splay - 0.8) + 4 * max(0.0, k.external_mouth - 0.75) + 2 * max(0.0, xratio - 1))
                 rows.append(dict(tweeter=mr.tweeter, mid_driver=mr.mid_driver, mid_compression=mr.compression,
-                                 hf_mouth_ratio=mr.hf_mouth_ratio,
+                                 hf_mouth_ratio=mr.hf_mouth_ratio, gap_override=float(mr.get("gap_override", 0.0) or 0.0),
                                  mid_mouth=mr.mouth_diameter, mid_length=mr.length, f2=mr.f2, kick_driver=kid,
-                                 compression=cr, law=law, half_angle_deg=ha, protrusion=pr,
+                                 compression=cr, law=law, half_angle_deg=ha, protrusion=pr, wedge_chamber=wc,
                                  chamber_depth=k.chamber_depth, chamber_litres=k.chamber_litres, f3=f3, f6=f6,
                                  ripple_db=ripple, slope_db_oct=float(fit[0]), level_db=float(ref), xratio=xratio,
                                  splay_ratio=splay, external_mouth=k.external_mouth, depth=k.depth, score=score,
@@ -178,11 +183,13 @@ def selection(row):
         tweeter=row.tweeter,
         mid=dict(driver_id=row.mid_driver, geometry=dict(law="os", compression=float(row.mid_compression),
                                                          mouth_diameter=float(row.mid_mouth), length=float(row.mid_length),
-                                                         hf_mouth_ratio=float(row.hf_mouth_ratio))),
+                                                         hf_mouth_ratio=float(row.hf_mouth_ratio),
+                                                         gap_override=float(getattr(row, "gap_override", 0.0) or 0.0))),
         kick=dict(driver_id=row.kick_driver, geometry=dict(compression=float(row.compression), law=row.law,
                                                            half_angle_deg=float(row.half_angle_deg),
                                                            protrusion=float(row.protrusion),
-                                                           chamber_depth=float(row.chamber_depth))),
+                                                           chamber_depth=float(row.chamber_depth),
+                                                           wedge_chamber=bool(row.wedge_chamber))),
         crossover_hz=[F1, float(row.f2)])
 
 
@@ -221,21 +228,21 @@ def system_stage(kick_rows, n=12):
 def revise_f2():
     """After the FEM: re-pick the upper crossover with the FEM-corrected mid.
 
-    Among crossovers that keep the vocal band on the mid (3.5 kHz and up), take the highest one that
-    scores within 0.15 of the best of them."""
+    Take the highest crossover from 2.5 to 4 kHz that scores within 0.15 of the best of them (the FEM, not the
+    network, sets how high the mid can go)."""
     from dataclasses import replace
     from sunflower import simulate as S
     from sunflower.design_tools import config_from
     sel = json.loads((OUT / "selected.json").read_text())
     cfg = config_from(sel, use_hf_fem=True, use_mid_fem=True)
-    scores = {f2: S.evaluate(replace(cfg, f2=f2))["scores"]["score"] for f2 in (3500.0, 4000.0, 4500.0, 5000.0)}
+    scores = {f2: S.evaluate(replace(cfg, f2=f2))["scores"]["score"] for f2 in (2500.0, 3000.0, 3500.0, 4000.0)}
     best = min(scores.values())
     f2 = max(f for f, v in scores.items() if v <= best + 0.15)
     sel["crossover_hz"] = [F1, f2]
     sel["f2_after_fem"] = {f"{k:.0f}": round(v, 3) for k, v in scores.items()}
     sel["crossover_note"] = ("The network model alone picks a higher crossover. The FEM shows the mid falling 8 to 12 dB from "
                              "3 to 6 kHz (a radial cavity mode over the cone that the network lumps away), so f2 is re-picked "
-                             "with that correction: the highest of 3.5 to 5 kHz scoring within 0.15 of the best.")
+                             "with that correction: the highest of 2.5 to 4 kHz scoring within 0.15 of the best.")
     (OUT / "selected.json").write_text(json.dumps(sel, indent=2) + "\n")
     print("f2 after FEM:", f2, sel["f2_after_fem"])
 
@@ -243,10 +250,16 @@ def revise_f2():
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--quick", action="store_true")
+    ap.add_argument("--max-depth", type=float, default=0.60, help="cabinet depth limit, m")
+    ap.add_argument("--out", type=Path, default=None, help="output folder (default results/optimise)")
     ap.add_argument("--from-kick", action="store_true", help="reuse mid-search.csv")
     ap.add_argument("--system-only", action="store_true", help="reuse kick-search.csv")
     ap.add_argument("--fem-f2", action="store_true", help="after the FEM: re-pick the upper crossover")
     a = ap.parse_args()
+    global MAX_DEPTH, OUT
+    MAX_DEPTH = a.max_depth
+    if a.out:
+        OUT = a.out
     if a.fem_f2:
         return revise_f2()
     OUT.mkdir(parents=True, exist_ok=True)
@@ -254,7 +267,8 @@ def main():
         kick = pd.read_csv(OUT / "kick-search.csv")
     else:
         mid = pd.read_csv(OUT / "mid-search.csv") if a.from_kick else mid_stage(a.quick)
-        best = mid.drop_duplicates(["mid_driver", "tweeter"]).head(2 if a.quick else 4)
+        # the depth limit decides which mid lengths fit, so carry the best of each driver and length
+        best = mid.drop_duplicates(["mid_driver", "length"]).groupby("length").head(3)
         kick = kick_stage(best, a.quick)
     system_stage(kick)
 

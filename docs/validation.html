@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sunflower validation</title>
+<meta name="description" content="What the Sunflower models were checked against.">
+<link rel="stylesheet" href="assets/style.css">
+<link rel="icon" href="data:image/svg+xml,<svg viewBox='0 0 32 32' aria-hidden='true'><g fill='none' stroke-width='2.4'><rect x='3' y='3' width='26' height='26' rx='4' stroke='%23d38a0c'/><circle cx='16' cy='16' r='8' stroke='%23eb6834'/><circle cx='16' cy='16' r='3.2' fill='%231baf7a' stroke='none'/></g></svg>">
+</head>
+<body>
+<header class="site"><div class="wrap">
+<a class="brand" href="index.html"><svg viewBox="0 0 32 32" aria-hidden="true"><g fill="none" stroke-width="2.4">
+<rect x="3" y="3" width="26" height="26" rx="4" stroke="#d38a0c"/><circle cx="16" cy="16" r="8" stroke="#eb6834"/>
+<circle cx="16" cy="16" r="3.2" fill="#1baf7a" stroke="none"/></g></svg>Sunflower</a>
+<nav><a href="index.html">Product</a><a href="design.html">Design</a><a href="simulation.html">Simulation</a><a href="validation.html" aria-current=page>Validation</a><a href="build.html">Build</a><a href="downloads.html">Downloads</a></nav>
+</div></header>
+<main><div class="wrap">
+
+<h1>Validation</h1>
+<p class="lede">What the models were checked against, and where they fall short. Every number on this page comes from
+the files in <code>results/validation/</code> and <code>results/fem/</code>.</p>
+
+<h2>1. A known box: the HD-15</h2>
+<p>The HD-15 (Rog Mogale, Speakerplans, 2001) is a 15 inch kick and bass bin with a published plan and response.
+Modelled with the same plane-wave network Sunflower uses, with the Eminence Kappa 15LF from the plan, it matches the
+published curve within about 1.5 dB from 40 to 130 Hz. Above 200 Hz the model reads 3 to 11 dB higher than the
+published curve, which itself looks like a simulation. Its wedge-shaped front chamber is lumped as one volume in the
+model, which is the likely cause.</p>
+<figure class="figure"><img class="plot" src="img/validation/hd15-check.png" alt="HD-15: the Sunflower network against the published curve, with the uncertain chamber and path varied." loading="lazy"><figcaption>HD-15: the Sunflower network against the published curve, with the uncertain chamber and path varied.</figcaption></figure>
+
+<h2>2. An independent solver: horn-simulation</h2>
+<p>The real air volumes of the Sunflower mid and kick horns were exported as STEP and solved in 3D by the separate
+<a href="https://github.com/timini/horn-simulation">horn-simulation</a> FEM pipeline. Its throat impedance agrees with
+the Sunflower network: median difference 4% for the mid horn and 8% for the kick horn
+(90th percentile 9% and 13%).</p>
+<figure class="figure"><img class="plot" src="img/validation/horn-simulation-check.png" alt="Throat impedance of each horn: horn-simulation against the Sunflower network." loading="lazy"><figcaption>Throat impedance of each horn: horn-simulation against the Sunflower network.</figcaption></figure>
+
+<h2>3. The whole kick, with the cone moving</h2>
+<p>The axisymmetric FEM with the reversed cone as a vibrating boundary agrees with the network within
+0.6 dB RMS (1.2 dB worst) from 40 to 250 Hz. A 3D model of the square frustum with
+its corner fillers agrees with the round equal-area model within about 0.7 dB in the same band.</p>
+
+<h2>4. Where the network is wrong: the mid's top end</h2>
+<p>The air between the mid cone and its phase plug behaves as a cavity that the plane-wave network cannot represent.
+The FEM shows the cone's radiation resistance collapsing above about 3 kHz on an 8 inch, and earlier on bigger cones.
+The network overstates the top end by 0.5 to 5 kHz, so mids are ranked on the FEM, not the network.</p>
+<div class="table-wrap"><table><thead><tr><th class="">Size</th><th class="">Driver</th><th class="">Mid horn</th><th class="">-6 dB, FEM</th><th class="">-6 dB, network</th></tr></thead><tbody><tr><td class="">10in</td><td class="">18sound-10nw650</td><td class="">160 mm</td><td class="">1.6 kHz</td><td class="">1.7 kHz</td></tr><tr><td class="">12in</td><td class="">prv-12mr1000-pro</td><td class="">160 mm</td><td class="">1.6 kHz</td><td class="">2.4 kHz</td></tr><tr><td class="">6.5in</td><td class="">bc-6ndl38</td><td class="">160 mm</td><td class="">2.0 kHz</td><td class="">2.4 kHz</td></tr><tr><td class="">8in</td><td class="">beyma-8mi100</td><td class="">160 mm</td><td class="">2.4 kHz</td><td class="">3.4 kHz</td></tr><tr><td class="">10in</td><td class="">18sound-10nw650</td><td class="">240 mm</td><td class="">1.6 kHz</td><td class="">2.2 kHz</td></tr><tr><td class="">12in</td><td class="">18sound-12nmb420</td><td class="">240 mm</td><td class="">1.9 kHz</td><td class="">6.7 kHz</td></tr><tr><td class="">6.5in</td><td class="">bc-6ndl38</td><td class="">240 mm</td><td class="">1.9 kHz</td><td class="">2.4 kHz</td></tr><tr><td class="">8in</td><td class="">beyma-8mi100</td><td class="">240 mm</td><td class="">2.6 kHz</td><td class="">4.0 kHz</td></tr></tbody></table></div>
+<p>Tried with the FEM on the 8 inch: compression ratio (2.2 is best; more is worse), a tighter gap (helps, limited by
+excursion), one and two annular slots (no gain), closing the HF bore (no change), and felt under the bullet (removes a
+separate centre-cavity notch near 3.6 kHz). The remaining limit is set by the depth of the cone, so the upper crossover
+is 3 kHz. The real cone must be measured: the profile used here is estimated from the datasheet.</p>
+
+<h2>5. The geometry: slicing the real model</h2>
+<p>The assembled model (every part the renders use) is cut every 1 cm. At each cut the inside of the walls, less every
+part (wedges, corner fillers, centre body, phase plug, felt, vanes, standoffs and the drivers), is the air. The phase
+plugs are sized from these slices, so the measured open area follows each horn's law with every obstruction counted.</p>
+<figure class="figure"><img class="plot" src="img/plots/slices.png" alt="The model sliced every 1 cm, with cross-sections looking into the mouth." loading="lazy"><figcaption>The model sliced every 1 cm, with cross-sections looking into the mouth.</figcaption></figure>
+
+<h2>6. Box depth</h2>
+<figure class="figure"><img class="plot" src="img/validation/depth-comparison.png" alt="Three depths with the same rules. Extra depth mostly buys a longer mid horn; 700 mm was chosen." loading="lazy"><figcaption>Three depths with the same rules. Extra depth mostly buys a longer mid horn; 700 mm was chosen.</figcaption></figure>
+
+</div></main>
+<footer><div class="wrap">
+Sunflower is an open design. Source, CAD and results: <a href="https://github.com/timini/sunflower">github.com/timini/sunflower</a>.
+Simulated, not yet built or measured. MIT licence.
+</div></footer>
+</body>
+</html>

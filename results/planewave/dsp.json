@@ -1,12 +1,12 @@
 {
   "gain_db": {
-    "low": -2.32,
-    "mid": -5.05,
+    "low": -1.51,
+    "mid": -2.49,
     "tweeter": 0.0
   },
   "eq": {
-    "mid_high_shelf_hz": 2200.0,
-    "mid_high_shelf_db": 12.0
+    "mid_high_shelf_hz": 1925.0,
+    "mid_high_shelf_db": 7.5
   },
   "polarity": {
     "low": 1,
@@ -15,45 +15,45 @@
   },
   "delay_ms": {
     "low": 0.0,
-    "mid": 1.26,
-    "tweeter": 0.26
+    "mid": 1.42,
+    "tweeter": 0.42
   },
   "crossover": {
     "type": "Linkwitz-Riley 24 dB/oct",
     "low_mid_hz": 250.0,
-    "mid_high_hz": 4000.0
+    "mid_high_hz": 3500.0
   },
   "section_levels_db": {
-    "low": 106.00353353423263,
-    "mid": 108.73206491613195,
-    "tweeter": 103.67864849455741
+    "low": 106.43806842614923,
+    "mid": 107.4168330786926,
+    "tweeter": 104.93113093838967
   },
-  "target_db": 103.67864849455741,
-  "rms_deviation_100_16k_db": 2.0018195617035315,
+  "target_db": 104.93113093838967,
+  "rms_deviation_100_16k_db": 1.7395192757023619,
   "no_sub_shelf": {
     "type": "2nd-order low shelf +6 dB at the low section's -3 dB point, LR4 high-pass 30 Hz",
-    "shelf_hz": 123.89851405190133,
-    "f_minus6_hz": 92.45203806374418,
-    "max_excursion_mm": 8.616449490782484,
-    "xmax_mm": 5.5,
-    "rated_power_w": 400,
-    "safe_power_w": 162.9778848730372
+    "shelf_hz": 134.1227501892642,
+    "f_minus6_hz": 79.37664433572425,
+    "max_excursion_mm": 15.096996481153791,
+    "xmax_mm": 6.5,
+    "rated_power_w": 450,
+    "safe_power_w": 83.41768235703184
   },
   "kick_low_end": {
     "single_free_db": {
-      "f_minus3_hz": 123.9947475611544,
-      "f_minus6_hz": 108.98774057203987,
-      "level_150_250_db": 106.87220299215399
+      "f_minus3_hz": 134.6033809009352,
+      "f_minus6_hz": 106.46115398704521,
+      "level_150_250_db": 106.95912696479107
     },
     "single_half_space_db": {
-      "f_minus3_hz": 116.93299920520208,
-      "f_minus6_hz": 103.99313949225049,
-      "level_150_250_db": 108.26400959454034
+      "f_minus3_hz": 122.54907817872727,
+      "f_minus6_hz": 95.79702228225322,
+      "level_150_250_db": 108.25675467395372
     },
     "cluster9_free_db": {
-      "f_minus3_hz": 134.6033809009352,
-      "f_minus6_hz": 112.8904928755611,
-      "level_150_250_db": 125.54209413952873
+      "f_minus3_hz": 153.13751939519625,
+      "f_minus6_hz": 114.22222324467309,
+      "level_150_250_db": 125.49988956800259
     }
   }
 }

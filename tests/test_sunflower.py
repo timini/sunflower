@@ -102,7 +102,7 @@ def test_inside_out_rules():
 
 def test_depth_and_chamber():
     k = D.KICK
-    assert 0.40 <= k.depth <= 0.60 + 1e-9
+    assert 0.40 <= k.depth <= 0.75 + 1e-9   # owner chose 700 mm (depth comparison on the validation page)
     assert k.chamber_litres > 5
 
 

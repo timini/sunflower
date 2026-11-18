@@ -1,43 +1,45 @@
 {
   "kick": {
-    "driver": "18 Sound 15MB700",
-    "law": "hypex",
+    "driver": "18 Sound 15W700",
+    "law": "conical",
     "throat_width_mm": 480.0,
-    "mouth_width_mm": 753.5761254721763,
-    "protrusion_mm": 150.0,
+    "mouth_width_mm": 791.6249107973956,
+    "protrusion_mm": 0.0,
     "estimated_geometry": [
-      "cone rim (from Sd)",
       "cone profile and neck position",
       "spider diameter",
       "basket arm envelope"
     ],
-    "throat_area_m2": 0.046257206410359165,
-    "mouth_area_m2": 0.518235293715658,
+    "throat_area_m2": 0.04901669937763474,
+    "mouth_area_m2": 0.5179834599513921,
     "compression": 1.6,
-    "cone_to_throat": 1.837551521074228,
-    "horn_length_m": 0.44577733922380536,
-    "mouth_width_m": 0.7535761254721762,
-    "external_mouth_m": 0.7908460679669392,
-    "external_back_m": 0.46957498624202315,
-    "depth_m": 0.5995,
-    "overall_depth_m": 0.7895000000000001,
+    "cone_to_throat": 1.7341028889999817,
+    "horn_length_m": 0.5152904019335814,
+    "mouth_width_m": 0.7916249107973956,
+    "external_mouth_m": 0.8288948532921586,
+    "external_back_m": 0.4534980346961558,
+    "external_height_m": 0.8276249107973956,
+    "wedge_litres": 52.90172063135369,
+    "wedge_chamber": false,
+    "depth_m": 0.7005,
+    "overall_depth_m": 0.7005,
     "splay_deg": 30.0,
-    "chamber_litres": 14.907485325379211,
-    "trapped_litres": 0.9616297074337197,
-    "turn_z_m": 0.06472266077619468,
-    "max_body_radius_m": 0.2862048327259766
+    "chamber_litres": 32.40927658860792,
+    "trapped_litres": 0.9641191788497642,
+    "turn_z_m": 0.06620959806641859,
+    "max_body_radius_m": 0.2555997381870547
   },
   "mid": {
     "driver": "Beyma 8MI100",
     "law": "os",
-    "compression": 2.2,
-    "plug_diameter_mm": 71.10818710315162,
-    "outer_throat_diameter_mm": 133.3745467488023,
+    "compression": 2.0,
+    "plug_diameter_mm": 66.0,
+    "outer_throat_diameter_mm": 135.50511057553067,
     "mouth_diameter_mm": 360.0,
-    "length_mm": 360.0,
-    "half_angle_deg": 8.482788134972886,
-    "gap_mm": 6.45,
-    "front_cavity_litres": 0.12386039408029506,
+    "length_mm": 280.0,
+    "half_angle_deg": 15.16172114869054,
+    "gap_mm": 4.500000000000001,
+    "front_cavity_litres": 0.08641422842811286,
     "rear_litres": 3.261621599149906,
     "estimated_geometry": [
       "cone rim (from Sd)",
@@ -50,62 +52,65 @@
     ]
   },
   "tweeter": {
-    "driver": "18 Sound ND1030",
+    "driver": "B&C DE111",
     "kind": "compression",
-    "body_diameter_mm": 65.0,
-    "hf_horn_mouth_mm": 60.959999999999994,
-    "price_usd": 150
+    "body_diameter_mm": 60.0,
+    "hf_horn_mouth_mm": 60.0,
+    "price_usd": 105.25
   },
   "crossover_hz": [
     250.0,
-    4000.0
+    3500.0
   ],
   "prices_usd": {
-    "kick": 245.95,
+    "kick": 233,
     "mid": 112.95,
-    "hf": 150
+    "hf": 105.25
   },
   "selection": {
-    "tweeter": "18sound-nd1030",
+    "tweeter": "bc-de111",
     "mid": {
       "driver_id": "beyma-8mi100",
       "geometry": {
         "law": "os",
-        "compression": 2.2,
+        "compression": 2.0,
         "mouth_diameter": 0.36,
-        "length": 0.36,
-        "hf_mouth_ratio": 2.4
+        "length": 0.28,
+        "hf_mouth_ratio": 2.4,
+        "gap_override": 0.0045000000000000005
       }
     },
     "kick": {
-      "driver_id": "18sound-15mb700",
+      "driver_id": "18sound-15w700",
       "geometry": {
         "compression": 1.6,
-        "law": "hypex",
+        "law": "conical",
         "half_angle_deg": 15.0,
-        "protrusion": 0.15,
-        "chamber_depth": 0.046
+        "protrusion": 0.0,
+        "chamber_depth": 0.076,
+        "wedge_chamber": false
       }
     },
     "crossover_hz": [
       250.0,
-      4000.0
+      3500.0
     ],
     "scores": {
-      "system": 6.605362041515962,
-      "score": 6.291977769648205,
-      "rms_on_db": 2.055994208033228,
-      "spread_30_db": 5.340475188396092,
-      "f3_hz": 121.31491934833862,
-      "sensitivity_db": 103.04041780591487
+      "system": 6.280684042789565,
+      "score": 5.81510462962093,
+      "rms_on_db": 2.104308614524092,
+      "spread_30_db": 3.175014432998274,
+      "f3_hz": 132.46577597195403,
+      "sensitivity_db": 104.4896551972026
     },
     "rule": "lowest system score; among designs within 0.25 of it, the cheapest",
-    "crossover_note": "The network model alone picks a higher crossover. The FEM shows the mid falling 8 to 12 dB from 3 to 6 kHz (a radial cavity mode over the cone that the network lumps away), so f2 is re-picked with that correction: the highest of 3.5 to 5 kHz scoring within 0.15 of the best.",
+    "hf_note": "HF changed from the ND1030 to the B&C DE111 after FEM: 60 mm body instead of 65 (bullet 66 mm against 72), rated from 1.2 kHz instead of 1.8 kHz, and cheaper. Mid compression re-picked on FEM: 2.0. The mid top end is set by the cone depth: -6 dB at about 3.3 kHz either way.",
     "f2_after_fem": {
-      "3500": 5.711,
-      "4000": 5.82,
-      "4500": 6.211,
-      "5000": 6.239
-    }
+      "2500": 6.412,
+      "3000": 6.144,
+      "3500": 5.592,
+      "4000": 6.029
+    },
+    "crossover_note": "The network model alone picks a higher crossover. The FEM shows the mid falling 8 to 12 dB from 3 to 6 kHz (a radial cavity mode over the cone that the network lumps away), so f2 is re-picked with that correction: the highest of 2.5 to 4 kHz scoring within 0.15 of the best."
   }
 }

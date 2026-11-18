@@ -1,43 +1,46 @@
 {
-  "tweeter": "18sound-nd1030",
+  "tweeter": "bc-de111",
   "mid": {
     "driver_id": "beyma-8mi100",
     "geometry": {
       "law": "os",
-      "compression": 2.2,
+      "compression": 2.0,
       "mouth_diameter": 0.36,
-      "length": 0.36,
-      "hf_mouth_ratio": 2.4
+      "length": 0.28,
+      "hf_mouth_ratio": 2.4,
+      "gap_override": 0.0045000000000000005
     }
   },
   "kick": {
-    "driver_id": "18sound-15mb700",
+    "driver_id": "18sound-15w700",
     "geometry": {
       "compression": 1.6,
-      "law": "hypex",
+      "law": "conical",
       "half_angle_deg": 15.0,
-      "protrusion": 0.15,
-      "chamber_depth": 0.046
+      "protrusion": 0.0,
+      "chamber_depth": 0.076,
+      "wedge_chamber": false
     }
   },
   "crossover_hz": [
     250.0,
-    4000.0
+    3500.0
   ],
   "scores": {
-    "system": 6.605362041515962,
-    "score": 6.291977769648205,
-    "rms_on_db": 2.055994208033228,
-    "spread_30_db": 5.340475188396092,
-    "f3_hz": 121.31491934833862,
-    "sensitivity_db": 103.04041780591487
+    "system": 6.280684042789565,
+    "score": 5.81510462962093,
+    "rms_on_db": 2.104308614524092,
+    "spread_30_db": 3.175014432998274,
+    "f3_hz": 132.46577597195403,
+    "sensitivity_db": 104.4896551972026
   },
   "rule": "lowest system score; among designs within 0.25 of it, the cheapest",
-  "crossover_note": "The network model alone picks a higher crossover. The FEM shows the mid falling 8 to 12 dB from 3 to 6 kHz (a radial cavity mode over the cone that the network lumps away), so f2 is re-picked with that correction: the highest of 3.5 to 5 kHz scoring within 0.15 of the best.",
+  "hf_note": "HF changed from the ND1030 to the B&C DE111 after FEM: 60 mm body instead of 65 (bullet 66 mm against 72), rated from 1.2 kHz instead of 1.8 kHz, and cheaper. Mid compression re-picked on FEM: 2.0. The mid top end is set by the cone depth: -6 dB at about 3.3 kHz either way.",
   "f2_after_fem": {
-    "3500": 5.711,
-    "4000": 5.82,
-    "4500": 6.211,
-    "5000": 6.239
-  }
+    "2500": 6.412,
+    "3000": 6.144,
+    "3500": 5.592,
+    "4000": 6.029
+  },
+  "crossover_note": "The network model alone picks a higher crossover. The FEM shows the mid falling 8 to 12 dB from 3 to 6 kHz (a radial cavity mode over the cone that the network lumps away), so f2 is re-picked with that correction: the highest of 2.5 to 4 kHz scoring within 0.15 of the best."
 }

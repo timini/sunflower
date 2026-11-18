@@ -4,16 +4,32 @@ Coordinates follow sunflower.geometry, in millimetres: z = 0 is the front face
 of the baffle (where the reversed kick flange sits), z is positive towards the
 listener, x is to the right when facing the cabinet, y is up.
 
+The box is single-ply 18 mm birch: two side walls angled at the half angle,
+flat top and bottom panels, a rectangular baffle and back. Tapered wedges under
+the top and over the bottom bring the horn to a square frustum, and four corner
+fillers make the throat an octagon.
+
+The two phase plugs are sized from slices of the model itself. Every part
+except the kick centre body's outer surface and the mid bullet is built first.
+At each z the open area inside the walls, less every part, is measured from the
+part meshes (sunflower.slicer), and the plug radius is solved so the air left
+is the horn law. The shroud over the reversed kick cone is sized the same way
+from cylinder slices through the cone and the basket. The assembled model is
+then sliced again and the plugs corrected until each slab matches its law.
+
 Outputs:
   cad/step/<part>.step, cad/stl/<part>.stl   one file per part, in place
   cad/print/<part>-<n>[-s<k>].stl             printable pieces (z slab n, sector k), each fits a 250 mm bed
   cad/sunflower-assembly.step                 everything in place
   cad/parts.json                              part list: material, category, explode vector, bbox, print files
-  cad/cutlist.json                            panels, compound mitre angles, fillers, chamber, stations
-  cad/stack.json                              splay for a vertical stack of three (renderer)
-  cad/array.json, cad/array.stl               3 x 3 curved array: placement of each box, joint gaps
+  cad/cutlist.json                            panels, bevels, wedges, fillers, chamber, stations
+  cad/plug_profiles.json                      slice-solved centre body, bullet and shroud profiles
+  cad/stack.json                              a single column (renderer)
+  cad/array.json, cad/array.stl               3 x 3 array: placement of each box, joint check
   cad/dxf/<panel>.dxf                         flat patterns
-  results/cad/area-check.csv                  open area sliced from the CAD air against the model
+  results/cad/slices.csv                      the assembled model sliced every 1 cm, against each law
+  results/cad/area-check.csv                  the same, in the older long format (plots, site)
+  results/cad/cone-channel.csv                open area over the reversed kick cone on cylinders r = const
 
 Driver bodies are dimensioned proxies for renders and clearance checks.
 """
@@ -28,8 +44,14 @@ import time
 
 import gmsh
 import numpy as np
+import trimesh
+from scipy.interpolate import PchipInterpolator
+from scipy.optimize import brentq
+from shapely.geometry import Point
+from shapely.ops import unary_union
 
 from sunflower import design as D
+from sunflower import slicer as SL
 from sunflower.geometry import array_layout
 
 ROOT = D.ROOT
@@ -44,12 +66,14 @@ K, M, TW = D.KICK, D.MID, D.TW
 KD, MD = K.drv, M.drv
 T = K.ply * MM
 A = math.radians(K.half_angle_deg)
+E = T / math.cos(A)                                # horizontal thickness of an 18 mm panel at the half angle
+HH = K.half_height * MM                            # inside half-height (flat top and bottom)
 
 # ---------------------------------------------------------------- stations (mm)
 Z_BAF = -K.baffle * MM                             # baffle back face
 Z_WB = -(K.baffle + K.chamber_depth) * MM          # wall back ends, back panel front face
 Z_BACK = Z_WB - T                                  # back panel back face
-Z_M = K.mouth_z * MM                               # kick mouth
+Z_M = K.mouth_z * MM                               # kick mouth (and mid mouth: no protrusion)
 Z_TURN = K.turn_z * MM
 Z_MF = K.mid_flange_z * MM
 Z_MT = K.mid_throat_z * MM
@@ -71,11 +95,14 @@ def zs(s):
     return Z_MT + s * MM
 
 
+def s_of(z):
+    return (z - Z_MT) / MM
+
+
 # centre body radii (mm)
 R_CS = K.channel_start * MM                        # inner edge of the shroud
 R_MC = (KD.motor_r + K.motor_clear) * MM           # motor cavity
 R_POD = MD.frame_od / 2 * MM + 0.5                 # mid pod cavity (frame plus 0.5 mm)
-J1 = max(KD.top_plate_z * MM, float(K.shroud_z(K.channel_start)) * MM + 10)   # shroud / fairing joint
 Z_CUT = KD.frame_od / 2 * MM - 17                  # baffle cutout radius (as in Kick.chamber_litres)
 
 # supports
@@ -86,16 +113,68 @@ R_STANDOFF = KD.frame_od / 2 * MM + 12             # just outside the kick flang
 SOCKET = 25.0                                      # standoff depth into the shroud
 VANE_T, VANE_CHORD = 6.0, 60.0
 Z_VANE = Z_M - 100.0
-BV_T, BV_S0, BV_S1 = 4.0, 0.008, 0.040             # bullet vanes: thickness mm, s range m
+# Bullet vanes: in front of the HF unit, where the bullet has room to slim down for them. At the HF body
+# (s = 5 to 51 mm) the bullet cannot give up their area and still hold the body cylinder.
+BV_T, BV_S0, BV_S1 = 4.0, 0.058, 0.090             # thickness mm, s range m
 BV_AZ = [math.radians(45 + 120 * k) for k in range(3)]
 S_HF_CABLE = 0.5 * (BV_S0 + BV_S1)
+R_CABLE_B = round(0.5 * (M.plug_radius + M.hf_horn_radius(S_HF_CABLE) + M.hf_wall) * MM, 1)   # HF cable bore in the
+                                                   # bullet wall, midway between the HF horn wall and the bullet;
+                                                   # runs back to the HF cavity
+assert BV_S0 > M.s_exit + 0.005, "bullet vanes must sit in front of the HF unit"
 R_HF_CH = R_POD + 20                               # HF cable channel radius in the body
 Z_CAB = Z_MOTOR + 30                               # duct channel enters the pod here
 SPIGOT_H = 6.0
+WEDGE_RIBS = (-0.6, 0.0, 0.6)                      # rib positions as a fraction of the baffle half-width
 
+DZ_SOLVE = 2.5                                     # plug solve station spacing, mm
 occ = None
 parts: list[dict] = []
 warnings: list[str] = []
+FINAL = False                                      # print pieces only on the final pass
+
+
+# ---------------------------------------------------------------- profiles
+class Prof:
+    """Piecewise cubic (PCHIP) spline through solved stations: C1, no overshoot."""
+
+    def __init__(self, x, y):
+        self.x, self.y = np.asarray(x, float), np.asarray(y, float)
+        self.f = PchipInterpolator(self.x, self.y)
+
+    def __call__(self, v):
+        return float(self.f(min(max(v, self.x[0]), self.x[-1])))
+
+
+def _grid(a, b, d):
+    n = max(2, int(math.ceil((b - a) / d)) + 1)
+    return np.linspace(a, b, n)
+
+
+P = dict(
+    body=Prof(_grid(Z_TURN, Z_M, DZ_SOLVE), [K.body_radius(z / MM) * MM for z in _grid(Z_TURN, Z_M, DZ_SOLVE)]),
+    bullet=Prof(_grid(0.0, M.s_tip * MM, DZ_SOLVE), [M.plug(s / MM) * MM for s in _grid(0.0, M.s_tip * MM, DZ_SOLVE)]),
+    shroud=Prof(_grid(R_CS, KD.rim_r * MM, 3.0), [float(K.shroud_z(r / MM)) * MM for r in _grid(R_CS, KD.rim_r * MM, 3.0)]),
+)
+
+
+def body_r(z):
+    return P["body"](z)
+
+
+def bullet_r(s):
+    """Bullet outer radius (mm) at mid horn coordinate s (m)."""
+    return P["bullet"](s * MM) if 0 <= s <= M.s_tip + 1e-9 else 0.0
+
+
+def shroud_z(r):
+    """Shroud underside (mm) at radius r (mm)."""
+    return P["shroud"](r)
+
+
+def j1():
+    """Shroud to fairing joint."""
+    return max(KD.top_plate_z * MM, shroud_z(R_CS) + 10)
 
 
 # ---------------------------------------------------------------- gmsh helpers
@@ -139,14 +218,14 @@ def revolve(segs, angle=2 * math.pi):
         pieces[-1][1][-1] = first
     tags = {}
 
-    def P(p):
+    def Pt(p):
         if p not in tags:
             tags[p] = occ.addPoint(p[0], 0, p[1])
         return tags[p]
 
     curves = []
     for kind, pts in pieces:
-        ids = [P(p) for p in pts]
+        ids = [Pt(p) for p in pts]
         if kind == "spline" and len(ids) > 2:
             curves.append(occ.addSpline(ids))
         else:
@@ -159,7 +238,7 @@ def revolve(segs, angle=2 * math.pi):
 def poly_volume(faces_pts):
     cache, edges = {}, {}
 
-    def P(p):
+    def Pt(p):
         key = tuple(round(v, 6) for v in p)
         if key not in cache:
             cache[key] = occ.addPoint(*p)
@@ -173,7 +252,10 @@ def poly_volume(faces_pts):
 
     surfs = []
     for face in faces_pts:
-        ids = [P(p) for p in face]
+        ids = [Pt(p) for p in face]
+        ids = [i for k, i in enumerate(ids) if i != ids[k - 1]]
+        if len(ids) < 3:
+            continue
         loop = [L(ids[i], ids[(i + 1) % len(ids)]) for i in range(len(ids))]
         surfs.append(occ.addPlaneSurface([occ.addCurveLoop(loop)]))
     return [(3, occ.addVolume([occ.addSurfaceLoop(surfs)]))]
@@ -187,6 +269,10 @@ def hexa(a, b):
 
 def square(h, z):
     return [(-h, -h, z), (h, -h, z), (h, h, z), (-h, h, z)]
+
+
+def rect(hx, hy, z):
+    return [(-hx, -hy, z), (hx, -hy, z), (hx, hy, z), (-hx, hy, z)]
 
 
 def frustum(z0, z1, half):
@@ -244,10 +330,12 @@ def quiet_write(path):
         os.close(fd)
 
 
-def mesh_write(path, size=12.0):
-    gmsh.option.setNumber("Mesh.MeshSizeFromCurvature", 36)
+def mesh_write(path, size=12.0, curv=120, smin=0.5):
+    """Surface mesh to STL. ``curv`` elements per full turn of a curved edge: 120 keeps the area error of a
+    sliced circle under 0.05 %."""
+    gmsh.option.setNumber("Mesh.MeshSizeFromCurvature", curv)
     gmsh.option.setNumber("Mesh.MeshSizeMax", size)
-    gmsh.option.setNumber("Mesh.MeshSizeMin", 0.5)
+    gmsh.option.setNumber("Mesh.MeshSizeMin", smin)
     for attempt, alg in enumerate((6, 1, 5, 2)):
         try:
             gmsh.option.setNumber("Mesh.Algorithm", alg)
@@ -260,28 +348,47 @@ def mesh_write(path, size=12.0):
     gmsh.option.setNumber("Mesh.Algorithm", 6)
     gmsh.option.setNumber("Mesh.Binary", 1)
     gmsh.write(str(path))
-    return gmsh.model.mesh.getNodes()[1].reshape(-1, 3)
+    return gmsh.model.mesh.getNodesByElementType(2)[1].reshape(-1, 3)     # nodes of the written triangles only
 
 
-def save(name, material, category, explode=(0, 0, 0), group="", note="", printable=False, qty=1):
+def save(name, material, category, explode=(0, 0, 0), group="", note="", printable=False, qty=1, curv=120,
+         smin=0.5, size=12.0):
     clean()
     gmsh.model.removePhysicalGroups()
     quiet_write(OUT / "step" / f"{name}.step")
     vol = sum(occ.getMass(*d) for d in gmsh.model.getEntities(3))
-    xyz = mesh_write(OUT / "stl" / f"{name}.stl")
+    xyz = mesh_write(OUT / "stl" / f"{name}.stl", size=size, curv=curv, smin=smin)
     bb = [*xyz.min(0), *xyz.max(0)]
     rec = dict(name=name, material=material, category=category, qty=qty, explode_mm=[float(v) for v in explode],
                group=group, volume_cm3=round(vol / 1000, 1), bbox_mm=[round(float(v), 1) for v in bb], note=note)
-    if printable:
+    if printable and FINAL:
         rec["print_files"] = split_for_print(name, bb)
-    parts.append(rec)
-    print(f"  {name}: {rec['volume_cm3']} cm3" + (f", {len(rec['print_files'])} print pieces" if printable else ""),
-          flush=True)
+    for i, p in enumerate(parts):
+        if p["name"] == name:
+            parts[i] = rec
+            break
+    else:
+        parts.append(rec)
+    print(f"  {name}: {rec['volume_cm3']} cm3" + (f", {len(rec['print_files'])} print pieces"
+                                                  if rec.get("print_files") else ""), flush=True)
     return rec
 
 
 def _fits(xyz):
     s = np.sort(xyz.max(0) - xyz.min(0))
+    return s[0] <= BED and s[1] <= BED and s[2] <= 1.3 * BED
+
+
+def _sector_fits(rmax, ns, h):
+    """Quick bound: can an annulus sector of outer radius rmax, ns sectors, height h fit at all?"""
+    if ns == 1:
+        dims = [2 * rmax, 2 * rmax, h]
+    elif ns == 2:
+        dims = [2 * rmax, rmax, h]
+    else:
+        a = 2 * math.pi / ns
+        dims = [rmax, rmax * math.sin(a) if a < math.pi / 2 else rmax, h]
+    s = sorted(dims)
     return s[0] <= BED and s[1] <= BED and s[2] <= 1.3 * BED
 
 
@@ -292,10 +399,18 @@ def split_for_print(name, bb):
     octant. Pieces stay in assembly coordinates.
     """
     z0, z1 = bb[2], bb[5]
+    if _fits(np.array([bb[:3], bb[3:]])) and z1 - z0 <= SLAB:
+        fn = f"{name}-1.stl"                       # fits whole: print the part as it is
+        (OUT / "print" / fn).write_bytes((OUT / "stl" / f"{name}.stl").read_bytes())
+        return [fn]
     nz = max(1, math.ceil((z1 - z0 - 0.5) / SLAB))
     big = 2 * max(abs(v) for v in bb) + 100
+    rmax = max(abs(v) for v in (bb[0], bb[1], bb[3], bb[4]))      # parts split this way are bodies of revolution
+    files = []
     for ns in (1, 2, 4, 8, 12, 16, 24):
-        files, ok = [], True
+        if ns > 1 and not _sector_fits(rmax, ns, (z1 - z0) / nz) and ns < 24:
+            continue
+        ok = True
         tmp = []
         for k in range(nz):
             za, zb = z0 - 0.5 + (z1 - z0 + 1) * k / nz, z0 - 0.5 + (z1 - z0 + 1) * (k + 1) / nz
@@ -312,7 +427,7 @@ def split_for_print(name, bb):
                 o.synchronize()
                 if res and sum(o.getMass(3, t) for d, t in res if d == 3) > 1.0:
                     fn = f"{name}-{k + 1}" + (f"-s{j + 1}" if ns > 1 else "") + ".stl"
-                    xyz = mesh_write(OUT / "print" / fn, size=8.0)
+                    xyz = mesh_write(OUT / "print" / fn, size=8.0, curv=48)
                     tmp.append(fn)
                     if not _fits(xyz):
                         ok = False
@@ -333,55 +448,70 @@ def split_for_print(name, bb):
 
 
 # ---------------------------------------------------------------- cabinet
-def wall_quads(side, z0, z1, outer=False):
-    f = ohw if outer else hw
-    out = []
-    for z in (z0, z1):
-        h = f(z)
-        if side == "right":
-            out += [(h, -h, z), (h, h, z)]
-        elif side == "left":
-            out += [(-h, h, z), (-h, -h, z)]
-        elif side == "top":
-            out += [(h, h, z), (-h, h, z)]
-        else:
-            out += [(-h, -h, z), (h, -h, z)]
-    a, b, c, d = out
-    return [a, b, d, c]
-
-
 def walls():
-    for side, ex in (("right", (350, 0, 0)), ("left", (-350, 0, 0)), ("top", (0, 350, 0)), ("bottom", (0, -350, 0))):
+    """Side walls at the half angle, full inside height; flat top and bottom over them, full depth."""
+    for side, sx in (("right", 1), ("left", -1)):
         start(f"wall_{side}")
-        inner = wall_quads(side, Z_WB, Z_M)
-        outer = wall_quads(side, Z_WB, Z_M, outer=True)
-        hexa(inner, outer)
-        save(f"wall_{side}", "ply", "cabinet", explode=ex, group="cabinet",
-             note=f"18 mm birch, trapezoid, compound mitres both long edges, ends bevelled {K.half_angle_deg:.1f} deg")
+        q = []
+        for z in (Z_WB, Z_M):
+            q.append([(sx * hw(z), -HH, z), (sx * hw(z), HH, z), (sx * ohw(z), HH, z), (sx * ohw(z), -HH, z)])
+        hexa(*q)
+        save(f"wall_{side}", "ply", "cabinet", explode=(sx * 350, 0, 0), group="cabinet",
+             note=f"18 mm birch rectangle, {2*HH:.0f} high, {(Z_M - Z_WB)/math.cos(A):.0f} long on the slant; "
+                  f"both ends bevelled {K.half_angle_deg:.1f} deg, long edges square (they butt under the top "
+                  f"and over the bottom)")
+    for name, sy in (("top", 1), ("bottom", -1)):
+        start(name)
+        q = []
+        for z in (Z_WB, Z_M):
+            q.append([(-ohw(z), sy * HH, z), (ohw(z), sy * HH, z), (ohw(z), sy * (HH + T), z), (-ohw(z), sy * (HH + T), z)])
+        hexa(*q)
+        save(name, "ply", "cabinet", explode=(0, sy * 350, 0), group="cabinet",
+             note=f"18 mm birch, flat, trapezoid {2*ohw(Z_WB):.0f} to {2*ohw(Z_M):.0f} mm over "
+                  f"{Z_M - Z_WB:.0f} mm; square edges (the side walls' outer faces run on from them)")
 
 
-def mitre_angles():
-    """Blade bevel and edge taper for the four identical frustum panels (each face flat on the saw)."""
-    p = np.array(wall_quads("right", Z_WB, Z_M))          # inner face of the right wall: a, b, (z1 +y), (z1 -y)
-    e = p[2] - p[1]
-    e /= np.linalg.norm(e)                                 # corner line along the +y edge, back to mouth
-    n_p = np.array([math.cos(A), 0, -math.sin(A)])         # right wall outward normal
-    n_t = np.array([0, math.cos(A), -math.sin(A)])         # top wall outward normal
-    m = n_p - n_t
-    m /= np.linalg.norm(m)                                 # mitre (bisector) plane normal
-    u = np.cross(e, n_p)
-    u /= np.linalg.norm(u)
-    bevel = math.degrees(math.acos(min(1.0, abs(float(u @ m)))))
-    length_dir = np.array([math.sin(A), 0, math.cos(A)])   # up the panel, square to its ends
-    taper = math.degrees(math.acos(min(1.0, abs(float(e @ length_dir)))))
-    dihedral = math.degrees(math.pi - math.acos(float(n_p @ n_t)))
-    return dict(blade_bevel_deg=round(bevel, 2), edge_taper_deg=round(taper, 2),
-                end_bevel_deg=round(K.half_angle_deg, 2), corner_dihedral_deg=round(dihedral, 2))
+def wedge_solid(sy):
+    """The whole wedge region: from the sloping horn face y = sy hw(z) to the flat panel, side wall to side wall."""
+    h0, zm = hw(0.0), Z_M
+    a = [(-h0, sy * h0, 0.0), (h0, sy * h0, 0.0), (h0, sy * HH, 0.0), (-h0, sy * HH, 0.0)]
+    tip = [(-hw(zm), sy * HH, zm), (hw(zm), sy * HH, zm)]
+    faces = [a, [a[0], a[1], tip[1], tip[0]], [a[3], a[2], tip[1], tip[0]], [a[1], a[2], tip[1]], [a[0], a[3], tip[0]]]
+    return poly_volume(faces)
+
+
+def wedge_cavity(sy):
+    """Air sealed inside the wedge: behind the 18 mm sloping panel, inside the 18 mm side closures."""
+    h0 = hw(0.0)
+    ze = Z_M - E / math.tan(A)                      # the panel's back face reaches the flat panel here
+    a = [(-(h0 - E), sy * (h0 + E), 0.0), ((h0 - E), sy * (h0 + E), 0.0), ((h0 - E), sy * HH, 0.0),
+         (-(h0 - E), sy * HH, 0.0)]
+    tip = [(-(hw(ze) - E), sy * HH, ze), ((hw(ze) - E), sy * HH, ze)]
+    faces = [a, [a[0], a[1], tip[1], tip[0]], [a[3], a[2], tip[1], tip[0]], [a[1], a[2], tip[1]], [a[0], a[3], tip[0]]]
+    return poly_volume(faces), ze
+
+
+def wedges():
+    out = {}
+    for name, sy in (("wedge_top", 1), ("wedge_bottom", -1)):
+        start(name)
+        w = wedge_solid(sy)
+        cav, ze = wedge_cavity(sy)
+        ribs = [(3, occ.addBox(f * hw(0.0) - T / 2, -HH - 10, -10, T, 2 * HH + 20, Z_M + 20)) for f in WEDGE_RIBS]
+        cells, _ = occ.cut(cav, ribs)
+        occ.cut(w, cells)
+        save(name, "ply", "cabinet", explode=(0, sy * 240, 120), group="cabinet",
+             note=f"tapered wedge {'under the top' if sy > 0 else 'over the bottom'}: 18 mm sloping panel at the half "
+                  f"angle (its face is the horn wall), 18 mm side closures against the side walls and "
+                  f"{len(WEDGE_RIBS)} ribs, glued to the flat panel and the baffle front face and sealed; "
+                  f"{2 * (HH - hw(0)):.0f} mm deep at the baffle, nothing at the mouth")
+        out[name] = ze
+    return out
 
 
 def baffle():
     start("baffle")
-    b = frustum(Z_BAF, 0.0, hw)
+    b = hexa(rect(hw(Z_BAF), HH, Z_BAF), rect(hw(0.0), HH, 0.0))
     holes = [(3, occ.addCylinder(0, 0, Z_BAF - 1, 0, 0, -Z_BAF + 2, Z_CUT))]
     pcd = KD.frame_od / 2 * MM - 9
     for k in range(8):
@@ -391,35 +521,39 @@ def baffle():
         holes.append(cyl_at(R_STANDOFF, az, Z_BAF - 1, 1, 6.0 if i == DUCT else 4.25))
     occ.cut(b, holes)
     save("baffle", "ply", "cabinet", explode=(0, 0, -260), group="cabinet",
-         note=f"25 mm birch, {2*hw(0):.0f} square at the front face, edges bevelled {K.half_angle_deg:.1f} deg, "
-              f"{2*Z_CUT:.0f} mm cutout, 8 flange holes on {2*pcd:.0f} PCD, 4 standoff bolts (one 12 mm duct hole)")
-    return dict(front_square_mm=round(2 * hw(0), 1), back_square_mm=round(2 * hw(Z_BAF), 1), thickness_mm=K.baffle * MM,
+         note=f"25 mm birch rectangle, {2*hw(0):.0f} wide at the front face by {2*HH:.0f} high, side edges "
+              f"bevelled {K.half_angle_deg:.1f} deg, {2*Z_CUT:.0f} mm cutout, 8 flange holes on {2*pcd:.0f} PCD, "
+              f"4 standoff bolts (one 12 mm duct hole)")
+    return dict(front_width_mm=round(2 * hw(0), 1), back_width_mm=round(2 * hw(Z_BAF), 1), height_mm=round(2 * HH, 1),
+                front_square_mm=round(2 * hw(0), 1), thickness_mm=K.baffle * MM,
                 cutout_diameter_mm=round(2 * Z_CUT, 1), flange_pcd_mm=round(2 * pcd, 1), flange_holes=8,
                 standoff_pcd_mm=round(2 * R_STANDOFF, 1), edge_bevel_deg=K.half_angle_deg)
 
 
 def back_panel():
     start("back")
-    b = frustum(Z_BACK, Z_WB, ohw)
-    h = hw(Z_WB)
-    groove_o = [(3, occ.addBox(-(h + 9), -(h + 9), Z_WB - 2, 2 * (h + 9), 2 * (h + 9), 3))]
-    groove_i = [(3, occ.addBox(-(h + 2), -(h + 2), Z_WB - 3, 2 * (h + 2), 2 * (h + 2), 5))]
-    groove, _ = occ.cut(groove_o, groove_i)
+    Y = HH + T
+    b = hexa(rect(ohw(Z_BACK), Y, Z_BACK), rect(ohw(Z_WB), Y, Z_WB))
+    hx = hw(Z_WB)
+    go = [(3, occ.addBox(-(hx + 9), -(HH + 9), Z_WB - 2, 2 * (hx + 9), 2 * (HH + 9), 3))]
+    gi = [(3, occ.addBox(-(hx + 2), -(HH + 2), Z_WB - 3, 2 * (hx + 2), 2 * (HH + 2), 5))]
+    groove, _ = occ.cut(go, gi)
     tools = list(groove)
-    rs = h + 13.5
-    for k in range(4):
-        for t in (-0.6, 0.0, 0.6):
-            x, y = [(rs, t * h), (-rs, t * h), (t * h, rs), (t * h, -rs)][k]
-            tools.append((3, occ.addCylinder(x, y, Z_BACK - 1, 0, 0, T + 2, 2.75)))
+    screws = [(s * (hx + 13.5), t * HH) for s in (-1, 1) for t in (-0.6, 0.0, 0.6)] + \
+             [(t * hx, s * (HH + 12)) for s in (-1, 1) for t in (-0.6, 0.0, 0.6)]
+    for x, y in screws:
+        tools.append((3, occ.addCylinder(x, y, Z_BACK - 1, 0, 0, T + 2, 2.75)))
     tools.append((3, occ.addCylinder(0, 0, Z_BACK - 1, 0, 0, T + 2, 32)))
     occ.cut(b, tools)
     save("back", "ply", "cabinet", explode=(0, 0, -480), group="cabinet",
-         note=f"18 mm birch, removable, {2*ohw(Z_WB):.0f} square at the front face, edges bevelled "
-              f"{K.half_angle_deg:.1f} deg to continue the walls; 2 mm deep gasket groove; 12 M5 screws into "
-              f"inserts in the wall ends; 64 mm terminal cup")
-    return dict(front_square_mm=round(2 * ohw(Z_WB), 1), back_square_mm=round(2 * ohw(Z_BACK), 1), thickness_mm=T,
-                edge_bevel_deg=K.half_angle_deg, screws="12 x M5 into threaded inserts in the wall end grain",
-                gasket="3 mm closed-cell foam in a 7 mm wide, 2 mm deep groove over the wall ends")
+         note=f"18 mm birch rectangle, removable, {2*ohw(Z_WB):.0f} x {2*Y:.0f} at the front face, side edges "
+              f"bevelled {K.half_angle_deg:.1f} deg to continue the walls; 2 mm deep gasket groove; 12 M5 screws "
+              f"into inserts in the wall, top and bottom ends; 64 mm terminal cup")
+    return dict(front_width_mm=round(2 * ohw(Z_WB), 1), back_width_mm=round(2 * ohw(Z_BACK), 1), height_mm=round(2 * Y, 1),
+                front_square_mm=round(2 * ohw(Z_WB), 1), thickness_mm=T, edge_bevel_deg=K.half_angle_deg,
+                screws="12 x M5 into threaded inserts in the wall, top and bottom end grain",
+                gasket="3 mm closed-cell foam in a 7 mm wide, 2 mm deep groove over the panel ends",
+                screw_xy_mm=[[round(x, 1), round(y, 1)] for x, y in screws])
 
 
 def filler_tet(sx, sy):
@@ -442,7 +576,8 @@ def fillers():
         occ.cut(f, kick_vanes(only=[math.atan2(sy, sx)]))
         save(f"filler_{name}", "ply", "filler", explode=(sx * 230, sy * 230, 0), group="cabinet",
              note=f"corner filler: right-angle triangle, {K.filler(0)*MM:.0f} mm legs at the baffle to nothing at "
-                  f"the mouth; hardwood or 18 mm ply laminations; slot for the vane")
+                  f"the mouth, in the corner of a side wall and a wedge face; hardwood or 18 mm ply laminations; "
+                  f"slot for the vane")
     c0 = K.filler(0.0) * MM
     lam = []
     z = 0.0
@@ -461,14 +596,14 @@ def kick_vanes(only=None):
     """Four 6 mm streamlined vanes from the centre body to the corner fillers (built in the current model)."""
     out = []
     z0, z1 = Z_VANE - VANE_CHORD / 2, Z_VANE + VANE_CHORD / 2
-    zz = np.linspace(z0, z1, 7)
-    r0 = min(K.body_radius(z / MM) for z in zz) * MM - 15
+    zz = np.linspace(z0, z1, 13)
+    r0 = min(body_r(z) for z in zz) - 15
     r1 = max(hw(z) * math.sqrt(2) - K.filler(z / MM) * MM / math.sqrt(2) for z in zz) + 10
     for az in [math.radians(45 + 90 * k) for k in range(4)]:
         if only is not None and not any(abs(math.remainder(az - o, 2 * math.pi)) < 1e-6 for o in only):
             continue
-        rect = occ.addRectangle(-VANE_T / 2, -VANE_CHORD / 2, 0, VANE_T, VANE_CHORD, roundedRadius=VANE_T / 2 - 0.01)
-        ex = occ.extrude([(2, rect)], 0, 0, r1 - r0)
+        rc = occ.addRectangle(-VANE_T / 2, -VANE_CHORD / 2, 0, VANE_T, VANE_CHORD, roundedRadius=VANE_T / 2 - 0.01)
+        ex = occ.extrude([(2, rc)], 0, 0, r1 - r0)
         v = [e for e in ex if e[0] == 3]
         # local (x thickness, y chord, z radial) -> global (radial, tangential, z)
         occ.affineTransform(v, [0, 0, 1, r0, 1, 0, 0, 0, 0, 1, 0, Z_VANE])
@@ -487,50 +622,55 @@ def standoff_shape(i):
     return s_
 
 
-def supports():
+def standoffs():
     for i, az in enumerate(STANDOFF_AZ):
         name = "standoff_duct" if i == DUCT else f"standoff_{i + 1}"
         start(name)
         standoff_shape(i)
         c, s = math.cos(az), math.sin(az)
-        save(name, "aluminium", "support", explode=(c * 160, s * 160, -60), group="supports",
+        save(name, "aluminium", "support", explode=(c * 160, s * 160, -60), group="supports", curv=48,
              note=f"20 mm aluminium round, {Z_TURN + SOCKET:.0f} long, M8 into the baffle, {SOCKET:.0f} mm into "
                   f"the shroud" + ("; 12 mm bore: cable duct from the chamber to the centre body" if i == DUCT else ""))
-    for k, (name, sx, sy) in enumerate(CORNERS):
+
+
+def vanes():
+    for name, sx, sy in CORNERS:
         start(f"vane_{name}")
         kick_vanes(only=[math.atan2(sy, sx)])
         save(f"vane_{name}", "aluminium", "support", explode=(sx * 260, sy * 260, 60), group="supports",
+             curv=24, smin=1.0,
              note=f"{VANE_T:.0f} mm plate, {VANE_CHORD:.0f} mm chord with round edges, body to corner filler, "
                   f"centred {Z_M - Z_VANE:.0f} mm behind the kick mouth")
 
 
 # ---------------------------------------------------------------- centre body
-def lip_arc(n=24):
-    """Rolled lip at the mid mouth: from the bore over the front, round the outside, to the back of the roll."""
-    rho = M.lip_radius * MM
-    al = math.radians(M.half_angle_deg)
-    R = M.radius(M.length) * MM
-    cr, cz = R + rho * math.cos(al), Z_MM - rho * math.sin(al)
-    psi = np.linspace(-math.pi / 2, math.pi - al, n)
-    return [(cr + rho * math.cos(p), cz + rho * math.sin(p)) for p in psi], (cr, cz - rho)
+def mouth_round():
+    """Rounded edge where the mid horn bore meets the centre body's outside, in the kick mouth plane.
 
-
-def s_of(z):
-    return (z - Z_MT) / MM
+    One arc tangent to the bore and to the body, with its front at the mouth plane (nothing sticks out), radius
+    at most MidHorn.lip_radius. Returns (radius, arc points from the body side over the front to the bore side)."""
+    rw, rb = M.radius(M.length) * MM, body_r(Z_M)
+    tw = (M.radius(M.length) - M.radius(M.length - 0.004)) / 0.004
+    tb = (body_r(Z_M) - body_r(Z_M - 4.0)) / 4.0
+    rho = (rb - rw) / (math.sqrt(1 + tw * tw) + math.sqrt(1 + tb * tb) - tw + tb)
+    rho = min(rho, M.lip_radius * MM)
+    zc = Z_M - rho
+    rc = rw - tw * rho + rho * math.sqrt(1 + tw * tw)
+    pb, pw = math.atan2(-tb, 1.0), math.atan2(tw, -1.0)
+    phi = np.linspace(pb, pw, 24)
+    return rho, [(rc + rho * math.cos(p), zc + rho * math.sin(p)) for p in phi]
 
 
 def body_outer(z):
-    """Outside radius of the centre body at z (mm), ignoring the lip roll."""
+    """Outside radius of the centre body at z (mm)."""
     if z <= Z_TURN:
-        return K.body_radius(K.turn_z) * MM
-    if z <= Z_M:
-        return K.body_radius(z / MM) * MM
-    return M.outer(min(s_of(z), M.length)) * MM
+        return body_r(Z_TURN)
+    return body_r(min(z, Z_M))
 
 
 def body_inner(z):
     """Largest cavity or bore radius at z (mm)."""
-    if z < J1:
+    if z < j1():
         return R_CS
     if z < Z_MOTOR - WALL_B:
         return R_MC
@@ -548,31 +688,26 @@ def ring_z(r):
 
 def body_profile():
     d, m = KD, M
-    cs, rim = K.channel_start, d.rim_r
+    J1 = j1()
     segs = []
-    rr = np.linspace(cs, rim, 40)
-    segs.append(("spline", [(r * MM, float(K.shroud_z(r)) * MM) for r in rr]))
-    zr = float(K.shroud_z(rim)) * MM
-    lip = [(rim * MM, zr)]
+    rr = np.linspace(R_CS, d.rim_r * MM, 40)
+    segs.append(("spline", [(r, shroud_z(r)) for r in rr]))
+    zr = shroud_z(d.rim_r * MM)
+    lip = [(d.rim_r * MM, zr)]
     if Z_TURN - zr > 0.1:
-        lip.append((rim * MM, Z_TURN))
+        lip.append((d.rim_r * MM, Z_TURN))
+    elif zr > Z_TURN + 0.1:
+        warnings.append(f"shroud at the rim ({zr:.1f} mm) is above the turn plane ({Z_TURN:.1f} mm)")
     lip.append((body_outer(Z_TURN), Z_TURN))
     segs.append(("line", lip))
-    u = np.linspace(0, 1, 70)
-    zz = K.turn_z + (K.mouth_z - K.turn_z) * (1 - (1 - u) ** 1.6)
-    segs.append(("spline", [(K.body_radius(z) * MM, z * MM) for z in zz]))
-    arc, back = lip_arc()
-    z_lb = back[1]
-    s_m, s_lb = s_of(Z_M), s_of(z_lb)
-    if s_lb <= s_m + 0.005:
-        warnings.append("rolled lip reaches behind the kick mouth")
-        s_lb = s_m + 0.005
-    ss = np.linspace(s_m, s_lb, 30)
-    segs.append(("spline", [(m.outer(s) * MM, zs(s)) for s in ss]))
-    segs.append(("line", [(m.outer(s_lb) * MM, zs(s_lb)), arc[0]]))
+    rho, arc = mouth_round()
+    zz = np.r_[P["body"].x[P["body"].x < arc[0][1] - 0.3]]
+    segs.append(("spline", [(body_r(z), z) for z in zz] + [arc[0]]))
     segs.append(("spline", arc))
-    sb = np.linspace(m.length, 0, 60)
-    segs.append(("spline", [(m.radius(s) * MM, zs(s)) for s in sb]))
+    s_w = s_of(arc[-1][1])
+    sb = np.r_[np.arange(math.floor(s_w * MM / 2.5) * 2.5 / MM, 0, -0.0025), 0.0]
+    sb = sb[sb < s_w - 2e-4]
+    segs.append(("spline", [arc[-1]] + [(m.radius(s) * MM, zs(s)) for s in sb]))
     r_ot = m.radius(0.0)
     md_rim = MD.rim_r
     rr = np.linspace(r_ot, md_rim, 20)
@@ -583,7 +718,6 @@ def body_profile():
     segs.append(("line", [(md_rim * MM, ring_z(md_rim)), (md_rim * MM + 2, z_sur), (r_fl, z_sur), (r_fl, Z_MF),
                           (R_POD, Z_MF), (R_POD, Z_MOTOR), (0, Z_MOTOR), (0, Z_MOTOR - WALL_B),
                           (R_MC, Z_MOTOR - WALL_B), (R_MC, J1), (R_CS, J1)]))
-    # the loop closes from (R_CS, J1) back to the first shroud point
     return segs
 
 
@@ -615,6 +749,8 @@ def build_body():
     TMP.mkdir(exist_ok=True)
     quiet_write(TMP / "body_full.step")
     v = sum(occ.getMass(*e) for e in gmsh.model.getEntities(3))
+    if not FINAL:
+        mesh_write(TMP / "body_full.stl", size=12.0, curv=120)
     return v
 
 
@@ -660,44 +796,47 @@ def module(name, z0, z1, joints_lo, joints_hi, explode, note):
 
 def centre_body():
     vol = build_body()
+    if not FINAL:
+        return dict(volume_cm3=round(vol / 1000, 1))
+    J1 = j1()
     zbot = Z_TURN - 1
-    z_top = max(p[1] for p in lip_arc()[0]) + 1
     # mid horn joint: the first z behind the kick mouth where the wall is 40 mm thick over the bolt length,
-    # clear of the vanes
+    # clear of the kick vanes and the bullet vane slots
     j4 = None
     for z in np.arange(Z_M - 5, Z_MT + 30, -2.0):
         r_in, r_out = joint_ring(z)
-        if r_out - r_in >= 40 and abs(z - Z_VANE) > VANE_CHORD / 2 + 30:
+        if r_out - r_in >= 40 and abs(z - Z_VANE) > VANE_CHORD / 2 + 30 and not zs(BV_S0) - 30 < z < zs(BV_S1) + 30:
             j4 = float(z)
             break
     j4 = j4 or (Z_MT + Z_M) / 2
+    rho, _ = mouth_round()
     mods = [
-        ("kick_shroud", zbot, J1, "underside follows the kick cone; lip; standoff sockets"),
+        ("kick_shroud", zbot, J1, "underside follows the kick cone, sized from cylinder slices; lip; standoff sockets"),
         ("motor_fairing", J1, Z_MOTOR, f"covers the kick motor with {K.motor_clear*MM:.0f} mm clearance"),
         ("mid_pod", Z_MOTOR, Z_MF, f"sealed rear volume of the mid, {M.rear_volume_litres:.1f} L"),
         ("mid_horn_rear", Z_MF, j4, "lead-in ring over the mid cone, mid horn bore, vane slots; mid driver screws to its back face"),
-        ("mid_horn_front", j4, z_top, f"mid horn to the mouth, rolled lip of {M.lip_radius*MM:.0f} mm radius"),
+        ("mid_horn_front", j4, Z_M + 1, f"mid horn to the mouth, flush with the kick mouth, {rho:.1f} mm rounded edge"),
     ]
     joints = [J1, Z_MOTOR, Z_MF, j4]
     for i, (name, a, b, note) in enumerate(mods):
         lo = [a] if a in joints else []
         hi = [b] if b in joints else []
         module(name, a, b, lo, hi, explode=(0, 0, 120 + 90 * i), note=note)
-    return dict(joints_mm=[round(z, 1) for z in joints], volume_cm3=round(vol / 1000, 1))
+    return dict(joints_mm=[round(z, 1) for z in joints], volume_cm3=round(vol / 1000, 1), mouth_edge_radius_mm=round(rho, 2))
 
 
 # ---------------------------------------------------------------- bullet
 def bullet_vanes(slots=False):
     out = []
     s0, s1 = BV_S0, BV_S1
-    r0 = min(M.plug(s) for s in np.linspace(s0, s1, 5)) * MM - 2
+    r0 = min(bullet_r(s) for s in np.linspace(s0, s1, 9)) - 2
     r1 = max(M.radius(s) for s in np.linspace(s0, s1, 5)) * MM + 3
     for az in BV_AZ:
         chord = (s1 - s0) * MM
         t = BV_T + (0.4 if slots else 0.0)
-        rect = occ.addRectangle(-t / 2, -chord / 2 - (0.2 if slots else 0), 0, t, chord + (0.4 if slots else 0),
-                                roundedRadius=t / 2 - 0.01)
-        ex = occ.extrude([(2, rect)], 0, 0, r1 - r0)
+        rc = occ.addRectangle(-t / 2, -chord / 2 - (0.2 if slots else 0), 0, t, chord + (0.4 if slots else 0),
+                              roundedRadius=t / 2 - 0.01)
+        ex = occ.extrude([(2, rc)], 0, 0, r1 - r0)
         v = [e for e in ex if e[0] == 3]
         occ.affineTransform(v, [0, 0, 1, r0, 1, 0, 0, 0, 0, 1, 0, zs((s0 + s1) / 2)])
         occ.rotate(v, 0, 0, 0, 0, 0, 1, az)
@@ -709,13 +848,14 @@ def bullet_profile():
     m = M
     r_hb = TW.body_diameter / 2 * MM + 0.3
     s_cav = m.s_exit - m.hf_depth
-    rr = np.linspace(0, m.plug_r0, 20)
+    r0 = bullet_r(0.0) / MM
+    rr = np.linspace(0, r0, 20)
     nose = [(r * MM, zs(float(m.nose(r)))) for r in rr]
-    segs = [("spline", nose), ("line", [nose[-1], (m.plug_r0 * MM, Z_MT)])]
-    ss = np.linspace(0, m.s_tip, 50)
-    segs.append(("spline", [(m.plug(s) * MM, zs(s)) for s in ss]))
+    segs = [("spline", nose), ("line", [nose[-1], (r0 * MM, Z_MT)])]
+    ss = P["bullet"].x
+    segs.append(("spline", [(bullet_r(s / MM), zs(s / MM)) for s in ss]))
     sh = np.linspace(m.s_tip, m.s_exit, 30)
-    segs.append(("line", [(m.tip_radius * MM, zs(m.s_tip)), (m.hf_horn_radius(m.s_tip) * MM, zs(m.s_tip))]))
+    segs.append(("line", [(bullet_r(m.s_tip), zs(m.s_tip)), (m.hf_horn_radius(m.s_tip) * MM, zs(m.s_tip))]))
     segs.append(("spline", [(m.hf_horn_radius(s) * MM, zs(s)) for s in sh]))
     segs.append(("line", [(m.hf_exit_diameter / 2 * MM, zs(m.s_exit)), (r_hb, zs(m.s_exit)), (r_hb, zs(s_cav)),
                           (0, zs(s_cav))]))
@@ -727,7 +867,7 @@ FELT = 3.0
 
 def felt_shape():
     """Felt disc on the nose underside: its face is the designed nose surface, recessed FELT mm into the bullet."""
-    rr = np.linspace(0, M.plug_r0 - 0.002, 20)
+    rr = np.linspace(0, bullet_r(0.0) / MM - 0.002, 20)
     face = [(r * MM, zs(float(M.nose(r)))) for r in rr]
     back = [(r, z + FELT) for r, z in face[::-1]]
     return revolve([("spline", face), ("line", [face[-1], back[0]]), ("spline", back)])
@@ -750,23 +890,29 @@ def bullet():
               f"{FELT:.0f} mm recess for the felt")
     start("felt")
     felt_shape()
-    save("felt", "driver_cone", "felt", explode=(0, 0, 600), group="bullet",
+    save("felt", "driver_cone", "felt", explode=(0, 0, 600), group="bullet", curv=48,
          note=f"{FELT:.0f} mm wool felt on the bullet nose underside, set into a recess so its face is at the "
               f"designed gap from the mid cone (MidHorn.felt_loss models its damping)")
     start("bullet")
     b = revolve(segs)
     b, _ = occ.intersect(b, slab(z_split, zs(M.s_tip) + 1))
-    holes = [radial_hole(BV_AZ[0], r_hb - 1, M.plug(S_HF_CABLE) * MM + 1, zs(S_HF_CABLE), 1.5)]
+    az = BV_AZ[0]
+    c, s_ = math.cos(az), math.sin(az)
+    zh = zs(S_HF_CABLE)
+    holes = [radial_hole(az, R_CABLE_B, bullet_r(S_HF_CABLE) + 1, zh, 1.5),
+             (3, occ.addCylinder(R_CABLE_B * c, R_CABLE_B * s_, zs(M.s_exit) - 1, 0, 0, zh - zs(M.s_exit) + 1, 1.5))]
     slots = bullet_vanes(slots=True)
     occ.cut(b, holes + slots)
     save("bullet", "print_orange", "print", explode=(0, 0, 700), group="bullet", printable=True,
-         note=f"smooth bullet round the {TW.model} body cylinder, printed HF horn "
-              f"{M.hf_exit_diameter*MM:.1f} to {2*M.hf_mouth_radius*MM:.0f} mm over {M.hf_len*MM:.0f} mm")
+         note=f"bullet round the {TW.model} body cylinder, outside sized from slices of the mid horn, printed HF "
+              f"horn {M.hf_exit_diameter*MM:.1f} to {2*M.hf_mouth_radius*MM:.0f} mm over {M.hf_len*MM:.0f} mm; "
+              f"3 mm HF cable bore from the vane back to the HF cavity")
     start("bullet_vanes")
     v = bullet_vanes()
-    occ.cut(v, [radial_hole(BV_AZ[0], r_hb - 2, M.radius(S_HF_CABLE) * MM + 4, zs(S_HF_CABLE), 1.5)])
-    save("bullet_vanes", "print_orange", "print", explode=(0, 0, 560), group="bullet", printable=True,
-         note=f"three {BV_T:.0f} mm vanes hold the bullet in the mid throat; one carries the HF cable in a 3 mm bore")
+    occ.cut(v, [radial_hole(BV_AZ[0], bullet_r(S_HF_CABLE) - 2, M.radius(S_HF_CABLE) * MM + 4, zh, 1.5)])
+    save("bullet_vanes", "print_orange", "print", explode=(0, 0, 560), group="bullet", printable=True, curv=48,
+         note=f"three {BV_T:.0f} mm vanes hold the bullet in the mid horn, {BV_S0*MM:.0f} to {BV_S1*MM:.0f} mm past "
+              f"the throat; one carries the HF cable in a 3 mm bore")
 
 
 # ---------------------------------------------------------------- drivers (proxies)
@@ -776,17 +922,13 @@ def cone_shell(drv, zmap, t=1.5, rim_out=None, roll_h=None):
     top = [(r * MM, zmap(float(drv.cone_z(r)) * MM)) for r in rr]
     sgn = 1 if zmap(1.0) > zmap(0.0) else -1
     bot = [(r, z + sgn * t) for r, z in top[::-1]]
-    segs = [("spline", top), ("line", [top[-1], bot[0]]), ("spline", bot), ("line", [bot[-1], top[0]])]
-    # close: the last line ends at top[0]; drop it and let revolve close the loop
-    segs = segs[:-1]
+    segs = [("spline", top), ("line", [top[-1], bot[0]]), ("spline", bot)]
     out = revolve(segs)
-    # dust cap: dome over the voice coil, bulging away from the motor
     rv = drv.vc_r * MM
     zn = zmap(drv.neck_z * MM)
     th = np.linspace(0, math.pi / 2, 12)
     dome = [(rv * math.sin(a), zn - sgn * 0.3 * rv * math.cos(a)) for a in th]
     out += revolve([("spline", dome), ("line", [dome[-1], (0, zn)])])
-    # surround: half roll from the rim outward, bulging away from the motor
     w = (rim_out - drv.rim_r * MM) if rim_out else 0.11 * drv.rim_r * MM
     h = roll_h or w / 2
     rc, zc = drv.rim_r * MM + w / 2, zmap(drv.rim_z * MM)
@@ -826,7 +968,7 @@ def basket(drv, zmap, arm, r_flange_in, z_flange_back, n=4, width_deg=10):
 def drivers():
     d = KD
     zk = lambda z: z  # noqa: E731  kick: cone_z is already in cabinet z (flange front face at z = 0)
-    # kick frame: flange, basket arms at 0, 90, 180, 270 deg, spider housing
+    kw = dict(curv=36, smin=1.0)
     start("drv_kick_frame")
     fl = ring(0.0, d.flange_t * MM, Z_CUT + 2, d.frame_od / 2 * MM)
     holes = [cyl_at(d.frame_od / 2 * MM - 9, math.radians(22.5 + 45 * k), -1, d.flange_t * MM + 1, 3.5) for k in range(8)]
@@ -834,18 +976,17 @@ def drivers():
     arms = basket(d, zk, K.arm * MM, Z_CUT + 4, d.flange_t * MM)
     hous = ring(d.neck_z * MM - 5, d.top_plate_z * MM, d.spider_r * MM + 2, d.spider_r * MM + 5)
     occ.fuse(fl, arms + hous)
-    save("drv_kick_frame", "driver_metal", "driver", explode=(0, 0, -120), group="kick driver",
+    save("drv_kick_frame", "driver_metal", "driver", explode=(0, 0, -120), group="kick driver", **kw,
          note=f"proxy of the {D.label(D.KICK_RECORD)} frame, reversed: flange on the baffle front, basket into the horn")
     start("drv_kick_cone")
     cone_shell(d, zk, rim_out=Z_CUT - 3)
-    save("drv_kick_cone", "driver_cone", "driver", explode=(0, 0, -120), group="kick driver",
+    save("drv_kick_cone", "driver_cone", "driver", explode=(0, 0, -120), group="kick driver", **kw,
          note="proxy cone (estimated profile), dust cap and surround")
     start("drv_kick_motor")
     mot = [(3, occ.addCylinder(0, 0, d.top_plate_z * MM, 0, 0, d.motor_h * MM, d.motor_r * MM))]
     occ.cut(mot, [(3, occ.addCylinder(0, 0, d.top_plate_z * MM - 1, 0, 0, d.motor_h * MM + 2, 0.5 * d.vc_r * MM))])
-    save("drv_kick_motor", "driver_metal", "driver", explode=(0, 0, -120), group="kick driver",
+    save("drv_kick_motor", "driver_metal", "driver", explode=(0, 0, -120), group="kick driver", **kw,
          note=f"kick motor proxy, {2*d.motor_r*MM:.0f} x {d.motor_h*MM:.0f} mm")
-    # mid: normal orientation, flange front face at Z_MF, motor behind
     md = MD
     zmid = lambda z: Z_MF - z  # noqa: E731
     start("drv_mid_frame")
@@ -853,349 +994,227 @@ def drivers():
     arms = basket(md, zmid, md.xmech * MM + 8, md.frame_od / 2 * MM - 12, Z_MF - md.flange_t * MM)
     hous = ring(zmid(md.top_plate_z * MM), zmid(md.neck_z * MM - 4), md.spider_r * MM + 2, md.spider_r * MM + 5)
     occ.fuse(fl, arms + hous)
-    save("drv_mid_frame", "driver_metal", "driver", explode=(0, 0, 330), group="mid driver",
+    save("drv_mid_frame", "driver_metal", "driver", explode=(0, 0, 330), group="mid driver", **kw,
          note=f"proxy of the {D.label(D.MID_RECORD)} frame")
     start("drv_mid_cone")
     cone_shell(md, zmid, t=1.0, rim_out=md.frame_od / 2 * MM - 13, roll_h=md.rim_z * MM)
-    save("drv_mid_cone", "driver_cone", "driver", explode=(0, 0, 330), group="mid driver",
+    save("drv_mid_cone", "driver_cone", "driver", explode=(0, 0, 330), group="mid driver", **kw,
          note="proxy cone (estimated profile); surround assumed flush with the flange face")
     start("drv_mid_motor")
     z0 = zmid(md.top_plate_z * MM) - md.motor_h * MM
     occ.addCylinder(0, 0, z0, 0, 0, md.motor_h * MM, md.motor_r * MM)
-    save("drv_mid_motor", "driver_metal", "driver", explode=(0, 0, 330), group="mid driver", note="mid motor proxy")
+    save("drv_mid_motor", "driver_metal", "driver", explode=(0, 0, 330), group="mid driver", note="mid motor proxy", **kw)
     start("drv_hf")
     se = zs(M.s_exit)
     rb = TW.body_diameter / 2 * MM
     body = [(3, occ.addCylinder(0, 0, se - TW.body_depth * MM, 0, 0, TW.body_depth * MM, rb))]
     occ.cut(body, [(3, occ.addCylinder(0, 0, se - 10, 0, 0, 11, M.hf_exit_diameter / 2 * MM))])
-    occ.addBox(-8, -4, se - M.hf_depth * MM, 16, 8, (M.hf_depth - TW.body_depth) * MM + 0.5)
-    save("drv_hf", "driver_metal", "driver", explode=(0, 0, 760), group="bullet",
+    if M.hf_depth - TW.body_depth > 0.001:            # terminals behind the body
+        occ.addBox(-8, -4, se - M.hf_depth * MM, 16, 8, (M.hf_depth - TW.body_depth) * MM + 0.5)
+    save("drv_hf", "driver_metal", "driver", explode=(0, 0, 760), group="bullet", **kw,
          note=f"{TW.model}: {TW.body_diameter*MM:.0f} mm body cylinder, {TW.body_depth*MM:.1f} mm deep, flange removed")
 
 
-# ---------------------------------------------------------------- area check
-def _slice_area(vol, z, keep):
-    big = 2000.0
-    rect = occ.addRectangle(-big, -big, z, 2 * big, 2 * big)
-    cp = occ.copy(vol)
-    res, _ = occ.intersect([(2, rect)], cp)
-    tot = 0.0
-    for d, t in res:
-        if d != 2:
-            continue
-        x0, y0, _, x1, y1, _ = occ.getBoundingBox(2, t)
-        if keep(max(abs(x0), abs(x1), abs(y0), abs(y1))):
-            tot += occ.getMass(2, t)
-    occ.remove(res, recursive=True)
-    return tot
-
-
-def area_check(n=60):
-    gmsh.clear()
-    gmsh.model.add("area")
-    global occ
-    occ = gmsh.model.occ
-    imp = lambda name: occ.importShapes(str(OUT / "step" / f"{name}.step"))  # noqa: E731
-    body = []
-    for name in ("kick_shroud", "motor_fairing", "mid_pod", "mid_horn_rear", "mid_horn_front"):
-        body += imp(name)
-    fill = []
-    for name, _, _ in CORNERS:
-        fill += imp(f"filler_{name}")
-    walls_ = []
-    for side in ("right", "left", "top", "bottom"):
-        walls_ += imp(f"wall_{side}")
-    stand = []
-    for i in range(4):
-        stand += imp("standoff_duct" if i == DUCT else f"standoff_{i + 1}")
-    vanes = []
-    for name, _, _ in CORNERS:
-        vanes += imp(f"vane_{name}")
-    bul = imp("bullet_nose") + imp("bullet")
-    bv = imp("bullet_vanes")
-    # kick: frustum just inside the wall thickness, less walls, fillers, body, standoffs and vanes (the real air).
-    # The exposed part of each vane (outside the body and filler slots) is sliced separately: real air plus the
-    # exposed vane section is the open area of walls, fillers and body alone, which is what Kick.area models.
-    probe = frustum(0.0, Z_M, lambda z: hw(z) + T / 2)
-    air, _ = occ.cut(probe, occ.copy(walls_ + fill + body + stand + vanes))
-    # the open passage from the design: inside the walls, outside the filler tetrahedra and the body of revolution
-    zz = np.linspace(K.turn_z, K.mouth_z, 80)
-    solid_body = revolve([("line", [(0, Z_TURN), (body_outer(Z_TURN), Z_TURN)]),
-                          ("spline", [(K.body_radius(z) * MM, z * MM) for z in zz]),
-                          ("line", [(body_outer(Z_M), Z_M), (0, Z_M)])])
-    tets = []
-    for _, sx, sy in CORNERS:
-        tets += filler_tet(sx, sy)
-    passage, _ = occ.cut(frustum(0.0, Z_M, hw), solid_body + tets)
-    vexp, _ = occ.intersect(occ.copy(vanes), passage)
-    t0 = time.time()
-    kick_litres = sum(occ.getMass(*e) for e in air) / 1e6
-    rows = []
-    for z in np.linspace(Z_TURN + 2, Z_M - 2, n):
-        rb = K.body_radius(z / MM) * MM
-        a = _slice_area(air, z, lambda r, rb=rb: r > rb + 1)
-        v = _slice_area(vexp, z, lambda r: True)
-        model = K.area(z / MM) * 1e6
-        rows.append(dict(kind="kick", z_mm=round(z, 2), s_mm="", cad_area_cm2=(a + v) / 100, model_area_cm2=model / 100,
-                         diff_pct=100 * (a + v - model) / model, real_air_cm2=a / 100, vane_blockage_cm2=v / 100,
-                         vane_blockage_pct=100 * v / (a + v)))
-    # mid: revolve just inside the wall, less the body, the bullet and its vanes
-    ss = np.linspace(0, M.length, 80)
-    prof = [("line", [(0, Z_MT), (M.radius(0) * MM + M.wall * MM / 2, Z_MT)]),
-            ("spline", [(M.radius(s) * MM + M.wall * MM / 2, zs(s)) for s in ss]),
-            ("line", [(M.radius(M.length) * MM + M.wall * MM / 2, Z_MM), (0, Z_MM)])]
-    mprobe = revolve(prof)
-    # the HF unit fills its cavity in the bullet; without it the cavity joins the mid air through the cable hole
-    r_hb = TW.body_diameter / 2 * MM + 0.3
-    s_cav = M.s_exit - M.hf_depth
-    hf = [(3, occ.addCylinder(0, 0, zs(s_cav) - 0.1, 0, 0, (M.s_exit - s_cav) * MM + 0.2, r_hb + 0.1))]
-    mair, _ = occ.cut(mprobe, occ.copy(body + bul + bv) + hf)
-    ann = revolve([("spline", [(M.plug(s) * MM, zs(s)) for s in np.linspace(0, M.s_tip, 60)]),
-                   ("line", [(M.tip_radius * MM, zs(M.s_tip)), (0, zs(M.s_tip)), (0, Z_MM)]),
-                   ("line", [(0, Z_MM), (M.radius(M.length) * MM, Z_MM)]),
-                   ("spline", [(M.radius(s) * MM, zs(s)) for s in np.linspace(M.length, 0, 80)])])
-    bexp, _ = occ.intersect(occ.copy(bv), ann)
-    for s in np.linspace(0.001, M.length - 0.001, n):
-        rp = M.plug(s) * MM
-        a = _slice_area(mair, zs(s), lambda r, rp=rp: r > rp + 0.5)
-        v = _slice_area(bexp, zs(s), lambda r: True)
-        model = M.area(s) * 1e6
-        rows.append(dict(kind="mid", z_mm=round(zs(s), 2), s_mm=round(s * MM, 2), cad_area_cm2=(a + v) / 100,
-                         model_area_cm2=model / 100, diff_pct=100 * (a + v - model) / model, real_air_cm2=a / 100,
-                         vane_blockage_cm2=v / 100, vane_blockage_pct=100 * v / (a + v)))
-    # standoffs block the turn under the shroud lip, which has no model area: report them against the turn
-    turn_circ = 2 * math.pi * R_STANDOFF
-    standoff = dict(width_fraction_of_turn_pct=100 * 4 * 2 * STANDOFF_R / turn_circ,
-                    turn_height_mm=Z_TURN - KD.flange_t * MM, at_radius_mm=R_STANDOFF)
-    RES.mkdir(parents=True, exist_ok=True)
-    cols = list(rows[0].keys())
-    with open(RES / "area-check.csv", "w") as f:
-        f.write(",".join(cols) + "\n")
-        for r in rows:
-            f.write(",".join(f"{r[c]:.4f}" if isinstance(r[c], float) else str(r[c]) for c in cols) + "\n")
+# ---------------------------------------------------------------- plug design from slices
+def load_meshes(names, extra=None):
     out = {}
-    for kind in ("kick", "mid"):
-        rr = [r for r in rows if r["kind"] == kind]
-        d = np.array([r["diff_pct"] for r in rr])
-        b = np.array([r["vane_blockage_pct"] for r in rr])
-        i = int(np.argmax(np.abs(d)))
-        out[kind] = dict(max_abs_diff_pct=round(float(abs(d[i])), 3), at_z_mm=rr[i]["z_mm"],
-                         rms_diff_pct=round(float(np.sqrt(np.mean(d**2))), 3), max_vane_blockage_pct=round(float(b.max()), 2))
-    out["kick_air_litres"] = round(kick_litres, 2)
-    out["standoffs"] = {k: round(v, 2) for k, v in standoff.items()}
-    print(f"  area check in {time.time() - t0:.0f} s: {json.dumps(out)}", flush=True)
+    for n in names:
+        f = OUT / "stl" / f"{n}.stl"
+        cat = next((p["category"] for p in parts if p["name"] == n), "")
+        out[n] = (cat, trimesh.load_mesh(f, process=True))
+    for n, f in (extra or {}).items():
+        out[n] = ("print", trimesh.load_mesh(f, process=True))
     return out
 
 
+def disc(r):
+    return Point(0, 0).buffer(r, quad_segs=512)
+
+
+def envelope_mm(z):
+    """Smallest centre body radius that still holds what is inside it at z, with the cable and socket features."""
+    e = K.envelope(z / MM) * MM
+    if z <= Z_TURN + SOCKET + 3:
+        e = max(e, R_STANDOFF + STANDOFF_R + 4)
+    if z <= Z_CAB + 8:
+        e = max(e, R_STANDOFF + 6 + 4)
+    if zs(0) - 30 <= z <= zs(S_HF_CABLE) + 5:
+        e = max(e, R_HF_CH + 4 + 4)
+    return e
+
+
+def hold_mm(s):
+    """Smallest bullet radius that still holds the HF body cylinder (with its sleeve) or the HF horn and its wall."""
+    if s <= M.s_exit + 0.002:
+        return M.plug_radius * MM
+    h = (M.hf_horn_radius(s) + M.hf_wall) * MM
+    if s <= S_HF_CABLE + 0.002:
+        h = max(h, R_CABLE_B + 1.5 + 1.5)
+    return h
+
+
+def solve_plugs(meshes):
+    """Slice every built part and solve the body and bullet radii so the air left follows each law."""
+    rows_k, rows_m = [], []
+    zk = _grid(Z_TURN, Z_M, DZ_SOLVE)
+    for z in zk:
+        zq = min(max(z, Z_TURN + 0.05), Z_M - 0.05)
+        inside, solid, _ = SL.inside_and_solid(meshes, zq)
+        free = inside.difference(solid)
+        law = K.law_area(z / MM) * 1e6
+        lo = envelope_mm(z) + (3.0 if z < Z_M - 10 else 0.0)
+        hi = hw(z) - 1.0
+
+        def f(R):
+            return free.difference(disc(R)).area - law
+        if f(lo) <= 0:
+            R, bind = lo, True
+        else:
+            R, bind = brentq(f, lo, hi, xtol=1e-4), False
+        exposed = inside.difference(disc(R)).area - free.difference(disc(R)).area
+        extra = exposed - (inside.area - K.wall_area(z / MM) * 1e6)       # beyond the wedges and fillers
+        rows_k.append(dict(z_mm=z, r_mm=R, r_equation_mm=K.body_radius(z / MM) * MM, envelope_mm=envelope_mm(z),
+                           law_cm2=law / 100, inside_cm2=inside.area / 100, obstruction_cm2=extra / 100,
+                           shortfall_cm2=-f(R) / 100 if bind else 0.0, held_by_envelope=bind))
+    sm = _grid(0.0, M.s_tip * MM, DZ_SOLVE)
+    for s_mm in sm:
+        s = s_mm / MM
+        z = min(max(zs(s), Z_MT + 0.05), zs(M.s_tip) - 0.05)
+        inside, solid, _ = SL.inside_and_solid(meshes, z)
+        Rw = M.radius(s) * MM
+        wall = disc(Rw)
+        free = wall.difference(solid) if solid is not None else wall
+        law = M.area(s) * 1e6
+        lo, hi = hold_mm(s), Rw - 1.0
+
+        def g(R):
+            return free.difference(disc(R)).area - law
+        if g(lo) <= 0:
+            R, bind = lo, True
+        else:
+            R, bind = brentq(g, lo, hi, xtol=1e-4), False
+        exposed = wall.difference(disc(R)).area - free.difference(disc(R)).area
+        rows_m.append(dict(s_mm=s_mm, z_mm=zs(s), r_mm=R, r_equation_mm=M.plug(s) * MM, hold_mm=hold_mm(s),
+                           wall_mm=Rw, law_cm2=law / 100, obstruction_cm2=exposed / 100,
+                           shortfall_cm2=-g(R) / 100 if bind else 0.0, held_by_hf=bind))
+    return rows_k, rows_m
+
+
+def correct(prof, xs_mm, err_mm2, lo_fn):
+    """Grow (or shrink) a plug so a measured area excess err (mm2, measured minus law) at stations xs goes."""
+    x = prof.x
+    e = np.interp(x, xs_mm, err_mm2, left=0.0, right=0.0)
+    r2 = np.maximum(prof.y ** 2 + e / math.pi, 0.0)
+    r = np.sqrt(r2)
+    r = np.maximum(r, [lo_fn(v) for v in x])
+    return Prof(x, r)
+
+
+# ---------------------------------------------------------------- cone channel (cylinder slices)
+def cone_channel(with_shroud, radii=None):
+    """Open area over the reversed kick cone on cylinders r = const, measured with OCC from the part solids.
+
+    A 0.5 mm cylindrical shell at each radius is cut by the cone, the basket and (if built) the shroud; the shell
+    left between the cone and the shroud, over its thickness, is the open area on that cylinder."""
+    start("channel")
+    frame = occ.importShapes(str(OUT / "step" / "drv_kick_frame.step"))
+    cone = occ.importShapes(str(OUT / "step" / "drv_kick_cone.step"))
+    shroud = occ.importShapes(str(OUT / "step" / "kick_shroud.step")) if with_shroud else []
+    radii = np.linspace(R_CS + 2, KD.rim_r * MM - 2, 12) if radii is None else radii
+    rows = []
+    dr = 0.5
+    for r in radii:
+        sh = ring(-1.0, j1() - 1.0, r, r + dr)         # to inside the shroud, above its underside
+        a, _ = occ.intersect(occ.copy(sh), occ.copy(frame))
+        blocked = sum(occ.getMass(*e) for e in a if e[0] == 3) / dr
+        arm_top = max((occ.getBoundingBox(*e)[5] for e in a if e[0] == 3), default=None)
+        if a:
+            occ.remove(a, recursive=True)
+        c, _ = occ.intersect(occ.copy(sh), occ.copy(cone))
+        cone_top = max(occ.getBoundingBox(*e)[5] for e in c if e[0] == 3)
+        cone_bot = min(occ.getBoundingBox(*e)[2] for e in c if e[0] == 3)
+        occ.remove(c, recursive=True)
+        open_ = None
+        if with_shroud:
+            air, _ = occ.cut(occ.copy(sh), occ.copy(frame + cone + shroud))
+            open_ = sum(occ.getMass(*e) for e in air if e[0] == 3 and occ.getBoundingBox(*e)[2] > cone_bot + 0.5) / dr
+            occ.remove(air, recursive=True)
+        occ.remove(sh, recursive=True)
+        rm = r + dr / 2
+        psi = math.atan(float(KD.cone_slope(rm / MM)))
+        rows.append(dict(r_mm=rm, psi_deg=math.degrees(psi), cone_top_mm=cone_top, arm_top_mm=arm_top,
+                         arms_cyl_cm2=blocked / 100, open_cyl_cm2=None if open_ is None else open_ / 100,
+                         target_normal_cm2=math.pi * rm**2 / K.compression / 100))
+    return rows
+
+
+def design_shroud(rows):
+    """Shroud underside from the cylinder slices: the open area normal to the cone is cone area inside r over the
+    compression, after the basket arms; no lower than the arms plus 3 mm or the cone travel plus 3 mm."""
+    r = np.array([x["r_mm"] for x in rows])
+    ct = PchipInterpolator(r, [x["cone_top_mm"] for x in rows], extrapolate=True)
+    ab = PchipInterpolator(r, [x["arms_cyl_cm2"] * 100 for x in rows], extrapolate=True)
+    at = PchipInterpolator(r, [x["arm_top_mm"] if x["arm_top_mm"] is not None else x["cone_top_mm"] for x in rows],
+                           extrapolate=True)
+    rr = _grid(R_CS, KD.rim_r * MM, 3.0)
+    zz = []
+    for v in rr:
+        cos = math.cos(math.atan(float(KD.cone_slope(v / MM))))
+        need = math.pi * v**2 / K.compression / cos + float(ab(v))
+        z = float(ct(v)) + need / (2 * math.pi * v)
+        z = max(z, float(at(v)) + 3.0, float(ct(v)) + (KD.xmech * MM + 3) / cos)
+        zz.append(z)
+    return Prof(rr, zz)
+
+
 # ---------------------------------------------------------------- 3 x 3 array
-def _Rax(u, t):
-    u = np.asarray(u, float)
-    u = u / np.linalg.norm(u)
-    k = np.array([[0, -u[2], u[1]], [u[2], 0, -u[0]], [-u[1], u[0], 0]])
-    return np.eye(3) + math.sin(t) * k + (1 - math.cos(t)) * k @ k
-
-
-def _face(w):
-    """Outer face of a wall (box local, metres): back 0, back 1, mouth 0, mouth 1, and its outward normal.
-
-    Vertex 0 is at -y for the side walls and -x for the top and bottom.
-    """
-    zb, zm = Z_BACK / MM, K.mouth_z
-    sx, sy = {"+x": (1, 0), "-x": (-1, 0), "+y": (0, 1), "-y": (0, -1)}[w]
-    pts = []
-    for z in (zb, zm):
-        h = K.outer_half_width(z)
-        pts += [(sx * h, -h, z), (sx * h, h, z)] if sx else [(-h, sy * h, z), (h, sy * h, z)]
-    n = np.array([sx * math.cos(A), sy * math.cos(A), -math.sin(A)])
+def _outer_face(w):
+    """Outer face of a box (mm, box frame): four corners, and the outward normal."""
+    Y = HH + T
+    zb, zm = Z_BACK, Z_M
+    if w in ("+x", "-x"):
+        s = 1 if w == "+x" else -1
+        pts = [(s * ohw(zb), -Y, zb), (s * ohw(zb), Y, zb), (s * ohw(zm), Y, zm), (s * ohw(zm), -Y, zm)]
+        n = np.array([s * math.cos(A), 0, -math.sin(A)])
+    else:
+        s = 1 if w == "+y" else -1
+        pts = [(-ohw(zb), s * Y, zb), (ohw(zb), s * Y, zb), (ohw(zm), s * Y, zm), (-ohw(zm), s * Y, zm)]
+        n = np.array([0, s, 0.0])
     return np.array(pts), n
 
 
-def _box_vertices():
-    out = []
-    for z in (Z_BACK / MM, K.mouth_z):
-        h = K.outer_half_width(z)
-        out += [(sx * h, sy * h, z) for sx in (-1, 1) for sy in (-1, 1)]
-    return np.array(out)
+def _box_solid(R, t):
+    Y = HH + T
+    v = np.array(rect(ohw(Z_BACK), Y, Z_BACK) + rect(ohw(Z_M), Y, Z_M)) @ R.T + t
+    return hexa([tuple(p) for p in v[:4]], [tuple(p) for p in v[4:]])
 
 
-def _tr(P, p):
-    return (P[0] @ np.asarray(p).T).T + P[1]
-
-
-def _joint(P, wp, Q, wq):
-    fp, n_p = _face(wp)
-    fq, n_q = _face(wq)
-    fp, fq = _tr(P, fp), _tr(Q, fq)
-    n_q, n_p = Q[0] @ n_q, P[0] @ n_p
-    d1 = (fp - fq[0]) @ n_q
-    d2 = (fq - fp[0]) @ n_p
-    sep = np.linalg.norm(fp[2:] - fq[2:], axis=1)
-    return d1, d2, sep
-
-
-def _inside(P, Q):
-    """Largest outside-distance of each of P's corners from box Q (negative: inside Q)."""
-    v = _tr(P, _box_vertices())
-    faces = [_face(w) for w in ("+x", "-x", "+y", "-y")]
-    zb, zm = Z_BACK / MM, K.mouth_z
-    out = []
-    for p in v:
-        q = Q[0].T @ (p - Q[1])
-        out.append(max([float((q - f[0]) @ n) for f, n in faces] + [zb - q[2], q[2] - zm]))
-    return np.array(out)
-
-
-def _layout(th, ph, tc):
-    """Poses (R, t) of the centre, the +x edge box and the +x +y corner box."""
-    I = (np.eye(3), np.zeros(3))
-    # edge: hinge on the centre's +x mouth front edge
-    R = _Rax((0, 1, 0), th)
-    fc, _ = _face("+x")
-    fe, _ = _face("-x")
-    c = fc[2:].mean(0)
-    Pe = (R, c - R @ fe[2:].mean(0))
-    Pc = (_Rax((-1, 1, 0), ph), np.array([tc[0], tc[0], tc[1]]))
-    return I, Pe, Pc
-
-
-def _mirror(P, S):
-    return (S @ P[0] @ S, S @ P[1])
-
-
-def _all_boxes(I, Pe, Pc):
-    Sx, Sy = np.diag([-1.0, 1, 1]), np.diag([1.0, -1, 1])
-    W = np.array([[0.0, 1, 0], [1, 0, 0], [0, 0, 1]])
-    boxes = {(0, 0): I, (1, 0): Pe, (0, 1): _mirror(Pe, W), (1, 1): Pc}
-    boxes[(-1, 0)] = _mirror(boxes[(1, 0)], Sx)
-    boxes[(0, -1)] = _mirror(boxes[(0, 1)], Sy)
-    boxes[(-1, 1)] = _mirror(Pc, Sx)
-    boxes[(1, -1)] = _mirror(Pc, Sy)
-    boxes[(-1, -1)] = _mirror(boxes[(-1, 1)], Sy)
-    return boxes
-
-
-def _twist(Pe, Pc):
-    _, n1 = _face("+y")
-    _, n2 = _face("-y")
-    c = float(np.clip((Pe[0] @ n1) @ -(Pc[0] @ n2), -1, 1))
-    return math.degrees(math.acos(c))
-
-
-def _report(boxes):
-    joints, worst = [], (0.0, "")
-    for (i, j), P in boxes.items():
-        for di, dj, wp, wq in ((1, 0, "+x", "-x"), (0, 1, "+y", "-y")):
-            if (i + di, j + dj) not in boxes:
-                continue
-            d1, d2, sep = _joint(P, wp, boxes[(i + di, j + dj)], wq)
-            g = np.maximum(d1, d2) * MM
-            f, _ = _face(wp)
-            v = _tr(P, f)
-            rad = np.hypot(v[:, 0], v[:, 1])
-            lab = []
-            for k in range(4):
-                other = k ^ 1
-                end = "either end" if abs(rad[k] - rad[other]) < 1e-3 else (
-                    "inner end" if rad[k] < rad[other] else "outer end")
-                lab.append(("back, " if k < 2 else "mouth, ") + end)
-            k = int(np.argmax(g))
-            joints.append(dict(a=[i, j], b=[i + di, j + dj], vertices=lab, gap_mm=[round(float(x), 1) for x in g],
-                               penetration_mm=round(float(max(0.0, -min(d1.min(), d2.min())) * MM), 2),
-                               mouth_edge_offset_mm=[round(float(x) * MM, 1) for x in sep]))
-            if g[k] > worst[0]:
-                worst = (float(g[k]), f"joint ({i},{j})-({i + di},{j + dj}), {lab[k]}")
-    return joints, worst
-
-
-def array_fit():
-    from scipy.optimize import brentq, minimize
-    s = math.radians(K.splay_deg)
-    # corner tilt so that the corner sits at the full splay from each edge neighbour
-    ez = np.array([math.sin(s), 0, math.cos(s)])
-
-    def ang(ph):
-        cz = _Rax((-1, 1, 0), ph)[:, 2]
-        return math.acos(float(np.clip(cz @ ez, -1, 1))) - s
-    ph = brentq(ang, s * 0.9, 2.5 * s)
-
-    W = np.array([[0.0, 1, 0], [1, 0, 0], [0, 0, 1]])
-
-    def ev(x):
-        I, Pe, Pc = _layout(s, ph, x)
-        d1, d2, sep = _joint(Pe, "+y", Pc, "-y")
-        Pe2 = _mirror(Pe, W)
-        con = np.r_[d1, d2, _inside(I, Pc), _inside(Pc, I), _inside(Pe, Pe2), _inside(Pe2, Pe)]
-        return float(sep.max()), float(con.min())
-
-    # start: corner rotated about the outer apex like the edges, then a grid over its two free coordinates
-    apex = K.outer_half_width(K.mouth_z) / math.tan(A) - K.mouth_z
-    c = np.array([0, 0, -apex])
-    t0 = c - _Rax((-1, 1, 0), ph) @ c
-    best = None
-    for t in np.linspace(t0[0] - 0.3, t0[0] + 0.3, 121):
-        for tz in np.linspace(t0[2] - 0.3, t0[2] + 0.3, 121):
-            o, cmin = ev((t, tz))
-            if cmin >= -1e-9 and (best is None or o < best[0]):
-                best = (o, t, tz)
-    if best is None:
-        raise RuntimeError("no overlap-free corner position found")
-    r = minimize(lambda x: ev(x)[0] + 1e3 * max(0.0, -ev(x)[1] - 1e-9), [best[1], best[2]], method="Nelder-Mead",
-                 options=dict(xatol=1e-7, fatol=1e-9, maxiter=4000))
-
-    def unpack(x):
-        return _layout(s, ph, x)
-
-    I, Pe, Pc = unpack(r.x[:2])
-    boxes = _all_boxes(I, Pe, Pc)
-    joints, worst = _report(boxes)
-    # gnomonic layout from sunflower.geometry for comparison
-    g = array_layout(K)
-    gb = {}
-    for b in g["boxes"]:
+def array_check():
+    lay = array_layout(K)
+    boxes = {}
+    for b in lay["boxes"]:
         Mx = np.array(b["matrix"])
-        gb[(b["i"], -b["j"])] = (Mx[:3, :3], Mx[:3, 3])
-    gj, gw = _report(gb)
-    pen = max(j["penetration_mm"] for j in gj)
-    out = dict(
-        splay_deg=K.splay_deg, boxes_n=9,
-        apex_behind_baffle_mm=round(apex * MM, 1),
-        corner_tilt_deg=round(math.degrees(ph), 3),
-        frame="Each matrix maps a box's own frame (metres; origin at the centre of its baffle front face, +z to the "
-              "listener, +x right, +y up) to the array frame, which is the centre box's own frame.",
-        method="Edge boxes hinge on the centre box's mouth front edges at the full splay, so those four joints are "
-               "flush. Each corner box is tilted towards the diagonal so its axis is the full splay from both edge "
-               "neighbours; its position is then solved (SLSQP) to bring its mouth front edges as close as possible "
-               "to the edge boxes' without any overlap. Square frustums cannot also close the four inner vertices: "
-               "the corner box is twisted against its neighbours, so the edge to corner joints open as a wedge.",
-        optimiser=dict(success=bool(r.success), message=str(r.message),
-                       max_mouth_edge_offset_mm=round(ev(r.x)[0] * MM, 1)),
-        corner_joint_twist_deg=round(_twist(Pe, Pc), 2),
-        max_gap_mm=round(worst[0], 1), max_gap_where=worst[1],
-        max_penetration_mm=max(j["penetration_mm"] for j in joints),
-        joints=joints,
-        gnomonic=dict(note="geometry.array_layout: same splay at the four edge joints, but the corner boxes sit too "
-                           "close and overlap their edge neighbours", max_gap_mm=round(gw[0], 1),
-                      max_penetration_mm=pen),
-        boxes=[dict(i=i, j=j, matrix=np.vstack([np.c_[P[0], P[1]], [0, 0, 0, 1]]).round(6).tolist())
-               for (i, j), P in sorted(boxes.items(), key=lambda kv: (-kv[0][1], kv[0][0]))],
-    )
-    return out, boxes
-
-
-def array_overlap(boxes):
-    """Intersect the nine outer frustums in OCC and return the largest overlap volume (cm3)."""
-    global occ
-    gmsh.clear()
-    gmsh.model.add("array")
-    occ = gmsh.model.occ
-    zb, zm = Z_BACK, Z_M
-    tags = {}
-    for key, P in boxes.items():
-        v = _tr((P[0], P[1] * MM), np.array(square(ohw(zb), zb) + square(ohw(zm), zm)))
-        a, b = [tuple(p) for p in v[:4]], [tuple(p) for p in v[4:]]
-        tags[key] = hexa(a, b)
-    worst = 0.0
-    keys = list(boxes)
+        boxes[(b["i"], b["j"])] = (Mx[:3, :3], Mx[:3, 3] * MM)
+    joints = []
+    for (i, j), (R, t) in boxes.items():
+        for di, dj, wa, wb in ((1, 0, "+x", "-x"), (0, 1, "+y", "-y")):
+            key = (i + di, j + dj)
+            if key not in boxes:
+                continue
+            R2, t2 = boxes[key]
+            fa, na = _outer_face(wa)
+            fb, _ = _outer_face(wb)
+            pa, pb = fa @ R.T + t, fb @ R2.T + t2
+            na = R @ na
+            d = (pb - pa[0]) @ na                      # > 0: gap, < 0: penetration
+            mis = max(float(np.min(np.linalg.norm(pb - p, axis=1))) for p in pa)
+            joints.append(dict(a=[i, j], b=list(key), kind="column" if di else "row",
+                               max_gap_mm=round(float(max(d.max(), 0.0)), 4),
+                               max_penetration_mm=round(float(max(-d.min(), 0.0)), 4),
+                               corner_mismatch_mm=round(mis, 4)))
+    start("array")
+    tags = {k: _box_solid(*v) for k, v in boxes.items()}
+    worst, keys = 0.0, list(boxes)
     for n, a in enumerate(keys):
         for b in keys[n + 1:]:
             if max(abs(a[0] - b[0]), abs(a[1] - b[1])) != 1:
@@ -1205,80 +1224,29 @@ def array_overlap(boxes):
             worst = max(worst, v / 1000)
             if res:
                 occ.remove(res, recursive=True)
-    return worst
-
-
-def _box_solid(P):
-    zb, zm = Z_BACK, Z_M
-    v = _tr((P[0], P[1] * MM), np.array(square(ohw(zb), zb) + square(ohw(zm), zm)))
-    return hexa([tuple(p) for p in v[:4]], [tuple(p) for p in v[4:]])
-
-
-def _face_prism(P, w, depth):
-    """The outer face of wall w of box P, swept outward by depth (mm), in the array frame."""
-    f, n = _face(w)
-    f = _tr((P[0], P[1] * MM), f * MM)[[0, 1, 3, 2]]
-    n = P[0] @ n
-    return hexa([tuple(p) for p in f], [tuple(p + depth * n) for p in f])
-
-
-def array_spacers(boxes):
-    """Tapered wedges that close the edge to corner joints: the space between the two facing walls, where the
-    faces overlap, outside every box. Each is written to cad/step and cad/stl in the array frame."""
-    global occ
-    out, tris = [], []
-    for (i, j), P in sorted(boxes.items()):
-        for di, dj, wp, wq in ((1, 0, "+x", "-x"), (0, 1, "+y", "-y")):
-            key = (i + di, j + dj)
-            if key not in boxes or (i == 0 and j == 0) or (key == (0, 0)):
-                continue
-            if (i == 0) == (key[0] == 0) and (j == 0) == (key[1] == 0):
-                continue
-            Q = boxes[key]
-            d1, d2, _ = _joint(P, wp, Q, wq)
-            if max(d1.max(), d2.max()) * MM < 0.5:
-                continue                      # flush joint, no spacer
-            name = f"array_spacer_{i}_{j}__{key[0]}_{key[1]}".replace("-", "m")
-            start(name)
-            a = _face_prism(P, wp, 300.0)
-            b = _face_prism(Q, wq, 300.0)
-            sp, _ = occ.intersect(a, b)
-            others = []
-            for k2, B in boxes.items():
-                if max(abs(k2[0] - i), abs(k2[1] - j)) <= 1 or max(abs(k2[0] - key[0]), abs(k2[1] - key[1])) <= 1:
-                    others += _box_solid(B)
-            occ.cut(sp, others)
-            clean()
-            vol = sum(occ.getMass(*e) for e in gmsh.model.getEntities(3))
-            quiet_write(OUT / "step" / f"{name}.step")
-            xyz = mesh_write(OUT / "stl" / f"{name}.stl", size=200.0)
-            tris.append(_read_stl(OUT / "stl" / f"{name}.stl"))
-            g = np.maximum(d1, d2) * MM
-            f, _ = _face(wp)
-            v = _tr(P, f)
-            rad = np.hypot(v[:, 0], v[:, 1])
-            lab = [("back" if k < 2 else "mouth") + ("_inner" if rad[k] < rad[k ^ 1] else "_outer") for k in range(4)]
-            out.append(dict(name=name, between=[[i, j], list(key)], walls=[wp, wq],
-                            thickness_mm={lab[k]: round(float(g[k]), 1) for k in range(4)},
-                            max_thickness_mm=round(float(g.max()), 1), min_thickness_mm=round(float(g.min()), 1),
-                            volume_litres=round(vol / 1e6, 2), bbox_mm=[round(float(v), 1) for v in [*xyz.min(0), *xyz.max(0)]],
-                            files=dict(step=f"step/{name}.step", stl=f"stl/{name}.stl")))
-    return out, (np.concatenate(tris) if tris else np.zeros((0, 3, 3)))
-
-
-def _read_stl(path):
-    b = path.read_bytes()
-    n = struct.unpack("<I", b[80:84])[0]
-    dt = np.dtype([("n", "<3f4"), ("v", "<9f4"), ("a", "<u2")])
-    return np.frombuffer(b[84:84 + n * 50], dtype=dt)["v"].reshape(-1, 3, 3).astype(float)
+    out = dict(
+        splay_deg=K.splay_deg, boxes_n=len(boxes), apex_behind_baffle_mm=round(lay["apex_behind_baffle_m"] * MM, 1),
+        row_pitch_mm=round(lay["row_pitch_m"] * MM, 2),
+        frame="Each matrix maps a box's own frame (metres; origin at the centre of its baffle front face, +z to the "
+              "listener, +x right, +y up) to the array frame, which is the centre box's own frame.",
+        method="geometry.array_layout: three columns fanned by the splay about the vertical line where the outer "
+               "side faces of the centre box meet behind it; rows stacked flat at the external height. The angled "
+               "side faces of neighbouring columns coincide, and the flat tops and bottoms of neighbouring rows "
+               "coincide, so nine identical boxes tile with no spacers.",
+        max_gap_mm=max(j["max_gap_mm"] for j in joints),
+        max_penetration_mm=max(j["max_penetration_mm"] for j in joints),
+        max_corner_mismatch_mm=max(j["corner_mismatch_mm"] for j in joints),
+        max_overlap_cm3_occ=round(worst, 4),
+        joints=joints,
+        boxes=[dict(i=b["i"], j=b["j"], yaw_deg=b["yaw_deg"], pitch_deg=b["pitch_deg"], matrix=b["matrix"])
+               for b in sorted(lay["boxes"], key=lambda b: (-b["j"], b["i"]))],
+    )
+    return out, boxes
 
 
 def coarse_triangles(names, size=40.0):
     """Coarse surface mesh (mm) of the named parts, for the array preview."""
-    global occ
-    gmsh.clear()
-    gmsh.model.add("coarse")
-    occ = gmsh.model.occ
+    start("coarse")
     for n in names:
         occ.importShapes(str(OUT / "step" / f"{n}.step"))
     occ.synchronize()
@@ -1287,6 +1255,7 @@ def coarse_triangles(names, size=40.0):
     gmsh.option.setNumber("Mesh.MeshSizeMax", size)
     gmsh.option.setNumber("Mesh.MeshSizeMin", size / 4)
     gmsh.model.mesh.generate(2)
+    gmsh.option.setNumber("Mesh.MeshSizeExtendFromBoundary", 1)
     tags, xyz, _ = gmsh.model.mesh.getNodes()
     xyz = xyz.reshape(-1, 3)
     index = np.zeros(int(tags.max()) + 1, dtype=int)
@@ -1295,10 +1264,10 @@ def coarse_triangles(names, size=40.0):
     return xyz[index[nodes.astype(int)]].reshape(-1, 3, 3)
 
 
-def write_array_stl(boxes, tri, extra=None):
-    out = [] if extra is None else [extra]
-    for P in boxes.values():
-        v = tri.reshape(-1, 3) @ P[0].T + P[1] * MM
+def write_array_stl(boxes, tri):
+    out = []
+    for R, t in boxes.values():
+        v = tri.reshape(-1, 3) @ R.T + t
         out.append(v.reshape(-1, 3, 3))
     allv = np.concatenate(out).astype("<f4")
     nrm = np.cross(allv[:, 1] - allv[:, 0], allv[:, 2] - allv[:, 0])
@@ -1313,35 +1282,79 @@ def write_array_stl(boxes, tri, extra=None):
     return len(rec)
 
 
-# ---------------------------------------------------------------- outputs
-def dxf(mitre, baf, back):
+# ---------------------------------------------------------------- panels
+def panel_bevels():
+    """Saw settings for the wedge panel: its long edges sit on the side walls (compound), its back end on the baffle."""
+    n_p = np.array([0, 1, -math.tan(A)])
+    n_p /= np.linalg.norm(n_p)                              # wedge face (top wedge), towards the flat top
+    n_s = np.array([1, 0, -math.tan(A)])
+    n_s /= np.linalg.norm(n_s)                              # right side wall inner face, outward
+    e = np.cross(n_s, n_p)
+    e /= np.linalg.norm(e)                                  # the corner line, along the panel's long edge
+    u = np.cross(e, n_p)
+    u /= np.linalg.norm(u)                                  # square-cut edge face normal
+    bevel = math.degrees(math.acos(min(1.0, abs(float(u @ n_s)))))
+    length_dir = np.array([0, math.sin(A), math.cos(A)])
+    taper = math.degrees(math.acos(min(1.0, abs(float(e @ length_dir)))))
+    return dict(blade_bevel_deg=round(bevel, 2), edge_taper_deg=round(taper, 2), end_bevel_deg=round(K.half_angle_deg, 2),
+                corner_dihedral_deg=round(math.degrees(math.pi - math.acos(float(n_p @ n_s))), 2))
+
+
+def dxf(baf, back, bev, ze):
     import ezdxf
     (OUT / "dxf").mkdir(exist_ok=True)
+    for f in (OUT / "dxf").glob("*.dxf"):
+        f.unlink()
 
-    def doc_with(label):
+    def doc_with():
         doc = ezdxf.new("R2010")
         doc.layers.add("CUT")
         doc.layers.add("INNER_FACE", linetype="DASHED")
         doc.layers.add("TEXT")
         return doc, doc.modelspace()
 
-    # wall: outer face outline (cut) and the inner face (after the bevel)
-    L = (Z_M - Z_WB) / math.cos(A)
+    def text(msp, s, x, y):
+        msp.add_text(s, dxfattribs={"height": 10, "layer": "TEXT"}).set_placement((x, y))
+
+    # side wall: a rectangle on the slant; the outer face is longer than the inner by the end bevels
+    Ls = (Z_M - Z_WB) / math.cos(A)               # same on both faces: the end bevels are parallel
     off = T * math.tan(A)
-    wo0, wo1 = 2 * ohw(Z_WB), 2 * ohw(Z_M)
-    wi0, wi1 = 2 * hw(Z_WB), 2 * hw(Z_M)
-    doc, msp = doc_with("wall")
-    msp.add_lwpolyline([(-wo0 / 2, 0), (wo0 / 2, 0), (wo1 / 2, L), (-wo1 / 2, L)], close=True, dxfattribs={"layer": "CUT"})
-    msp.add_lwpolyline([(-wi0 / 2, off), (wi0 / 2, off), (wi1 / 2, L + off), (-wi1 / 2, L + off)], close=True,
-                       dxfattribs={"layer": "INNER_FACE"})
-    msp.add_text(f"Wall x4, 18 mm birch, outer face shown. Long edges: blade bevel {mitre['blade_bevel_deg']:.1f} deg, "
-                 f"edge taper {mitre['edge_taper_deg']:.1f} deg. Ends bevelled {mitre['end_bevel_deg']:.1f} deg, parallel.",
-                 dxfattribs={"height": 10, "layer": "TEXT"}).set_placement((-wo1 / 2, -30))
-    doc.saveas(OUT / "dxf" / "wall.dxf")
-    doc, msp = doc_with("baffle")
-    a, b = baf["front_square_mm"] / 2, baf["back_square_mm"] / 2
-    msp.add_lwpolyline([(-a, -a), (a, -a), (a, a), (-a, a)], close=True, dxfattribs={"layer": "CUT"})
-    msp.add_lwpolyline([(-b, -b), (b, -b), (b, b), (-b, b)], close=True, dxfattribs={"layer": "INNER_FACE"})
+    doc, msp = doc_with()
+    msp.add_lwpolyline([(0, -HH), (Ls, -HH), (Ls, HH), (0, HH)], close=True, dxfattribs={"layer": "CUT"})
+    msp.add_lwpolyline([(off, -HH), (Ls + off, -HH), (Ls + off, HH), (off, HH)], close=True, dxfattribs={"layer": "INNER_FACE"})
+    text(msp, f"Side wall x2, 18 mm birch, outer face shown. Ends bevelled {K.half_angle_deg:.1f} deg, parallel. "
+              f"Long edges square.", 0, -HH - 30)
+    doc.saveas(OUT / "dxf" / "side_wall.dxf")
+    # top and bottom: flat trapezoids, square edges
+    doc, msp = doc_with()
+    L = Z_M - Z_WB
+    msp.add_lwpolyline([(-ohw(Z_WB), 0), (ohw(Z_WB), 0), (ohw(Z_M), L), (-ohw(Z_M), L)], close=True, dxfattribs={"layer": "CUT"})
+    msp.add_lwpolyline([(-hw(Z_WB), 0), (hw(Z_WB), 0), (hw(Z_M), L), (-hw(Z_M), L)], close=True, dxfattribs={"layer": "INNER_FACE"})
+    text(msp, "Top and bottom x2, 18 mm birch, flat. All edges square. Dashed: the side walls' inner faces.",
+         -ohw(Z_M), -30)
+    doc.saveas(OUT / "dxf" / "top_bottom.dxf")
+    # wedge panel: on its slope, from the baffle to the mouth
+    doc, msp = doc_with()
+    Ls = Z_M / math.cos(A)
+    msp.add_lwpolyline([(-hw(0), 0), (hw(0), 0), (hw(Z_M), Ls), (-hw(Z_M), Ls)], close=True, dxfattribs={"layer": "CUT"})
+    zl = (ze) / math.cos(A)
+    msp.add_line((-hw(ze), zl), (hw(ze), zl), dxfattribs={"layer": "INNER_FACE"})
+    text(msp, f"Wedge panel x2, 18 mm birch, horn face shown. Long edges: blade bevel {bev['blade_bevel_deg']:.1f} deg, "
+              f"edge taper {bev['edge_taper_deg']:.1f} deg. Back end bevelled {bev['end_bevel_deg']:.1f} deg on the "
+              f"baffle. Plane the back face to a feather edge from the dashed line to the mouth.", -hw(Z_M), -30)
+    doc.saveas(OUT / "dxf" / "wedge_panel.dxf")
+    # wedge rib: triangle in the y-z plane
+    doc, msp = doc_with()
+    h = HH - hw(0) - E
+    msp.add_lwpolyline([(0, 0), (ze, 0), (0, h)], close=True, dxfattribs={"layer": "CUT"})
+    text(msp, f"Wedge rib x{2*len(WEDGE_RIBS)}, 18 mm birch. Long leg on the flat panel, short leg on the baffle, "
+              f"hypotenuse on the wedge panel's back face.", 0, -30)
+    doc.saveas(OUT / "dxf" / "wedge_rib.dxf")
+    # baffle
+    doc, msp = doc_with()
+    a, b = baf["front_width_mm"] / 2, baf["back_width_mm"] / 2
+    msp.add_lwpolyline([(-a, -HH), (a, -HH), (a, HH), (-a, HH)], close=True, dxfattribs={"layer": "CUT"})
+    msp.add_lwpolyline([(-b, -HH), (b, -HH), (b, HH), (-b, HH)], close=True, dxfattribs={"layer": "INNER_FACE"})
     msp.add_circle((0, 0), baf["cutout_diameter_mm"] / 2, dxfattribs={"layer": "CUT"})
     for k in range(8):
         az = math.radians(22.5 + 45 * k)
@@ -1350,26 +1363,24 @@ def dxf(mitre, baf, back):
     for i, az in enumerate(STANDOFF_AZ):
         msp.add_circle((R_STANDOFF * math.cos(az), R_STANDOFF * math.sin(az)), 6.0 if i == DUCT else 4.25,
                        dxfattribs={"layer": "CUT"})
-    msp.add_text(f"Baffle, 25 mm birch, front face shown (back face dashed). Edges bevelled {K.half_angle_deg:.1f} deg.",
-                 dxfattribs={"height": 10, "layer": "TEXT"}).set_placement((-a, -a - 30))
+    text(msp, f"Baffle, 25 mm birch, front face shown (back face dashed). Side edges bevelled {K.half_angle_deg:.1f} deg, "
+              f"top and bottom edges square.", -a, -HH - 30)
     doc.saveas(OUT / "dxf" / "baffle.dxf")
-    doc, msp = doc_with("back")
-    a, b = back["front_square_mm"] / 2, back["back_square_mm"] / 2
-    msp.add_lwpolyline([(-a, -a), (a, -a), (a, a), (-a, a)], close=True, dxfattribs={"layer": "CUT"})
-    msp.add_lwpolyline([(-b, -b), (b, -b), (b, b), (-b, b)], close=True, dxfattribs={"layer": "INNER_FACE"})
+    # back
+    doc, msp = doc_with()
+    a, b, Y = back["front_width_mm"] / 2, back["back_width_mm"] / 2, back["height_mm"] / 2
+    msp.add_lwpolyline([(-a, -Y), (a, -Y), (a, Y), (-a, Y)], close=True, dxfattribs={"layer": "CUT"})
+    msp.add_lwpolyline([(-b, -Y), (b, -Y), (b, Y), (-b, Y)], close=True, dxfattribs={"layer": "INNER_FACE"})
     msp.add_circle((0, 0), 32, dxfattribs={"layer": "CUT"})
-    h = hw(Z_WB)
-    for g in (h + 2, h + 9):
-        msp.add_lwpolyline([(-g, -g), (g, -g), (g, g), (-g, g)], close=True, dxfattribs={"layer": "INNER_FACE"})
-    rs = h + 13.5
-    for x, y in [(rs, t * h) for t in (-0.6, 0, 0.6)] + [(-rs, t * h) for t in (-0.6, 0, 0.6)] + \
-                [(t * h, rs) for t in (-0.6, 0, 0.6)] + [(t * h, -rs) for t in (-0.6, 0, 0.6)]:
+    hx = hw(Z_WB)
+    for g in (2, 9):
+        msp.add_lwpolyline([(-(hx + g), -(HH + g)), (hx + g, -(HH + g)), (hx + g, HH + g), (-(hx + g), HH + g)],
+                           close=True, dxfattribs={"layer": "INNER_FACE"})
+    for x, y in back["screw_xy_mm"]:
         msp.add_circle((x, y), 2.75, dxfattribs={"layer": "CUT"})
-    msp.add_text(f"Back panel, 18 mm birch, front face shown. Edges bevelled {K.half_angle_deg:.1f} deg. "
-                 f"Gasket groove 7 x 2 mm.", dxfattribs={"height": 10, "layer": "TEXT"}).set_placement((-a, -a - 30))
+    text(msp, f"Back panel, 18 mm birch, front face shown. Side edges bevelled {K.half_angle_deg:.1f} deg. "
+              f"Gasket groove 7 x 2 mm.", -a, -Y - 30)
     doc.saveas(OUT / "dxf" / "back.dxf")
-    for old in ("side.dxf", "horn_side_wall.dxf", "horn_top_wall.dxf", "horn_wall_inner_face.dxf"):
-        (OUT / "dxf" / old).unlink(missing_ok=True)
 
 
 def assembly():
@@ -1380,95 +1391,287 @@ def assembly():
     quiet_write(OUT / "sunflower-assembly.step")
 
 
+# ---------------------------------------------------------------- verification
+OBSTRUCTIONS = None
+
+
+def model_meshes():
+    """Every built part, plus the whole centre body, for slicing (the body modules are only cut on the final pass)."""
+    names = [p["name"] for p in parts if p["category"] != "print" or p["name"].startswith("bullet")]
+    names = [n for n in names if not n.startswith(("kick_shroud", "motor_fairing", "mid_pod", "mid_horn"))]
+    return load_meshes(names, extra={"centre_body": TMP / "body_full.stl"})
+
+
+def slab_errors(df):
+    k = df[(df.z_mm > Z_TURN + 5) & (df.z_mm < Z_M - 1) & df.kick_model_cm2.notna()]
+    m = df[df.mid_model_cm2.notna() & (df.z_mm > Z_MT + 1) & (df.z_mm < Z_M - 1)]
+    return k, m
+
+
+def summary_stats(df):
+    k, m = slab_errors(df)
+    tip = zs(M.s_tip)
+    mb = m[m.z_mm < tip - 1]
+    return dict(kick_slabs=len(k), kick_max_abs_pct=round(float(k.kick_diff_pct.abs().max()), 3),
+                kick_rms_pct=round(float(np.sqrt((k.kick_diff_pct ** 2).mean())), 3),
+                kick_worst_z_mm=float(k.z_mm.iloc[int(k.kick_diff_pct.abs().argmax())]),
+                mid_slabs=len(m), mid_max_abs_pct=round(float(m.mid_diff_pct.abs().max()), 3),
+                mid_rms_pct=round(float(np.sqrt((m.mid_diff_pct ** 2).mean())), 3),
+                mid_worst_z_mm=float(m.z_mm.iloc[int(m.mid_diff_pct.abs().argmax())]),
+                mid_bullet_max_abs_pct=round(float(mb.mid_diff_pct.abs().max()), 3))
+
+
+# ---------------------------------------------------------------- outputs
+def write_profiles(rows_k, rows_m, ch_eq, ch_new, rho):
+    pk = P["body"]
+    pb = P["bullet"]
+    ps = P["shroud"]
+    zz = pk.x
+    data = dict(
+        units="mm; z from the baffle front face, s from the mid throat plane",
+        note="Plug radii solved from slices of the assembled model (every part subtracted), then corrected from a "
+             "second slicing of the model with the plugs in place. Each profile is a PCHIP spline through these "
+             "stations.",
+        kick_body=dict(
+            z_mm=[round(float(v), 3) for v in zz], r_mm=[round(float(v), 3) for v in pk.y],
+            r_equation_mm=[round(K.body_radius(z / MM) * MM, 3) for z in zz],
+            envelope_mm=[round(envelope_mm(z), 3) for z in zz],
+            law_area_cm2=[round(K.law_area(z / MM) * 1e4, 3) for z in zz],
+            obstruction_cm2=[round(r["obstruction_cm2"], 3) for r in rows_k],
+            held_by_envelope=[bool(r["held_by_envelope"]) for r in rows_k]),
+        bullet=dict(
+            s_mm=[round(float(v), 3) for v in pb.x], z_mm=[round(zs(v / MM), 3) for v in pb.x],
+            r_mm=[round(float(v), 3) for v in pb.y], r_equation_mm=[round(M.plug(v / MM) * MM, 3) for v in pb.x],
+            hold_mm=[round(hold_mm(v / MM), 3) for v in pb.x], wall_mm=[round(M.radius(v / MM) * MM, 3) for v in pb.x],
+            obstruction_cm2=[round(r["obstruction_cm2"], 3) for r in rows_m],
+            held_by_hf=[bool(r["held_by_hf"]) for r in rows_m]),
+        shroud=dict(r_mm=[round(float(v), 3) for v in ps.x], z_mm=[round(float(v), 3) for v in ps.y],
+                    z_equation_mm=[round(float(K.shroud_z(v / MM)) * MM, 3) for v in ps.x]),
+        mouth_edge_radius_mm=round(rho, 3),
+    )
+    (OUT / "plug_profiles.json").write_text(json.dumps(data, indent=1) + "\n")
+    return data
+
+
+def channel_check():
+    """Cylinder slices through the built shroud, cone and basket, against the target and the equation shroud."""
+    rows = cone_channel(True)
+    for r in rows:
+        rm = r["r_mm"]
+        cos = math.cos(math.radians(r["psi_deg"]))
+        r["open_normal_cm2"] = r["open_cyl_cm2"] * cos
+        r["diff_pct"] = 100 * (r["open_normal_cm2"] / r["target_normal_cm2"] - 1)
+        eq_cyl = (2 * math.pi * rm * (float(K.shroud_z(rm / MM)) * MM - r["cone_top_mm"]) - r["arms_cyl_cm2"] * 100) / 100
+        r["equation_shroud_open_cyl_cm2"] = eq_cyl
+        r["equation_shroud_open_normal_cm2"] = eq_cyl * cos
+        r["equation_shroud_diff_pct"] = 100 * (eq_cyl * cos / r["target_normal_cm2"] - 1)
+        r["shroud_z_mm"] = shroud_z(rm)
+        r["equation_shroud_z_mm"] = float(K.shroud_z(rm / MM)) * MM
+    import pandas as pd
+    RES.mkdir(parents=True, exist_ok=True)
+    pd.DataFrame(rows).to_csv(RES / "cone-channel.csv", index=False, float_format="%.4g")
+    return rows
+
+
+def write_area_check(df, rows_k, rows_m):
+    """results/cad/area-check.csv: the slices in the older long format, with the vane blockage from the plug solve
+    (the vane area left exposed in the passage, averaged over the slab)."""
+    import pandas as pd
+    zk = np.array([r["z_mm"] for r in rows_k])
+    bk = np.array([max(r["obstruction_cm2"], 0.0) for r in rows_k])
+    zm = np.array([r["z_mm"] for r in rows_m])
+    bm = np.array([max(r["obstruction_cm2"], 0.0) for r in rows_m])
+
+    def avg(z, h, zz, bb):
+        x = np.linspace(z - h / 2, z + h / 2, 21)
+        return float(np.mean(np.interp(x, zz, bb, left=0.0, right=0.0)))
+    ac = []
+    for _, r in df.iterrows():
+        if not math.isnan(r.kick_model_cm2):
+            v = avg(r.z_mm, r.slab_mm, zk, bk)
+            ac.append(dict(kind="kick", z_mm=r.z_mm, s_mm="", cad_area_cm2=r.kick_cm2, model_area_cm2=r.kick_model_cm2,
+                           diff_pct=r.kick_diff_pct, real_air_cm2=r.kick_cm2, vane_blockage_cm2=v,
+                           vane_blockage_pct=100 * v / (r.kick_cm2 + v)))
+    for _, r in df.iterrows():
+        if not math.isnan(r.mid_model_cm2):
+            v = avg(r.z_mm, r.slab_mm, zm, bm)
+            ac.append(dict(kind="mid", z_mm=r.z_mm, s_mm=round(r.z_mm - Z_MT, 2), cad_area_cm2=r.mid_cm2,
+                           model_area_cm2=r.mid_model_cm2, diff_pct=r.mid_diff_pct, real_air_cm2=r.mid_cm2,
+                           vane_blockage_cm2=v, vane_blockage_pct=100 * v / (r.mid_cm2 + v)))
+    RES.mkdir(parents=True, exist_ok=True)
+    pd.DataFrame(ac).to_csv(RES / "area-check.csv", index=False, float_format="%.4f")
+
+
 def main():
+    global FINAL
     t0 = time.time()
     for sub in ("step", "stl", "print", "dxf"):
         (OUT / sub).mkdir(parents=True, exist_ok=True)
     for sub in ("step", "stl", "print"):
         for f in (OUT / sub).glob("*"):
             f.unlink()
+    TMP.mkdir(exist_ok=True)
     gmsh.initialize()
     gmsh.option.setNumber("General.Terminal", 0)
     gmsh.option.setString("Geometry.OCCTargetUnit", "MM")
     print("cabinet", flush=True)
     walls()
+    ze = wedges()
     baf = baffle()
     back = back_panel()
     fill = fillers()
-    print("supports", flush=True)
-    supports()
-    print("centre body", flush=True)
-    body = centre_body()
-    print("bullet", flush=True)
-    bullet()
-    print("drivers", flush=True)
+    print("supports and drivers", flush=True)
+    standoffs()
     drivers()
+
+    # 1. shroud over the reversed cone, from cylinder slices of the cone and basket
+    print("cone channel", flush=True)
+    ch_design = cone_channel(False)
+    P["shroud"] = design_shroud(ch_design)
+
+    # 2. plugs from slices of everything else (twice: the vanes reach into the body and follow its radius)
+    rows_k = rows_m = None
+    for it in range(3):
+        print(f"plug solve, pass {it + 1}", flush=True)
+        vanes()
+        start("bv_tmp")
+        bullet_vanes()
+        clean()
+        mesh_write(TMP / "bullet_vanes.stl", size=12.0, curv=48)
+        names = [p["name"] for p in parts]
+        meshes = load_meshes(names, extra={"bullet_vanes": TMP / "bullet_vanes.stl"})
+        rows_k, rows_m = solve_plugs(meshes)
+        nk = Prof([r["z_mm"] for r in rows_k], [r["r_mm"] for r in rows_k])
+        nm = Prof([r["s_mm"] for r in rows_m], [r["r_mm"] for r in rows_m])
+        dk, dm = float(np.abs(nk.y - P["body"].y).max()), float(np.abs(nm.y - P["bullet"].y).max())
+        P["body"], P["bullet"] = nk, nm
+        print(f"  change: body {dk:.3f} mm, bullet {dm:.3f} mm", flush=True)
+        if it > 0 and dk < 0.05 and dm < 0.05:
+            break
+    solved = dict(body=P["body"], bullet=P["bullet"])
+
+    # 3. build the plugs, slice the whole model, correct, repeat
+    history = []
+    for it in range(3):
+        print(f"verify, pass {it + 1}", flush=True)
+        vanes()
+        centre_body()
+        bullet()
+        df, _ = SL.run(dz=10.0, meshes=model_meshes(), write=False)
+        st = summary_stats(df)
+        history.append(st)
+        print("  " + json.dumps(st), flush=True)
+        if st["kick_max_abs_pct"] <= 0.5 and st["mid_bullet_max_abs_pct"] <= 0.5:
+            break
+        k, m = slab_errors(df)
+        P["body"] = correct(P["body"], k.z_mm.values, (k.kick_cm2 - k.kick_model_cm2).values * 100,
+                            lambda z: envelope_mm(z) + (3.0 if z < Z_M - 10 else 0.0))
+        mb = m[m.z_mm < zs(M.s_tip) - 1]
+        P["bullet"] = correct(P["bullet"], (mb.z_mm.values - Z_MT), (mb.mid_cm2 - mb.mid_model_cm2).values * 100,
+                              lambda s: hold_mm(s / MM))
+
+    # 4. final build
+    FINAL = True
+    print("final build", flush=True)
+    vanes()
+    body = centre_body()
+    bullet()
+    print("cone channel check", flush=True)
+    ch_new = channel_check()
+    print("drivers, assembly", flush=True)
     assembly()
-    print("area check", flush=True)
-    area = area_check()
+    rho, _ = mouth_round()
+    prof = write_profiles(rows_k, rows_m, ch_design, ch_new, rho)
+
+    # 5. the official slices of the assembled model (cad/parts.json)
+    (OUT / "parts.json").write_text(json.dumps(parts, indent=1) + "\n")
+    print("slices", flush=True)
+    df, meshes = SL.run(dz=10.0)
+    SL.figure(df, meshes)
+    final = summary_stats(df)
+    print("  " + json.dumps(final), flush=True)
+    RES.mkdir(parents=True, exist_ok=True)
+    write_area_check(df, rows_k, rows_m)
+
+    # 6. array
     print("array", flush=True)
-    arr, boxes = array_fit()
-    arr["max_overlap_cm3_occ"] = round(array_overlap(boxes), 3)
-    spacers, sp_tri = array_spacers(boxes)
-    arr["spacers"] = spacers
-    arr["spacer_note"] = ("Tapered wedges, part of the rigging frame, that close the edge to corner joints. Each is the "
-                          "space between the two facing walls where they overlap, so both boxes sit flush on it. "
-                          "Coordinates are the array frame in mm (the centre box's own frame).")
-    tri = coarse_triangles([p["name"] for p in parts if p["category"] in ("cabinet", "filler", "print", "support")])
+    arr, boxes = array_check()
+    tri = coarse_triangles([p["name"] for p in parts if p["category"] in ("cabinet", "filler", "print", "support")],
+                           size=60.0)
     gmsh.finalize()
-    arr["preview"] = dict(file="array.stl", triangles=write_array_stl(boxes, tri, sp_tri),
-                          note="coarse mesh of the cabinet, fillers, supports and printed parts of each box, placed, "
-                               "plus the array spacers")
-    mitre = mitre_angles()
-    dxf(mitre, baf, back)
-    ext = dict(width=round(2 * ohw(Z_M), 1), height_front=round(2 * ohw(Z_M), 1), height_back=round(2 * ohw(Z_BACK), 1),
-               depth=round(Z_M - Z_BACK, 1), overall_depth=round(max(p[1] for p in lip_arc()[0]) - Z_BACK, 1))
+    arr["preview"] = dict(file="array.stl", triangles=write_array_stl(boxes, tri),
+                          note="coarse mesh of the cabinet, wedges, fillers, supports and printed parts of each box, placed")
+    bev = panel_bevels()
+    dxf(baf, back, bev, ze["wedge_top"])
+    ext = dict(width=round(2 * ohw(Z_M), 1), height_front=round(2 * (HH + T), 1), height_back=round(2 * (HH + T), 1),
+               width_back=round(2 * ohw(Z_BACK), 1), depth=round(Z_M - Z_BACK, 1), overall_depth=round(Z_M - Z_BACK, 1))
     L = (Z_M - Z_WB) / math.cos(A)
+    kk = [r for r in prof["kick_body"]["r_mm"]]
     cut = dict(
         units="mm",
         external_mm=ext,
-        walls=dict(qty=4, ply_mm=T, slant_length_mm=round(L, 1),
-                   inner_face=dict(back_edge=round(2 * hw(Z_WB), 1), mouth_edge=round(2 * hw(Z_M), 1)),
-                   outer_face=dict(back_edge=round(2 * ohw(Z_WB), 1), mouth_edge=round(2 * ohw(Z_M), 1)),
-                   **mitre, dxf="dxf/wall.dxf",
-                   note="Four identical panels. Cut the outer face to size, tilt the blade to the bevel along both "
-                        "long edges so the inner face is the narrower one, and bevel both ends at the half angle so "
-                        "the back and the mouth are square to the axis."),
+        walls=dict(qty=2, ply_mm=T, slant_length_mm=round(L, 1), height_mm=round(2 * HH, 1),
+                   inner_face=dict(back_edge=round(L, 1), mouth_edge=round(L, 1)),
+                   outer_face=dict(back_edge=round(2 * HH, 1), mouth_edge=round(2 * HH, 1)),
+                   blade_bevel_deg=0.0, edge_taper_deg=0.0, end_bevel_deg=round(K.half_angle_deg, 2),
+                   dxf="dxf/side_wall.dxf",
+                   note="Two side walls: 18 mm rectangles, both ends bevelled at the half angle and parallel so the "
+                        "back and the mouth are square to the axis. Long edges square; they butt under the top and "
+                        "over the bottom."),
+        top_bottom=dict(qty=2, ply_mm=T, length_mm=round(Z_M - Z_WB, 1), back_width_mm=round(2 * ohw(Z_WB), 1),
+                        mouth_width_mm=round(2 * ohw(Z_M), 1), dxf="dxf/top_bottom.dxf",
+                        note="Flat trapezoids, all edges square: the side walls' outer faces run on from the "
+                             "angled edges. Full depth, from the back panel to the mouth."),
+        wedges=dict(qty=2, ply_mm=T, depth_at_baffle_mm=round(HH - hw(0), 1), length_mm=round(Z_M, 1),
+                    panel_slant_length_mm=round(Z_M / math.cos(A), 1), panel_back_width_mm=round(2 * hw(0), 1),
+                    panel_mouth_width_mm=round(2 * hw(Z_M), 1), feather_from_z_mm=round(ze["wedge_top"], 1),
+                    ribs_per_wedge=len(WEDGE_RIBS), rib_x_mm=[round(f * hw(0), 1) for f in WEDGE_RIBS],
+                    sealed_litres_each=round(K.wedge_litres / 2, 2), **bev,
+                    dxf=["dxf/wedge_panel.dxf", "dxf/wedge_rib.dxf"],
+                    note="Under the flat top and over the flat bottom, from the baffle front face to the mouth. An "
+                         "18 mm sloping panel at the half angle is the horn wall; 18 mm side closures along the side "
+                         "walls and ribs carry it from the flat panel. Glue and seal: the wedges are not vented."),
         baffle=dict(**baf, z_mm=[round(Z_BAF, 1), 0.0], dxf="dxf/baffle.dxf",
-                    note="Glued inside the frustum; the kick flange screws to its front face"),
-        back=dict(**back, z_mm=[round(Z_BACK, 1), round(Z_WB, 1)], dxf="dxf/back.dxf"),
+                    note="Glued between the side walls, top and bottom; the kick flange screws to its front face"),
+        back=dict(**{k: v for k, v in back.items() if k != "screw_xy_mm"}, z_mm=[round(Z_BACK, 1), round(Z_WB, 1)],
+                  dxf="dxf/back.dxf"),
         corner_filler=dict(qty=4, **fill),
         chamber=dict(available_litres=round(K.chamber_litres, 2),
-                     frustum_litres=round(float(np.trapezoid([(2 * hw(z)) ** 2 for z in np.linspace(Z_WB, Z_BAF, 50)],
-                                                          np.linspace(Z_WB, Z_BAF, 50))) / 1e6, 2),
-                     note="Kick.chamber_litres: frustum between the baffle and the back, the baffle cutout, the cone"),
+                     box_litres=round(float(np.trapezoid([2 * hw(z) * 2 * HH for z in np.linspace(Z_WB, Z_BAF, 50)],
+                                                        np.linspace(Z_WB, Z_BAF, 50))) / 1e6, 2),
+                     note="Kick.chamber_litres: the full-height box between the baffle and the back, the baffle "
+                          "cutout, the cone"),
         supports=dict(standoffs=dict(qty=4, diameter_mm=2 * STANDOFF_R, pcd_mm=round(2 * R_STANDOFF, 1),
                                      length_mm=round(Z_TURN + SOCKET, 1), duct_bore_mm=12,
                                      azimuth_deg=[45, 135, 225, 315]),
-                      vanes=dict(qty=4, thickness_mm=VANE_T, chord_mm=VANE_CHORD, z_centre_mm=round(Z_VANE, 1))),
-        centre_body=body,
-        stations_mm=dict(back=round(Z_BACK, 1), wall_back=round(Z_WB, 1), baffle_back=round(Z_BAF, 1), baffle_front=0.0, throat=0.0, turn=round(Z_TURN, 1),
-                         motor_end=round(Z_MOTOR, 1), mid_driver_back=round(Z_MF - MD.depth * MM, 1),
-                         mid_flange=round(Z_MF, 1), mid_throat=round(Z_MT, 1), hf_exit=round(zs(M.s_exit), 1),
-                         hf_mouth=round(zs(M.s_tip), 1), mouth=round(Z_M, 1), mid_mouth=round(Z_MM, 1),
-                         vanes=round(Z_VANE, 1)),
-        array_spacers=dict(
-            qty=len(spacers), max_thickness_mm=max((x["max_thickness_mm"] for x in spacers), default=0.0),
-            min_thickness_mm=min((x["min_thickness_mm"] for x in spacers), default=0.0),
-            pieces=[dict(name=x["name"], between=x["between"], max_thickness_mm=x["max_thickness_mm"],
-                         min_thickness_mm=x["min_thickness_mm"], volume_litres=x["volume_litres"]) for x in spacers],
-            note="Rigging frame, not part of a single box. Each spacer is a twisted wedge between the facing walls of "
-                 "an edge box and a corner box. Make it as an 18 mm birch ply frame (a perimeter of strips "
-                 "planed to the taper, with a ply skin on each face) or as a solid laminated wedge; four are mirror "
-                 "images of the other four. STEP and STL in the array frame: cad/step and cad/stl/array_spacer_*."),
-        area_check=area,
+                      vanes=dict(qty=4, thickness_mm=VANE_T, chord_mm=VANE_CHORD, z_centre_mm=round(Z_VANE, 1)),
+                      bullet_vanes=dict(qty=3, thickness_mm=BV_T, s_mm=[BV_S0 * MM, BV_S1 * MM])),
+        centre_body=dict(**body, max_radius_mm=round(max(kk), 1)),
+        cone_channel=dict(file="../results/cad/cone-channel.csv",
+                          max_abs_diff_pct=round(max(abs(r["diff_pct"]) for r in ch_new), 2),
+                          equation_shroud_max_diff_pct=round(max(r["equation_shroud_diff_pct"] for r in ch_new), 2),
+                          arms_cm2=round(ch_new[0]["arms_cyl_cm2"], 2),
+                          note="Open area on cylinders r = const between the cone and the shroud, less the basket "
+                               "arms, projected normal to the cone, against the cone area inside r over the "
+                               "compression. The equation shroud assumed 12 % arm blockage; the real arms block "
+                               "about 2 %, so the shroud is lower by 4 to 6 mm."),
+        plugs=dict(profiles="plug_profiles.json", verify_passes=history, final_slices=final,
+                   mouth_edge_radius_mm=round(rho, 2)),
+        stations_mm=dict(back=round(Z_BACK, 1), wall_back=round(Z_WB, 1), baffle_back=round(Z_BAF, 1), baffle_front=0.0,
+                         throat=0.0, turn=round(Z_TURN, 1), motor_end=round(Z_MOTOR, 1),
+                         mid_driver_back=round(Z_MF - MD.depth * MM, 1), mid_flange=round(Z_MF, 1),
+                         mid_throat=round(Z_MT, 1), hf_exit=round(zs(M.s_exit), 1), hf_mouth=round(zs(M.s_tip), 1),
+                         mouth=round(Z_M, 1), mid_mouth=round(Z_MM, 1), vanes=round(Z_VANE, 1)),
+        array=dict(max_gap_mm=arr["max_gap_mm"], max_penetration_mm=arr["max_penetration_mm"],
+                   max_overlap_cm3=arr["max_overlap_cm3_occ"]),
+        array_spacers=dict(qty=0, max_thickness_mm=0.0, min_thickness_mm=0.0, pieces=[],
+                           note="None: the boxes tile exactly (see array.json)."),
         print_files={p["name"]: p.get("print_files", []) for p in parts if p.get("print_files")},
         warnings=warnings,
     )
-    stack = dict(splay_deg=K.splay_deg, boxes=3,
-                 note="Three boxes in a vertical column, each turned by the splay about the mouth front edge it "
-                      "shares with its neighbour. See array.json for the 3 x 3 array.",
-                 pivot_mm=dict(y=round(ohw(Z_M), 1), z=round(Z_M, 1)))
+    stack = dict(splay_deg=0.0, boxes=3, row_pitch_mm=round(2 * (HH + T), 1),
+                 note="A column of the 3 x 3 array: rows stack flat, flat tops on flat bottoms. The columns fan by "
+                      f"{K.splay_deg:.0f} deg about a vertical axis (array.json).")
     (OUT / "parts.json").write_text(json.dumps(parts, indent=1) + "\n")
     (OUT / "cutlist.json").write_text(json.dumps(cut, indent=1) + "\n")
     (OUT / "stack.json").write_text(json.dumps(stack, indent=1) + "\n")
@@ -1476,9 +1679,12 @@ def main():
     for f in TMP.glob("*"):
         f.unlink()
     TMP.rmdir()
-    print(json.dumps(dict(area_check=area, array=dict(max_gap_mm=arr["max_gap_mm"], where=arr["max_gap_where"],
-                                                      overlap_cm3=arr["max_overlap_cm3_occ"]),
-                          pieces=sum(len(p.get("print_files", [])) for p in parts), warnings=warnings), indent=1))
+    print(json.dumps(dict(slices=final, array=dict(max_gap_mm=arr["max_gap_mm"],
+                                                   max_penetration_mm=arr["max_penetration_mm"],
+                                                   corner_mismatch_mm=arr["max_corner_mismatch_mm"],
+                                                   overlap_cm3=arr["max_overlap_cm3_occ"]),
+                          external_mm=ext, pieces=sum(len(p.get("print_files", [])) for p in parts),
+                          warnings=warnings), indent=1))
     print(f"done in {time.time() - t0:.0f} s")
 
 
